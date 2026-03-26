@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qosina Enterprise AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .qosina-blue { background-color: #005DAA; }
+        .qosina-blue-text { color: #005DAA; }
+        .qosina-blue-border { border-color: #005DAA; }
+        .message-user { background-color: #005DAA; color: white; }
+        .message-ai { background-color: #f3f4f6; color: #1f2937; }
+        .tool-activity { background-color: #fefce8; border-left: 3px solid #eab308; }
+        .approval-pending { border-left: 4px solid #f59e0b; }
+        .approval-approved { border-left: 4px solid #10b981; }
+        .approval-rejected { border-left: 4px solid #ef4444; }
+        .typing-dot { animation: blink 1.4s infinite both; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+        #chat-messages::-webkit-scrollbar { width: 6px; }
+        #chat-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body class="h-full flex flex-col bg-gray-50">
+
+<!-- Header -->
+<header class="qosina-blue text-white px-6 py-3 flex items-center justify-between shadow-md flex-shrink-0">
+    <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 bg-white rounded flex items-center justify-center">
+            <span class="qosina-blue-text font-bold text-sm">Q</span>
+        </div>
+        <h1 class="text-lg font-semibold">Qosina Enterprise AI Assistant</h1>
+    </div>
+    <div class="text-sm opacity-90">Powered by Claude &bull; Human-in-the-Loop</div>
+</header>
+
+<!-- Main Content -->
+<main class="flex-1 flex overflow-hidden">
+
+    <!-- Chat Panel (60%) -->
+    <div class="w-3/5 flex flex-col border-r border-gray-200">
+
+        <!-- Messages -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div class="message-ai rounded-lg p-4 max-w-[85%]">
+                <p class="text-sm">Welcome! I'm the Qosina Enterprise AI Assistant. I can help you with:</p>
+                <ul class="text-sm mt-2 ml-4 list-disc space-y-1">
+                    <li>Product catalog search and specifications</li>
+                    <li>Inventory levels, lot tracking, and expiration alerts</li>
+                    <li>Part compatibility and connection types</li>
+                    <li>Customer order history and purchasing patterns</li>
+                    <li>Proactive recommendations (routed to approval queue)</li>
+                </ul>
+                <p class="text-sm mt-2 text-gray-500">All recommendations require human approval before action is taken.</p>
+            </div>
+        </div>
+
+        <!-- Tool Activity Feed -->
+        <div id="tool-feed-container" class="border-t border-gray-200 hidden">
+            <button id="tool-feed-toggle" class="w-full px-4 py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 flex items-center justify-between">
+                <span>Tool Activity</span>
+                <span id="tool-feed-arrow" class="transform rotate-180">&#9650;</span>
+            </button>
+            <div id="tool-feed" class="max-h-40 overflow-y-auto px-4 py-2 space-y-1 bg-gray-50">
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0">
+            <form id="chat-form" class="flex space-x-3">
+                <input id="chat-input" type="text" placeholder="Ask about products, inventory, customers..."
+                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                       autocomplete="off">
+                <button type="submit" id="send-btn"
+                        class="qosina-blue text-white px-5 py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
+                    Send
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Approval Queue Panel (40%) -->
+    <div class="w-2/5 flex flex-col bg-white">
+        <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-800">Approval Queue</h2>
+            <span id="pending-badge" class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-0.5 rounded-full hidden">
+                0 pending
+            </span>
+        </div>
+        <div id="approval-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+            <p id="no-approvals" class="text-sm text-gray-400 text-center mt-8">No approval items yet. The AI assistant will create recommendations here for your review.</p>
+        </div>
+    </div>
+
+</main>
+
+<!-- Status Bar -->
+<footer class="bg-gray-800 text-gray-300 px-6 py-2 flex items-center justify-between text-xs flex-shrink-0">
+    <div class="flex space-x-6">
+        <span>Products: <strong id="stat-products">--</strong></span>
+        <span>Inventory Lots: <strong id="stat-lots">--</strong></span>
+        <span>Customers: <strong id="stat-customers">--</strong></span>
+    </div>
+    <div>
+        Pending Approvals: <strong id="stat-pending" class="text-yellow-400">--</strong>
+    </div>
+</footer>
+
+<script>
+(function() {
+    const chatMessages = document.getElementById('chat-messages');
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+    const toolFeedContainer = document.getElementById('tool-feed-container');
+    const toolFeed = document.getElementById('tool-feed');
+    const toolFeedToggle = document.getElementById('tool-feed-toggle');
+    const toolFeedArrow = document.getElementById('tool-feed-arrow');
+    const approvalList = document.getElementById('approval-list');
+    const noApprovals = document.getElementById('no-approvals');
+    const pendingBadge = document.getElementById('pending-badge');
+
+    let conversationId = null;
+    let currentAiMessage = null;
+    let toolFeedOpen = true;
+    let isStreaming = false;
+
+    // Toggle tool feed
+    toolFeedToggle.addEventListener('click', () => {
+        toolFeedOpen = !toolFeedOpen;
+        toolFeed.classList.toggle('hidden', !toolFeedOpen);
+        toolFeedArrow.style.transform = toolFeedOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+    });
+
+    // Send message
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message || isStreaming) return;
+
+        addUserMessage(message);
+        chatInput.value = '';
+        isStreaming = true;
+        sendBtn.disabled = true;
+
+        // Show typing indicator
+        const typing = addTypingIndicator();
+
+        // Clear tool feed for new query
+        toolFeed.innerHTML = '';
+        toolFeedContainer.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message, conversation_id: conversationId }),
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            currentAiMessage = null;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
+                    if (line.startsWith('event: ')) {
+                        var eventType = line.slice(7).trim();
+                    } else if (line.startsWith('data: ') && eventType) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            handleSSEEvent(eventType, data, typing);
+                        } catch (err) {}
+                        eventType = null;
+                    }
+                }
+            }
+        } catch (err) {
+            typing.remove();
+            addErrorMessage('Connection error. Please try again.');
+        }
+
+        isStreaming = false;
+        sendBtn.disabled = false;
+        chatInput.focus();
+    });
+
+    function handleSSEEvent(event, data, typing) {
+        switch (event) {
+            case 'token':
+                if (typing.parentNode) typing.remove();
+                if (!currentAiMessage) {
+                    currentAiMessage = addAiMessage('');
+                }
+                currentAiMessage.textContent += data.content;
+                scrollToBottom();
+                break;
+
+            case 'tool_call':
+                addToolActivity(`Calling ${data.tool}...`, 'calling');
+                break;
+
+            case 'tool_result':
+                addToolActivity(`${data.tool} complete`, 'complete');
+                break;
+
+            case 'approval_created':
+                addToolActivity(`Created approval: ${data.title}`, 'approval');
+                fetchApprovals();
+                break;
+
+            case 'error':
+                if (typing.parentNode) typing.remove();
+                addErrorMessage(data.message);
+                break;
+
+            case 'done':
+                if (typing.parentNode) typing.remove();
+                conversationId = data.conversation_id;
+                break;
+        }
+    }
+
+    function addUserMessage(text) {
+        const div = document.createElement('div');
+        div.className = 'flex justify-end';
+        div.innerHTML = `<div class="message-user rounded-lg px-4 py-2 max-w-[85%] text-sm">${escapeHtml(text)}</div>`;
+        chatMessages.appendChild(div);
+        scrollToBottom();
+    }
+
+    function addAiMessage(text) {
+        const div = document.createElement('div');
+        div.className = 'flex justify-start';
+        const inner = document.createElement('div');
+        inner.className = 'message-ai rounded-lg px-4 py-3 max-w-[85%] text-sm whitespace-pre-wrap';
+        inner.textContent = text;
+        div.appendChild(inner);
+        chatMessages.appendChild(div);
+        scrollToBottom();
+        return inner;
+    }
+
+    function addTypingIndicator() {
+        const div = document.createElement('div');
+        div.className = 'flex justify-start';
+        div.innerHTML = `<div class="message-ai rounded-lg px-4 py-3 flex space-x-1">
+            <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+            <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+            <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+        </div>`;
+        chatMessages.appendChild(div);
+        scrollToBottom();
+        return div;
+    }
+
+    function addErrorMessage(text) {
+        const div = document.createElement('div');
+        div.className = 'flex justify-start';
+        div.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-2 max-w-[85%] text-sm">${escapeHtml(text)}</div>`;
+        chatMessages.appendChild(div);
+        scrollToBottom();
+    }
+
+    function addToolActivity(text, status) {
+        const div = document.createElement('div');
+        const icon = status === 'calling' ? '&#9881;' : status === 'approval' ? '&#9989;' : '&#10003;';
+        const color = status === 'calling' ? 'text-yellow-600' : status === 'approval' ? 'text-green-600' : 'text-gray-600';
+        div.className = `tool-activity rounded px-3 py-1.5 text-xs font-mono ${color}`;
+        div.innerHTML = `<span>${icon}</span> ${escapeHtml(text)}`;
+        toolFeed.appendChild(div);
+        toolFeed.scrollTop = toolFeed.scrollHeight;
+    }
+
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // --- Approvals ---
+    async function fetchApprovals() {
+        try {
+            const res = await fetch('/api/approvals');
+            const approvals = await res.json();
+            renderApprovals(approvals);
+        } catch (err) {}
+    }
+
+    function renderApprovals(approvals) {
+        if (approvals.length === 0) {
+            noApprovals.classList.remove('hidden');
+            pendingBadge.classList.add('hidden');
+            approvalList.innerHTML = '';
+            approvalList.appendChild(noApprovals);
+            return;
+        }
+
+        noApprovals.classList.add('hidden');
+        const pending = approvals.filter(a => a.status === 'pending').length;
+        if (pending > 0) {
+            pendingBadge.textContent = `${pending} pending`;
+            pendingBadge.classList.remove('hidden');
+        } else {
+            pendingBadge.classList.add('hidden');
+        }
+
+        approvalList.innerHTML = '';
+        approvals.forEach(a => {
+            const div = document.createElement('div');
+            div.className = `approval-${a.status} bg-white border border-gray-200 rounded-lg p-3 shadow-sm`;
+
+            const badge = a.status === 'pending'
+                ? '<span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">Pending</span>'
+                : a.status === 'approved'
+                ? '<span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">Approved</span>'
+                : '<span class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded">Rejected</span>';
+
+            const typeBadge = `<span class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded">${escapeHtml(a.recommendation_type)}</span>`;
+
+            const buttons = a.status === 'pending' ? `
+                <div class="flex space-x-2 mt-2">
+                    <button onclick="handleApproval(${a.id}, 'approved')"
+                            class="bg-green-600 text-white text-xs px-3 py-1 rounded hover:bg-green-700">Approve</button>
+                    <button onclick="handleApproval(${a.id}, 'rejected')"
+                            class="bg-red-600 text-white text-xs px-3 py-1 rounded hover:bg-red-700">Reject</button>
+                </div>` : '';
+
+            const reviewer = a.reviewed_by ? `<p class="text-xs text-gray-400 mt-1">Reviewed by ${escapeHtml(a.reviewed_by)}</p>` : '';
+
+            div.innerHTML = `
+                <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center space-x-2">${typeBadge} ${badge}</div>
+                </div>
+                <h3 class="text-sm font-medium text-gray-800">${escapeHtml(a.title)}</h3>
+                <p class="text-xs text-gray-600 mt-1">${escapeHtml(a.content)}</p>
+                ${reviewer}
+                ${buttons}
+            `;
+            approvalList.appendChild(div);
+        });
+    }
+
+    window.handleApproval = async function(id, status) {
+        try {
+            await fetch(`/api/approvals/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status, reviewed_by: 'Demo User' }),
+            });
+            fetchApprovals();
+        } catch (err) {
+            alert('Failed to update approval');
+        }
+    };
+
+    // --- Stats ---
+    async function fetchStats() {
+        try {
+            const res = await fetch('/api/stats');
+            const stats = await res.json();
+            document.getElementById('stat-products').textContent = stats.product_count;
+            document.getElementById('stat-lots').textContent = stats.inventory_lots;
+            document.getElementById('stat-customers').textContent = stats.total_customers;
+            document.getElementById('stat-pending').textContent = stats.pending_approvals;
+        } catch (err) {}
+    }
+
+    // Initial load and polling
+    fetchStats();
+    fetchApprovals();
+    setInterval(fetchStats, 10000);
+    setInterval(fetchApprovals, 5000);
+    chatInput.focus();
+})();
+</script>
+</body>
+</html>
