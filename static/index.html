@@ -215,46 +215,80 @@
         <!-- Chat Panel -->
         <div id="panel-chat" class="flex-1 flex flex-col min-h-0">
             <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
-                <div class="max-w-2xl mx-auto">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 slide-in">
-                        <h2 class="text-lg font-semibold text-gray-800 mb-3">How This Works</h2>
-                        <div class="grid grid-cols-3 gap-4 mb-4">
-                            <div class="text-center p-3 rounded-lg bg-blue-50">
-                                <div class="w-8 h-8 rounded-full bg-qblue text-white flex items-center justify-center text-sm font-bold mx-auto mb-2">1</div>
-                                <div class="text-xs font-semibold text-gray-700">You Ask</div>
-                                <div class="text-[10px] text-gray-500 mt-1">Natural language questions about products, inventory, or customers</div>
-                            </div>
-                            <div class="text-center p-3 rounded-lg bg-green-50">
-                                <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold mx-auto mb-2">2</div>
-                                <div class="text-xs font-semibold text-gray-700">AI Investigates</div>
-                                <div class="text-[10px] text-gray-500 mt-1">Agent queries D365 data using tools (visible in left panel)</div>
-                            </div>
-                            <div class="text-center p-3 rounded-lg bg-yellow-50">
-                                <div class="w-8 h-8 rounded-full bg-yellow-500 text-white flex items-center justify-center text-sm font-bold mx-auto mb-2">3</div>
-                                <div class="text-xs font-semibold text-gray-700">You Approve</div>
-                                <div class="text-[10px] text-gray-500 mt-1">Recommendations queue for human review (right panel)</div>
-                            </div>
+                <!-- Dashboard + Quick Actions -->
+                <div id="welcome-dashboard" class="max-w-3xl mx-auto space-y-4">
+                    <!-- Live Alert Cards -->
+                    <div class="grid grid-cols-4 gap-3">
+                        <div onclick="sendQuick('Which parts are running low on stock? Create reorder approvals for each.')"
+                             class="bg-white rounded-xl border border-gray-200 p-4 hover:border-red-300 hover:shadow-md cursor-pointer transition-all">
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Low Stock</div>
+                            <div class="text-2xl font-bold text-red-600 mt-1" id="dash-low-stock">--</div>
+                            <div class="text-[10px] text-gray-500 mt-0.5">items below reorder point</div>
                         </div>
-                        <div class="border-t border-gray-100 pt-3">
-                            <p class="text-xs font-semibold text-gray-600 mb-2">Try a demo scenario:</p>
-                            <div class="flex flex-wrap gap-2">
-                                <button onclick="sendDemo(this)" class="demo-btn text-xs bg-qblue text-white px-3 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors">
-                                    What parts are compatible with part 80147?
-                                </button>
-                                <button onclick="sendDemo(this)" class="demo-btn text-xs bg-qblue text-white px-3 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors">
-                                    Which parts are running low on stock?
-                                </button>
-                                <button onclick="sendDemo(this)" class="demo-btn text-xs bg-qblue text-white px-3 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors">
-                                    Show inventory expiring in the next 6 months
-                                </button>
-                                <button onclick="sendDemo(this)" class="demo-btn text-xs bg-qblue text-white px-3 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors">
-                                    Analyze order history for CUST-003
-                                </button>
-                                <button onclick="sendDemo(this)" class="demo-btn text-xs bg-qblue text-white px-3 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors">
-                                    Find cross-sell opportunities for CUST-001
-                                </button>
-                            </div>
+                        <div onclick="sendQuick('Show all inventory expiring in the next 90 days. Create expiry alert approvals for each.')"
+                             class="bg-white rounded-xl border border-gray-200 p-4 hover:border-orange-300 hover:shadow-md cursor-pointer transition-all">
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Expiring Soon</div>
+                            <div class="text-2xl font-bold text-orange-600 mt-1" id="dash-expiring">--</div>
+                            <div class="text-[10px] text-gray-500 mt-0.5">lots within 90 days</div>
                         </div>
+                        <div onclick="sendQuick('Which customers have not ordered in the last 6 months? Analyze their history and create outreach approvals.')"
+                             class="bg-white rounded-xl border border-gray-200 p-4 hover:border-yellow-300 hover:shadow-md cursor-pointer transition-all">
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">At-Risk Customers</div>
+                            <div class="text-2xl font-bold text-yellow-600 mt-1" id="dash-at-risk">--</div>
+                            <div class="text-[10px] text-gray-500 mt-0.5">no orders in 6 months</div>
+                        </div>
+                        <div onclick="filterApprovals('pending'); document.getElementById('tab-chat').click();"
+                             class="bg-white rounded-xl border border-gray-200 p-4 hover:border-qblue hover:shadow-md cursor-pointer transition-all">
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Pending Review</div>
+                            <div class="text-2xl font-bold text-qblue mt-1" id="dash-pending">--</div>
+                            <div class="text-[10px] text-gray-500 mt-0.5">approvals awaiting action</div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                        <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="sendQuick('Run a full inventory audit: check low stock, expiring lots, and create approval items for everything that needs attention.')"
+                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                                <div class="font-semibold">Run Inventory Audit</div>
+                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Low stock + expiring + reorder recommendations</div>
+                            </button>
+                            <button onclick="sendQuick('Find cross-sell opportunities across all customers. Look at what they order and what compatible parts they have never ordered.')"
+                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                                <div class="font-semibold">Cross-Sell Analysis</div>
+                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Find upsell opportunities by customer</div>
+                            </button>
+                            <button onclick="sendQuick('Check all inventory lots expiring in the next 90 days. For each, create an expiry alert approval with lot number, quantity, and recommended action.')"
+                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                                <div class="font-semibold">FDA Expiry Compliance Check</div>
+                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Flag lots approaching expiration dates</div>
+                            </button>
+                            <button onclick="sendQuick('Identify all at-risk customers — anyone with declining order volume or no recent orders. Create customer outreach approvals for each.')"
+                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                                <div class="font-semibold">Customer Health Check</div>
+                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Churn risk + declining accounts</div>
+                            </button>
+                            <button onclick="sendQuick('What parts are compatible with part 80147 (Needleless Injection Site)?')"
+                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                                <div class="font-semibold">Part Compatibility Lookup</div>
+                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Find what connects to Part #80147</div>
+                            </button>
+                            <button onclick="sendQuick('Tell me about Qosina — the business, tech stack, D365 integration, and how this AI assistant connects to enterprise systems.')"
+                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                                <div class="font-semibold">About This System</div>
+                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Business context, D365, OData, architecture</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- How it works — condensed -->
+                    <div class="flex items-center justify-center space-x-6 text-[10px] text-gray-400 py-1">
+                        <span class="flex items-center space-x-1"><span class="w-5 h-5 rounded-full bg-qblue text-white flex items-center justify-center text-[9px] font-bold">1</span><span>You ask or click</span></span>
+                        <span class="text-gray-300">&rarr;</span>
+                        <span class="flex items-center space-x-1"><span class="w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center text-[9px] font-bold">2</span><span>AI queries D365 data</span></span>
+                        <span class="text-gray-300">&rarr;</span>
+                        <span class="flex items-center space-x-1"><span class="w-5 h-5 rounded-full bg-yellow-500 text-white flex items-center justify-center text-[9px] font-bold">3</span><span>You approve actions</span></span>
                     </div>
                 </div>
             </div>
@@ -385,14 +419,40 @@
         chatForm.dispatchEvent(new Event('submit'));
     };
 
+    // Quick action buttons
+    window.sendQuick = function(message) {
+        switchTab('chat');
+        chatInput.value = message;
+        chatForm.dispatchEvent(new Event('submit'));
+    };
+
+    // Load dashboard stats
+    async function fetchDashboard() {
+        try {
+            const res = await fetch('/api/dashboard');
+            const d = await res.json();
+            const setVal = (id, val, warnThreshold) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.textContent = val;
+                    if (warnThreshold && val >= warnThreshold) el.classList.add('animate-pulse');
+                }
+            };
+            setVal('dash-low-stock', d.low_stock_items, 1);
+            setVal('dash-expiring', d.expiring_90_days, 1);
+            setVal('dash-at-risk', d.at_risk_customers, 1);
+            setVal('dash-pending', d.pending_approvals, 1);
+        } catch (err) {}
+    }
+
     // Send message
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const message = chatInput.value.trim();
         if (!message || isStreaming) return;
 
-        // Hide welcome card on first message
-        const welcome = chatMessages.querySelector('.max-w-2xl');
+        // Hide welcome dashboard on first message
+        const welcome = document.getElementById('welcome-dashboard');
         if (welcome) welcome.style.display = 'none';
 
         addUserMessage(message);
@@ -477,6 +537,10 @@
             case 'approval_created':
                 addToolEntry(`+ Approval: ${data.title}`, 'text-yellow-600 font-medium');
                 fetchApprovals();
+                fetchDashboard();
+                // Flash the approval panel
+                const aq = document.querySelector('.w-\\[320px\\]');
+                if (aq) { aq.classList.add('ring-2', 'ring-yellow-400'); setTimeout(() => aq.classList.remove('ring-2', 'ring-yellow-400'), 2000); }
                 break;
 
             case 'error':
@@ -947,8 +1011,10 @@
 
     fetchStats();
     fetchApprovals();
+    fetchDashboard();
     setInterval(fetchStats, 10000);
     setInterval(fetchApprovals, 5000);
+    setInterval(fetchDashboard, 10000);
     chatInput.focus();
 })();
 </script>

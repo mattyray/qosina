@@ -190,6 +190,69 @@ def get_stats():
     }
 
 
+@app.get("/api/dashboard")
+def get_dashboard():
+    """Dashboard alerts — live counts of issues needing attention."""
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    cutoff_90 = (now + timedelta(days=90)).strftime("%Y-%m-%d")
+    cutoff_30 = (now + timedelta(days=30)).strftime("%Y-%m-%d")
+
+    with get_db() as conn:
+        # Low stock items
+        low_stock = conn.execute("""
+            SELECT COUNT(DISTINCT i.item_id) FROM inventory i
+            JOIN (SELECT item_id, SUM(quantity_on_hand) as total
+                  FROM inventory GROUP BY item_id) t ON i.item_id = t.item_id
+            WHERE t.total < i.reorder_point
+        """).fetchone()[0]
+
+        # Expiring within 90 days
+        expiring_90 = conn.execute("""
+            SELECT COUNT(*) FROM inventory
+            WHERE expiration_date IS NOT NULL
+            AND expiration_date <= ? AND quantity_on_hand > 0
+        """, (cutoff_90,)).fetchone()[0]
+
+        # Expiring within 30 days (urgent)
+        expiring_30 = conn.execute("""
+            SELECT COUNT(*) FROM inventory
+            WHERE expiration_date IS NOT NULL
+            AND expiration_date <= ? AND quantity_on_hand > 0
+        """, (cutoff_30,)).fetchone()[0]
+
+        # Pending approvals
+        pending = conn.execute(
+            "SELECT COUNT(*) FROM approval_queue WHERE status = 'pending'"
+        ).fetchone()[0]
+
+        # Customers with no orders in last 6 months (at-risk)
+        six_months_ago = (now - timedelta(days=180)).strftime("%Y-%m-%d")
+        at_risk = conn.execute("""
+            SELECT COUNT(*) FROM customers c
+            WHERE NOT EXISTS (
+                SELECT 1 FROM order_history o
+                WHERE o.customer_id = c.customer_id
+                AND o.order_date >= ?
+            )
+        """, (six_months_ago,)).fetchone()[0]
+
+        # Total inventory value
+        total_value = conn.execute("""
+            SELECT COALESCE(SUM(i.quantity_on_hand * p.unit_price), 0)
+            FROM inventory i JOIN products p ON i.item_id = p.item_id
+        """).fetchone()[0]
+
+    return {
+        "low_stock_items": low_stock,
+        "expiring_90_days": expiring_90,
+        "expiring_30_days": expiring_30,
+        "pending_approvals": pending,
+        "at_risk_customers": at_risk,
+        "total_inventory_value": round(total_value, 2),
+    }
+
+
 # --- Data Explorer endpoints ---
 
 @app.get("/api/products")
