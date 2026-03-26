@@ -220,19 +220,19 @@
             <div class="max-w-3xl mx-auto space-y-4">
                 <!-- Live Alert Cards -->
                 <div class="grid grid-cols-4 gap-3">
-                    <div onclick="sendQuick('Which parts are running low on stock? Batch all low stock items into a single reorder approval.')"
+                    <div onclick="sendQuick('Which parts are running low on stock? Create a separate reorder approval for each one.')"
                          class="bg-white rounded-xl border border-gray-200 p-4 hover:border-red-300 hover:shadow-md cursor-pointer transition-all">
                         <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Low Stock</div>
                         <div class="text-2xl font-bold text-red-600 mt-1" id="dash-low-stock">--</div>
                         <div class="text-[10px] text-gray-500 mt-0.5">items below reorder point</div>
                     </div>
-                    <div onclick="sendQuick('Show all inventory lots expiring in the next 90 days. Batch them into a single expiry alert approval.')"
+                    <div onclick="sendQuick('Show all inventory lots expiring in the next 90 days. Create a separate expiry alert approval for each lot.')"
                          class="bg-white rounded-xl border border-gray-200 p-4 hover:border-orange-300 hover:shadow-md cursor-pointer transition-all">
                         <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Expiring Soon</div>
                         <div class="text-2xl font-bold text-orange-600 mt-1" id="dash-expiring">--</div>
                         <div class="text-[10px] text-gray-500 mt-0.5">lots within 90 days</div>
                     </div>
-                    <div onclick="sendQuick('Which customers have not ordered in the last 6 months? Create one customer outreach approval covering all at-risk accounts.')"
+                    <div onclick="sendQuick('Which customers have not ordered in the last 6 months? Create a separate customer outreach approval for each at-risk account.')"
                          class="bg-white rounded-xl border border-gray-200 p-4 hover:border-yellow-300 hover:shadow-md cursor-pointer transition-all">
                         <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">At-Risk Customers</div>
                         <div class="text-2xl font-bold text-yellow-600 mt-1" id="dash-at-risk">--</div>
@@ -249,7 +249,7 @@
                 <div class="bg-white rounded-xl border border-gray-200 p-4">
                     <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</div>
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="sendQuick('Run a full inventory audit: check low stock and expiring lots. Create ONE reorder approval for all low stock items and ONE expiry alert for all expiring lots.')"
+                        <button onclick="sendQuick('Run a full inventory audit: check low stock and expiring lots. Create a separate approval for each item that needs attention.')"
                             class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
                             <div class="font-semibold">Run Inventory Audit</div>
                             <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Low stock + expiring + reorder recommendations</div>
@@ -259,12 +259,12 @@
                             <div class="font-semibold">Cross-Sell Analysis</div>
                             <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Find upsell opportunities by customer</div>
                         </button>
-                        <button onclick="sendQuick('Check all inventory lots expiring in the next 90 days. Create ONE expiry alert approval listing all affected lots with dates and quantities.')"
+                        <button onclick="sendQuick('Check all inventory lots expiring in the next 90 days. Create a separate expiry alert approval for each lot with its date and quantity.')"
                             class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
                             <div class="font-semibold">FDA Expiry Compliance Check</div>
                             <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Flag lots approaching expiration dates</div>
                         </button>
-                        <button onclick="sendQuick('Identify all at-risk customers with declining order volume or no recent orders. Create ONE customer outreach approval covering all accounts.')"
+                        <button onclick="sendQuick('Identify all at-risk customers with declining order volume or no recent orders. Create a separate outreach approval for each customer.')"
                             class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
                             <div class="font-semibold">Customer Health Check</div>
                             <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Churn risk + declining accounts</div>
@@ -782,7 +782,7 @@
                             <svg id="${cardId}-chevron" class="w-4 h-4 text-gray-300 flex-shrink-0 mt-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </div>
                     </div>
-                    <div id="${cardId}-detail" class="hidden px-3 pb-3">
+                    <div id="${cardId}-detail" class="px-3 pb-3">
                         <div class="text-[11px] text-gray-600 leading-relaxed bg-gray-50 rounded p-2">${formattedContent}</div>
                         ${reviewer}
                         ${buttons}
