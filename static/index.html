@@ -665,15 +665,22 @@
 
             const timestamp = a.ai_generated_at ? `<p class="text-[10px] text-gray-300 mt-1">${new Date(a.ai_generated_at).toLocaleString()}</p>` : '';
 
+            // Format content: split lines, highlight part numbers
+            const formattedContent = escapeHtml(a.content)
+                .replace(/(#\d{4,5}|Part\s*#?\d{4,5})/g, '<strong class="text-qblue">$1</strong>')
+                .replace(/(CUST-\d{3})/g, '<strong class="text-qblue">$1</strong>')
+                .replace(/(\d+\s*units?)/gi, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+
             div.innerHTML = `
                 <div class="bg-white border border-gray-200 ${borderColor} border-l-4 rounded-lg p-3 shadow-sm">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <div class="flex items-center space-x-1.5">${typeBadge}</div>
+                    <div class="flex items-center justify-between mb-1">
+                        ${typeBadge}
+                        <span class="text-[9px] text-gray-300">${a.ai_generated_at ? new Date(a.ai_generated_at).toLocaleTimeString() : ''}</span>
                     </div>
-                    <h3 class="text-sm font-semibold text-gray-800">${escapeHtml(a.title)}</h3>
-                    <p class="text-xs text-gray-600 mt-1 leading-relaxed">${escapeHtml(a.content)}</p>
+                    <h3 class="text-[13px] font-semibold text-gray-800 leading-snug">${escapeHtml(a.title)}</h3>
+                    <div class="text-[11px] text-gray-600 mt-1.5 leading-relaxed">${formattedContent}</div>
                     ${reviewer}
-                    ${timestamp}
                     ${buttons}
                 </div>
             `;

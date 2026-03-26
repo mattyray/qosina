@@ -105,7 +105,14 @@ def get_customer_order_history(customer_id: str) -> str:
 def create_approval(recommendation_type: str, title: str, content: str) -> str:
     """Submit an AI recommendation for human review. This is the ONLY way to propose actions.
     Types: 'reorder', 'customer_outreach', 'expiry_alert', 'draft_response', 'general'.
-    Use this whenever you identify an action that should be taken — you cannot take actions directly."""
+    Use this whenever you identify an action that should be taken — you cannot take actions directly.
+
+    IMPORTANT: Keep the content SHORT and STRUCTURED. Use this format:
+    - Line 1: What's happening (the problem or opportunity)
+    - Line 2: Key data points (numbers, part #s, dates)
+    - Line 3: Recommended action
+    Example: "Part #91050 stock at 45 units (reorder point: 100). Recommend ordering 500 units from supplier."
+    Do NOT write paragraphs. Keep it under 3-4 lines. The reviewer needs to scan this quickly."""
     return json.dumps(_create_approval(recommendation_type, title, content), indent=2)
 
 
