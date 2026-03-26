@@ -107,12 +107,15 @@ def create_approval(recommendation_type: str, title: str, content: str) -> str:
     Types: 'reorder', 'customer_outreach', 'expiry_alert', 'draft_response', 'general'.
     Use this whenever you identify an action that should be taken — you cannot take actions directly.
 
-    IMPORTANT: Keep the content SHORT and STRUCTURED. Use this format:
-    - Line 1: What's happening (the problem or opportunity)
-    - Line 2: Key data points (numbers, part #s, dates)
-    - Line 3: Recommended action
-    Example: "Part #91050 stock at 45 units (reorder point: 100). Recommend ordering 500 units from supplier."
-    Do NOT write paragraphs. Keep it under 3-4 lines. The reviewer needs to scan this quickly."""
+    IMPORTANT RULES FOR APPROVALS:
+    1. BATCH related items into ONE approval. Do NOT create separate approvals for each item.
+       BAD: 4 separate "Reorder Part #X" approvals
+       GOOD: 1 "Reorder 4 Low Stock Items" approval listing all parts
+    2. Keep content SHORT. Max 4-5 lines. Use bullet format for multiple items.
+    3. Example format:
+       Title: "Reorder 4 Low Stock Items"
+       Content: "- #91050 High-Flow Check Valve: 45 units (reorder: 100)\n- #97337 Flow Control Switch: 75 units (reorder: 100)\n- #14054 Roller Clamp: 45 units (reorder: 100)\n- #T1006 Silicone Tubing: 18 units (reorder: 30)"
+    4. The reviewer needs to scan this in seconds, not read paragraphs."""
     return json.dumps(_create_approval(recommendation_type, title, content), indent=2)
 
 

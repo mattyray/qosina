@@ -204,7 +204,7 @@
     <div class="flex-1 flex flex-col min-w-0">
         <!-- Tab Bar -->
         <div class="flex border-b border-gray-200 bg-white flex-shrink-0">
-            <button id="tab-dash" onclick="switchTab('chat'); showDashboard();" class="px-6 py-2.5 text-sm font-medium border-b-2 border-qblue text-qblue transition-colors">
+            <button id="tab-dash" onclick="switchTab('dash')" class="px-6 py-2.5 text-sm font-medium border-b-2 border-qblue text-qblue transition-colors">
                 Dashboard
             </button>
             <button id="tab-chat" onclick="switchTab('chat')" class="px-6 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
@@ -215,85 +215,87 @@
             </button>
         </div>
 
-        <!-- Chat Panel -->
-        <div id="panel-chat" class="flex-1 flex flex-col min-h-0">
-            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
-                <!-- Dashboard + Quick Actions -->
-                <div id="welcome-dashboard" class="max-w-3xl mx-auto space-y-4">
-                    <!-- Live Alert Cards -->
-                    <div class="grid grid-cols-4 gap-3">
-                        <div onclick="sendQuick('Which parts are running low on stock? Create reorder approvals for each.')"
-                             class="bg-white rounded-xl border border-gray-200 p-4 hover:border-red-300 hover:shadow-md cursor-pointer transition-all">
-                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Low Stock</div>
-                            <div class="text-2xl font-bold text-red-600 mt-1" id="dash-low-stock">--</div>
-                            <div class="text-[10px] text-gray-500 mt-0.5">items below reorder point</div>
-                        </div>
-                        <div onclick="sendQuick('Show all inventory expiring in the next 90 days. Create expiry alert approvals for each.')"
-                             class="bg-white rounded-xl border border-gray-200 p-4 hover:border-orange-300 hover:shadow-md cursor-pointer transition-all">
-                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Expiring Soon</div>
-                            <div class="text-2xl font-bold text-orange-600 mt-1" id="dash-expiring">--</div>
-                            <div class="text-[10px] text-gray-500 mt-0.5">lots within 90 days</div>
-                        </div>
-                        <div onclick="sendQuick('Which customers have not ordered in the last 6 months? Analyze their history and create outreach approvals.')"
-                             class="bg-white rounded-xl border border-gray-200 p-4 hover:border-yellow-300 hover:shadow-md cursor-pointer transition-all">
-                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">At-Risk Customers</div>
-                            <div class="text-2xl font-bold text-yellow-600 mt-1" id="dash-at-risk">--</div>
-                            <div class="text-[10px] text-gray-500 mt-0.5">no orders in 6 months</div>
-                        </div>
-                        <div onclick="filterApprovals('pending'); document.getElementById('tab-chat').click();"
-                             class="bg-white rounded-xl border border-gray-200 p-4 hover:border-qblue hover:shadow-md cursor-pointer transition-all">
-                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Pending Review</div>
-                            <div class="text-2xl font-bold text-qblue mt-1" id="dash-pending">--</div>
-                            <div class="text-[10px] text-gray-500 mt-0.5">approvals awaiting action</div>
-                        </div>
+        <!-- Dashboard Panel (separate from chat) -->
+        <div id="panel-dash" class="flex-1 overflow-y-auto p-6">
+            <div class="max-w-3xl mx-auto space-y-4">
+                <!-- Live Alert Cards -->
+                <div class="grid grid-cols-4 gap-3">
+                    <div onclick="sendQuick('Which parts are running low on stock? Batch all low stock items into a single reorder approval.')"
+                         class="bg-white rounded-xl border border-gray-200 p-4 hover:border-red-300 hover:shadow-md cursor-pointer transition-all">
+                        <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Low Stock</div>
+                        <div class="text-2xl font-bold text-red-600 mt-1" id="dash-low-stock">--</div>
+                        <div class="text-[10px] text-gray-500 mt-0.5">items below reorder point</div>
                     </div>
-
-                    <!-- Quick Actions -->
+                    <div onclick="sendQuick('Show all inventory lots expiring in the next 90 days. Batch them into a single expiry alert approval.')"
+                         class="bg-white rounded-xl border border-gray-200 p-4 hover:border-orange-300 hover:shadow-md cursor-pointer transition-all">
+                        <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Expiring Soon</div>
+                        <div class="text-2xl font-bold text-orange-600 mt-1" id="dash-expiring">--</div>
+                        <div class="text-[10px] text-gray-500 mt-0.5">lots within 90 days</div>
+                    </div>
+                    <div onclick="sendQuick('Which customers have not ordered in the last 6 months? Create one customer outreach approval covering all at-risk accounts.')"
+                         class="bg-white rounded-xl border border-gray-200 p-4 hover:border-yellow-300 hover:shadow-md cursor-pointer transition-all">
+                        <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">At-Risk Customers</div>
+                        <div class="text-2xl font-bold text-yellow-600 mt-1" id="dash-at-risk">--</div>
+                        <div class="text-[10px] text-gray-500 mt-0.5">no orders in 6 months</div>
+                    </div>
                     <div class="bg-white rounded-xl border border-gray-200 p-4">
-                        <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="sendQuick('Run a full inventory audit: check low stock, expiring lots, and create approval items for everything that needs attention.')"
-                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
-                                <div class="font-semibold">Run Inventory Audit</div>
-                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Low stock + expiring + reorder recommendations</div>
-                            </button>
-                            <button onclick="sendQuick('Find cross-sell opportunities across all customers. Look at what they order and what compatible parts they have never ordered.')"
-                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
-                                <div class="font-semibold">Cross-Sell Analysis</div>
-                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Find upsell opportunities by customer</div>
-                            </button>
-                            <button onclick="sendQuick('Check all inventory lots expiring in the next 90 days. For each, create an expiry alert approval with lot number, quantity, and recommended action.')"
-                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
-                                <div class="font-semibold">FDA Expiry Compliance Check</div>
-                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Flag lots approaching expiration dates</div>
-                            </button>
-                            <button onclick="sendQuick('Identify all at-risk customers — anyone with declining order volume or no recent orders. Create customer outreach approvals for each.')"
-                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
-                                <div class="font-semibold">Customer Health Check</div>
-                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Churn risk + declining accounts</div>
-                            </button>
-                            <button onclick="sendQuick('What parts are compatible with part 80147 (Needleless Injection Site)?')"
-                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
-                                <div class="font-semibold">Part Compatibility Lookup</div>
-                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Find what connects to Part #80147</div>
-                            </button>
-                            <button onclick="sendQuick('Tell me about Qosina — the business, tech stack, D365 integration, and how this AI assistant connects to enterprise systems.')"
-                                class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
-                                <div class="font-semibold">About This System</div>
-                                <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Business context, D365, OData, architecture</div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- How it works — condensed -->
-                    <div class="flex items-center justify-center space-x-6 text-[10px] text-gray-400 py-1">
-                        <span class="flex items-center space-x-1"><span class="w-5 h-5 rounded-full bg-qblue text-white flex items-center justify-center text-[9px] font-bold">1</span><span>You ask or click</span></span>
-                        <span class="text-gray-300">&rarr;</span>
-                        <span class="flex items-center space-x-1"><span class="w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center text-[9px] font-bold">2</span><span>AI queries D365 data</span></span>
-                        <span class="text-gray-300">&rarr;</span>
-                        <span class="flex items-center space-x-1"><span class="w-5 h-5 rounded-full bg-yellow-500 text-white flex items-center justify-center text-[9px] font-bold">3</span><span>You approve actions</span></span>
+                        <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Pending Review</div>
+                        <div class="text-2xl font-bold text-qblue mt-1" id="dash-pending">--</div>
+                        <div class="text-[10px] text-gray-500 mt-0.5">approvals awaiting action</div>
                     </div>
                 </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="sendQuick('Run a full inventory audit: check low stock and expiring lots. Create ONE reorder approval for all low stock items and ONE expiry alert for all expiring lots.')"
+                            class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                            <div class="font-semibold">Run Inventory Audit</div>
+                            <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Low stock + expiring + reorder recommendations</div>
+                        </button>
+                        <button onclick="sendQuick('Find cross-sell opportunities across all customers. Look at what they order and what compatible parts they have never ordered.')"
+                            class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                            <div class="font-semibold">Cross-Sell Analysis</div>
+                            <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Find upsell opportunities by customer</div>
+                        </button>
+                        <button onclick="sendQuick('Check all inventory lots expiring in the next 90 days. Create ONE expiry alert approval listing all affected lots with dates and quantities.')"
+                            class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                            <div class="font-semibold">FDA Expiry Compliance Check</div>
+                            <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Flag lots approaching expiration dates</div>
+                        </button>
+                        <button onclick="sendQuick('Identify all at-risk customers with declining order volume or no recent orders. Create ONE customer outreach approval covering all accounts.')"
+                            class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                            <div class="font-semibold">Customer Health Check</div>
+                            <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Churn risk + declining accounts</div>
+                        </button>
+                        <button onclick="sendQuick('What parts are compatible with part 80147 (Needleless Injection Site)?')"
+                            class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                            <div class="font-semibold">Part Compatibility Lookup</div>
+                            <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Find what connects to Part #80147</div>
+                        </button>
+                        <button onclick="sendQuick('Tell me about Qosina — the business, tech stack, D365 integration, and how this AI assistant connects to enterprise systems.')"
+                            class="text-left text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2.5 transition-colors group">
+                            <div class="font-semibold">About This System</div>
+                            <div class="text-[10px] text-gray-400 group-hover:text-blue-200 mt-0.5">Business context, D365, OData, architecture</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- How it works — condensed -->
+                <div class="flex items-center justify-center space-x-6 text-[10px] text-gray-400 py-1">
+                    <span class="flex items-center space-x-1"><span class="w-5 h-5 rounded-full bg-qblue text-white flex items-center justify-center text-[9px] font-bold">1</span><span>You ask or click</span></span>
+                    <span class="text-gray-300">&rarr;</span>
+                    <span class="flex items-center space-x-1"><span class="w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center text-[9px] font-bold">2</span><span>AI queries D365 data</span></span>
+                    <span class="text-gray-300">&rarr;</span>
+                    <span class="flex items-center space-x-1"><span class="w-5 h-5 rounded-full bg-yellow-500 text-white flex items-center justify-center text-[9px] font-bold">3</span><span>You approve actions</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Panel (separate from dashboard) -->
+        <div id="panel-chat" class="flex-1 flex flex-col min-h-0 hidden">
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
             </div>
             <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0 shadow-inner">
                 <form id="chat-form" class="max-w-2xl mx-auto flex space-x-3">
@@ -362,6 +364,15 @@
                 Rejected <span id="filter-rejected-count" class="text-gray-400 ml-0.5"></span>
             </button>
         </div>
+        <!-- Type filter chips -->
+        <div class="flex flex-wrap gap-1 px-3 py-2 bg-gray-50 border-b border-gray-100 flex-shrink-0">
+            <button onclick="filterByType('all')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-qblue text-white font-medium" data-type="all">All</button>
+            <button onclick="filterByType('reorder')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="reorder">Reorder</button>
+            <button onclick="filterByType('expiry_alert')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="expiry_alert">Expiry</button>
+            <button onclick="filterByType('customer_outreach')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="customer_outreach">Outreach</button>
+            <button onclick="filterByType('draft_response')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="draft_response">Draft</button>
+            <button onclick="filterByType('general')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="general">General</button>
+        </div>
         <div id="approval-list" class="flex-1 overflow-y-auto p-3 space-y-3">
             <div id="no-approvals" class="text-center mt-12 px-4">
                 <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
@@ -422,11 +433,13 @@
         chatForm.dispatchEvent(new Event('submit'));
     };
 
-    // Quick action buttons
+    // Quick action buttons — switch to chat then send
     window.sendQuick = function(message) {
         switchTab('chat');
-        chatInput.value = message;
-        chatForm.dispatchEvent(new Event('submit'));
+        setTimeout(() => {
+            chatInput.value = message;
+            chatForm.dispatchEvent(new Event('submit'));
+        }, 100);
     };
 
     // Load dashboard stats
@@ -453,10 +466,6 @@
         e.preventDefault();
         const message = chatInput.value.trim();
         if (!message || isStreaming) return;
-
-        // Hide welcome dashboard on first message
-        const welcome = document.getElementById('welcome-dashboard');
-        if (welcome) welcome.style.display = 'none';
 
         addUserMessage(message);
         chatInput.value = '';
@@ -635,6 +644,19 @@
     // --- Approvals ---
     let allApprovals = [];
     let currentFilter = 'pending';
+    let currentTypeFilter = 'all';
+
+    window.filterByType = function(type) {
+        currentTypeFilter = type;
+        document.querySelectorAll('.type-chip').forEach(el => {
+            const active = el.dataset.type === type;
+            el.classList.toggle('bg-qblue', active);
+            el.classList.toggle('text-white', active);
+            el.classList.toggle('bg-gray-200', !active);
+            el.classList.toggle('text-gray-600', !active);
+        });
+        renderFilteredApprovals();
+    };
 
     async function fetchApprovals() {
         try {
@@ -679,7 +701,10 @@
     };
 
     function renderFilteredApprovals() {
-        const filtered = allApprovals.filter(a => a.status === currentFilter);
+        let filtered = allApprovals.filter(a => a.status === currentFilter);
+        if (currentTypeFilter !== 'all') {
+            filtered = filtered.filter(a => a.recommendation_type === currentTypeFilter);
+        }
         approvalList.querySelectorAll('.approval-card').forEach(el => el.remove());
 
         if (filtered.length === 0) {
@@ -794,38 +819,20 @@
     let selectedItem = null;
 
     window.switchTab = function(tab) {
+        document.getElementById('panel-dash').classList.toggle('hidden', tab !== 'dash');
         document.getElementById('panel-chat').classList.toggle('hidden', tab !== 'chat');
         document.getElementById('panel-data').classList.toggle('hidden', tab !== 'data');
         ['tab-dash', 'tab-chat', 'tab-data'].forEach(id => {
             const el = document.getElementById(id);
-            const active = (id === 'tab-' + tab) || (tab === 'chat' && id === 'tab-chat');
+            const active = id === 'tab-' + tab;
             el.classList.toggle('border-qblue', active);
             el.classList.toggle('text-qblue', active);
             el.classList.toggle('border-transparent', !active);
             el.classList.toggle('text-gray-500', !active);
         });
-        // When switching to chat via AI Chat tab, deactivate dashboard tab
-        if (tab === 'chat') {
-            document.getElementById('tab-dash').classList.remove('border-qblue', 'text-qblue');
-            document.getElementById('tab-dash').classList.add('border-transparent', 'text-gray-500');
-            document.getElementById('tab-chat').classList.add('border-qblue', 'text-qblue');
-            document.getElementById('tab-chat').classList.remove('border-transparent', 'text-gray-500');
-        }
         if (tab === 'data') loadDataTab('products');
         if (tab === 'chat') chatInput.focus();
-    };
-
-    window.showDashboard = function() {
-        const dash = document.getElementById('welcome-dashboard');
-        if (dash) dash.style.display = '';
-        // Scroll to top to see dashboard
-        chatMessages.scrollTop = 0;
-        fetchDashboard();
-        // Highlight dashboard tab
-        document.getElementById('tab-dash').classList.add('border-qblue', 'text-qblue');
-        document.getElementById('tab-dash').classList.remove('border-transparent', 'text-gray-500');
-        document.getElementById('tab-chat').classList.remove('border-qblue', 'text-qblue');
-        document.getElementById('tab-chat').classList.add('border-transparent', 'text-gray-500');
+        if (tab === 'dash') fetchDashboard();
     };
 
     window.loadDataTab = function(tab) {
