@@ -5,109 +5,318 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Qosina Enterprise AI Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        qblue: { DEFAULT: '#005DAA', light: '#E8F1FA', dark: '#004080' },
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        .qosina-blue { background-color: #005DAA; }
-        .qosina-blue-text { color: #005DAA; }
-        .qosina-blue-border { border-color: #005DAA; }
-        .message-user { background-color: #005DAA; color: white; }
-        .message-ai { background-color: #f3f4f6; color: #1f2937; }
-        .tool-activity { background-color: #fefce8; border-left: 3px solid #eab308; }
-        .approval-pending { border-left: 4px solid #f59e0b; }
-        .approval-approved { border-left: 4px solid #10b981; }
-        .approval-rejected { border-left: 4px solid #ef4444; }
         .typing-dot { animation: blink 1.4s infinite both; }
         .typing-dot:nth-child(2) { animation-delay: 0.2s; }
         .typing-dot:nth-child(3) { animation-delay: 0.4s; }
         @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
-        pre { white-space: pre-wrap; word-wrap: break-word; }
-        #chat-messages::-webkit-scrollbar { width: 6px; }
-        #chat-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        @keyframes pulse-border { 0%, 100% { border-color: #f59e0b; } 50% { border-color: #fbbf24; } }
+        .pulse-border { animation: pulse-border 2s ease-in-out infinite; }
+        @keyframes slide-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-in { animation: slide-in 0.3s ease-out; }
+        .tool-pulse { animation: tool-pulse 1s ease-in-out infinite; }
+        @keyframes tool-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        #chat-messages::-webkit-scrollbar, #approval-list::-webkit-scrollbar { width: 5px; }
+        #chat-messages::-webkit-scrollbar-thumb, #approval-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        /* Markdown in chat */
+        .msg-md h2 { font-size: 0.85rem; font-weight: 700; color: #1e3a5f; margin: 0.75rem 0 0.25rem; }
+        .msg-md h3 { font-size: 0.8rem; font-weight: 600; color: #374151; margin: 0.6rem 0 0.2rem; }
+        .msg-md p { margin: 0.3rem 0; }
+        .msg-md ul, .msg-md ol { margin: 0.25rem 0 0.25rem 1.25rem; }
+        .msg-md li { margin: 0.15rem 0; }
+        .msg-md strong { font-weight: 600; color: #1f2937; }
+        .msg-md code { background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.8rem; color: #005DAA; }
+        .msg-md h2:first-child { margin-top: 0; }
     </style>
 </head>
-<body class="h-full flex flex-col bg-gray-50">
+<body class="h-full flex flex-col bg-gray-100">
 
 <!-- Header -->
-<header class="qosina-blue text-white px-6 py-3 flex items-center justify-between shadow-md flex-shrink-0">
-    <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 bg-white rounded flex items-center justify-center">
-            <span class="qosina-blue-text font-bold text-sm">Q</span>
-        </div>
-        <h1 class="text-lg font-semibold">Qosina Enterprise AI Assistant</h1>
-    </div>
-    <div class="text-sm opacity-90">Powered by Claude &bull; Human-in-the-Loop</div>
-</header>
-
-<!-- Main Content -->
-<main class="flex-1 flex overflow-hidden">
-
-    <!-- Chat Panel (60%) -->
-    <div class="w-3/5 flex flex-col border-r border-gray-200">
-
-        <!-- Messages -->
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
-            <div class="message-ai rounded-lg p-4 max-w-[85%]">
-                <p class="text-sm">Welcome! I'm the Qosina Enterprise AI Assistant. I can help you with:</p>
-                <ul class="text-sm mt-2 ml-4 list-disc space-y-1">
-                    <li>Product catalog search and specifications</li>
-                    <li>Inventory levels, lot tracking, and expiration alerts</li>
-                    <li>Part compatibility and connection types</li>
-                    <li>Customer order history and purchasing patterns</li>
-                    <li>Proactive recommendations (routed to approval queue)</li>
-                </ul>
-                <p class="text-sm mt-2 text-gray-500">All recommendations require human approval before action is taken.</p>
+<header class="bg-qblue text-white shadow-lg flex-shrink-0">
+    <div class="px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <!-- Qosina Logo -->
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-inner">
+                    <svg viewBox="0 0 40 40" class="w-7 h-7">
+                        <circle cx="20" cy="20" r="16" fill="none" stroke="#005DAA" stroke-width="3"/>
+                        <text x="20" y="26" text-anchor="middle" font-size="18" font-weight="bold" fill="#005DAA">Q</text>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Qosina</h1>
+                    <p class="text-xs text-blue-200 -mt-0.5">Enterprise AI Assistant</p>
+                </div>
             </div>
         </div>
-
-        <!-- Tool Activity Feed -->
-        <div id="tool-feed-container" class="border-t border-gray-200 hidden">
-            <button id="tool-feed-toggle" class="w-full px-4 py-2 text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 flex items-center justify-between">
-                <span>Tool Activity</span>
-                <span id="tool-feed-arrow" class="transform rotate-180">&#9650;</span>
-            </button>
-            <div id="tool-feed" class="max-h-40 overflow-y-auto px-4 py-2 space-y-1 bg-gray-50">
+        <div class="flex items-center space-x-6">
+            <!-- Live Stats -->
+            <div class="hidden md:flex items-center space-x-4 text-xs">
+                <div class="flex items-center space-x-1.5 bg-white/10 rounded-full px-3 py-1">
+                    <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                    <span><strong id="stat-products">--</strong> Products</span>
+                </div>
+                <div class="flex items-center space-x-1.5 bg-white/10 rounded-full px-3 py-1">
+                    <span class="w-2 h-2 bg-blue-400 rounded-full"></span>
+                    <span><strong id="stat-lots">--</strong> Lots Tracked</span>
+                </div>
+                <div class="flex items-center space-x-1.5 bg-white/10 rounded-full px-3 py-1">
+                    <span class="w-2 h-2 bg-purple-400 rounded-full"></span>
+                    <span><strong id="stat-customers">--</strong> Customers</span>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-xs text-blue-200">Powered by Claude</div>
+                <div class="text-[10px] text-blue-300">Human-in-the-Loop Architecture</div>
             </div>
         </div>
-
-        <!-- Input -->
-        <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0">
-            <form id="chat-form" class="flex space-x-3">
-                <input id="chat-input" type="text" placeholder="Ask about products, inventory, customers..."
-                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                       autocomplete="off">
-                <button type="submit" id="send-btn"
-                        class="qosina-blue text-white px-5 py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
-                    Send
-                </button>
-            </form>
-        </div>
     </div>
-
-    <!-- Approval Queue Panel (40%) -->
-    <div class="w-2/5 flex flex-col bg-white">
-        <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h2 class="font-semibold text-gray-800">Approval Queue</h2>
-            <span id="pending-badge" class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-0.5 rounded-full hidden">
-                0 pending
+    <!-- Architecture Banner -->
+    <div class="bg-qblue-dark/50 border-t border-white/10 px-6 py-1.5 flex items-center justify-between text-xs text-blue-200">
+        <div class="flex items-center space-x-4">
+            <span class="flex items-center space-x-1">
+                <span class="text-green-400">&#9679;</span>
+                <span>SQLite (mocks D365 F&O)</span>
+            </span>
+            <span class="text-white/30">|</span>
+            <span class="flex items-center space-x-1">
+                <span class="text-green-400">&#9679;</span>
+                <span>6 Read-Only Tools + 1 Approval Tool</span>
+            </span>
+            <span class="text-white/30">|</span>
+            <span class="flex items-center space-x-1">
+                <span class="text-green-400">&#9679;</span>
+                <span>Agent cannot modify records</span>
             </span>
         </div>
-        <div id="approval-list" class="flex-1 overflow-y-auto p-4 space-y-3">
-            <p id="no-approvals" class="text-sm text-gray-400 text-center mt-8">No approval items yet. The AI assistant will create recommendations here for your review.</p>
+        <span class="text-yellow-300 font-medium" id="stat-pending-header">
+            <span id="stat-pending">0</span> Pending Approvals
+        </span>
+    </div>
+</header>
+
+<!-- Three-Panel Layout -->
+<main class="flex-1 flex overflow-hidden">
+
+    <!-- LEFT: Agent Tools Panel -->
+    <div class="w-[220px] bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+        <div class="px-4 py-3 border-b border-gray-100">
+            <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Agent Tools</h2>
+            <p class="text-[10px] text-gray-400 mt-0.5">What the AI can access</p>
+        </div>
+        <div class="flex-1 overflow-y-auto p-3 space-y-1.5">
+            <div class="tool-item rounded-lg p-2.5 bg-blue-50 border border-blue-100" data-tool="search_products">
+                <div class="flex items-center space-x-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-0.5"></span>
+                    <span class="text-xs font-medium text-gray-700">Search Products</span>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1 ml-6">Catalog, specs, materials</p>
+            </div>
+            <div class="tool-item rounded-lg p-2.5 bg-green-50 border border-green-100" data-tool="check_inventory">
+                <div class="flex items-center space-x-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 mt-0.5"></span>
+                    <span class="text-xs font-medium text-gray-700">Check Inventory</span>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1 ml-6">Stock, lots, expiration</p>
+            </div>
+            <div class="tool-item rounded-lg p-2.5 bg-purple-50 border border-purple-100" data-tool="find_compatible_parts">
+                <div class="flex items-center space-x-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-0.5"></span>
+                    <span class="text-xs font-medium text-gray-700">Compatibility</span>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1 ml-6">Matching parts & connections</p>
+            </div>
+            <div class="tool-item rounded-lg p-2.5 bg-orange-50 border border-orange-100" data-tool="check_expiring_inventory">
+                <div class="flex items-center space-x-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500 mt-0.5"></span>
+                    <span class="text-xs font-medium text-gray-700">Expiring Inventory</span>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1 ml-6">FDA compliance alerts</p>
+            </div>
+            <div class="tool-item rounded-lg p-2.5 bg-red-50 border border-red-100" data-tool="check_low_stock">
+                <div class="flex items-center space-x-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 mt-0.5"></span>
+                    <span class="text-xs font-medium text-gray-700">Low Stock Alerts</span>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1 ml-6">Below reorder point</p>
+            </div>
+            <div class="tool-item rounded-lg p-2.5 bg-indigo-50 border border-indigo-100" data-tool="get_customer_order_history">
+                <div class="flex items-center space-x-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-0.5"></span>
+                    <span class="text-xs font-medium text-gray-700">Customer History</span>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1 ml-6">Orders & purchasing patterns</p>
+            </div>
+            <div class="tool-item rounded-lg p-2.5 bg-yellow-50 border border-yellow-200" data-tool="create_approval">
+                <div class="flex items-center space-x-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-0.5"></span>
+                    <span class="text-xs font-medium text-gray-700">Create Approval</span>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1 ml-6">Submit for human review</p>
+                <p class="text-[10px] text-yellow-600 font-medium mt-0.5 ml-6">Only write action</p>
+            </div>
+        </div>
+        <!-- Tool Activity Log -->
+        <div class="border-t border-gray-200">
+            <div class="px-4 py-2 bg-gray-50">
+                <h3 class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Live Activity</h3>
+            </div>
+            <div id="tool-feed" class="h-28 overflow-y-auto px-3 py-2 space-y-1 bg-gray-50 text-[11px] font-mono">
+                <p class="text-gray-400 italic">Waiting for query...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CENTER: Chat + Data Explorer -->
+    <div class="flex-1 flex flex-col min-w-0">
+        <!-- Tab Bar -->
+        <div class="flex border-b border-gray-200 bg-white flex-shrink-0">
+            <button id="tab-chat" onclick="switchTab('chat')" class="px-6 py-2.5 text-sm font-medium border-b-2 border-qblue text-qblue transition-colors">
+                AI Chat
+            </button>
+            <button id="tab-data" onclick="switchTab('data')" class="px-6 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
+                Data Explorer
+            </button>
+        </div>
+
+        <!-- Chat Panel -->
+        <div id="panel-chat" class="flex-1 flex flex-col min-h-0">
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 slide-in">
+                        <h2 class="text-lg font-semibold text-gray-800 mb-3">How This Works</h2>
+                        <div class="grid grid-cols-3 gap-4 mb-4">
+                            <div class="text-center p-3 rounded-lg bg-blue-50">
+                                <div class="w-8 h-8 rounded-full bg-qblue text-white flex items-center justify-center text-sm font-bold mx-auto mb-2">1</div>
+                                <div class="text-xs font-semibold text-gray-700">You Ask</div>
+                                <div class="text-[10px] text-gray-500 mt-1">Natural language questions about products, inventory, or customers</div>
+                            </div>
+                            <div class="text-center p-3 rounded-lg bg-green-50">
+                                <div class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold mx-auto mb-2">2</div>
+                                <div class="text-xs font-semibold text-gray-700">AI Investigates</div>
+                                <div class="text-[10px] text-gray-500 mt-1">Agent queries D365 data using tools (visible in left panel)</div>
+                            </div>
+                            <div class="text-center p-3 rounded-lg bg-yellow-50">
+                                <div class="w-8 h-8 rounded-full bg-yellow-500 text-white flex items-center justify-center text-sm font-bold mx-auto mb-2">3</div>
+                                <div class="text-xs font-semibold text-gray-700">You Approve</div>
+                                <div class="text-[10px] text-gray-500 mt-1">Recommendations queue for human review (right panel)</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-100 pt-3">
+                            <p class="text-xs font-semibold text-gray-600 mb-2">Try a demo scenario:</p>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="sendDemo(this)" class="demo-btn text-xs bg-qblue text-white px-3 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors">
+                                    What parts are compatible with part 80147?
+                                </button>
+                                <button onclick="sendDemo(this)" class="demo-btn text-xs bg-qblue text-white px-3 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors">
+                                    Which parts are running low on stock?
+                                </button>
+                                <button onclick="sendDemo(this)" class="demo-btn text-xs bg-qblue text-white px-3 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors">
+                                    Show inventory expiring in the next 6 months
+                                </button>
+                                <button onclick="sendDemo(this)" class="demo-btn text-xs bg-qblue text-white px-3 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors">
+                                    Analyze order history for CUST-003
+                                </button>
+                                <button onclick="sendDemo(this)" class="demo-btn text-xs bg-qblue text-white px-3 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors">
+                                    Find cross-sell opportunities for CUST-001
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0 shadow-inner">
+                <form id="chat-form" class="max-w-2xl mx-auto flex space-x-3">
+                    <input id="chat-input" type="text" placeholder="Ask about products, inventory, customers, or compatibility..."
+                           class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20"
+                           autocomplete="off">
+                    <button type="submit" id="send-btn"
+                            class="bg-qblue text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-qblue-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
+                        <span>Send</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Data Explorer Panel (hidden by default) -->
+        <div id="panel-data" class="flex-1 flex flex-col min-h-0 hidden">
+            <!-- Data Sub-tabs -->
+            <div class="flex border-b border-gray-100 bg-gray-50 px-4 flex-shrink-0">
+                <button onclick="loadDataTab('products')" class="data-tab px-4 py-2 text-xs font-medium border-b-2 border-qblue text-qblue" data-tab="products">
+                    Products (28)
+                </button>
+                <button onclick="loadDataTab('inventory')" class="data-tab px-4 py-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="inventory">
+                    Inventory Lots
+                </button>
+                <button onclick="loadDataTab('customers')" class="data-tab px-4 py-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="customers">
+                    Customers
+                </button>
+                <button onclick="loadDataTab('compatibility')" class="data-tab px-4 py-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="compatibility">
+                    Compatibility Map
+                </button>
+            </div>
+            <!-- Data Content -->
+            <div id="data-content" class="flex-1 overflow-y-auto p-4">
+                <p class="text-gray-400 text-sm text-center mt-8">Loading...</p>
+            </div>
+            <!-- Ask About This button -->
+            <div id="ask-about-bar" class="border-t border-gray-200 p-3 bg-white flex-shrink-0 hidden">
+                <div class="flex items-center space-x-3 max-w-2xl mx-auto">
+                    <span class="text-xs text-gray-500" id="ask-about-label">Selected: --</span>
+                    <button onclick="askAboutSelected()" class="bg-qblue text-white text-xs px-4 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors">
+                        Ask AI About This
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Approval Queue -->
+    <div class="w-[320px] bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
+        <div class="px-4 py-3 border-b border-gray-200 bg-yellow-50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <h2 class="font-semibold text-gray-800 text-sm">Approval Queue</h2>
+                </div>
+                <span id="pending-badge" class="bg-yellow-400 text-yellow-900 text-xs font-bold px-2.5 py-0.5 rounded-full hidden">
+                    0
+                </span>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-1">AI recommendations require human approval before any action is taken</p>
+        </div>
+        <div id="approval-list" class="flex-1 overflow-y-auto p-3 space-y-3">
+            <div id="no-approvals" class="text-center mt-12 px-4">
+                <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                </div>
+                <p class="text-sm text-gray-400 font-medium">No recommendations yet</p>
+                <p class="text-xs text-gray-300 mt-1">When the AI identifies actions to take (reorder, alert, outreach), they'll appear here for your approval.</p>
+                <div class="mt-4 p-3 bg-gray-50 rounded-lg text-left">
+                    <p class="text-[10px] font-semibold text-gray-500 uppercase mb-1.5">Approval Types</p>
+                    <div class="space-y-1 text-[11px] text-gray-500">
+                        <div class="flex items-center space-x-2"><span class="w-2 h-2 rounded-full bg-orange-400"></span><span>Reorder Recommendations</span></div>
+                        <div class="flex items-center space-x-2"><span class="w-2 h-2 rounded-full bg-blue-400"></span><span>Customer Outreach</span></div>
+                        <div class="flex items-center space-x-2"><span class="w-2 h-2 rounded-full bg-red-400"></span><span>Expiry Alerts</span></div>
+                        <div class="flex items-center space-x-2"><span class="w-2 h-2 rounded-full bg-purple-400"></span><span>Draft Responses</span></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
 </main>
-
-<!-- Status Bar -->
-<footer class="bg-gray-800 text-gray-300 px-6 py-2 flex items-center justify-between text-xs flex-shrink-0">
-    <div class="flex space-x-6">
-        <span>Products: <strong id="stat-products">--</strong></span>
-        <span>Inventory Lots: <strong id="stat-lots">--</strong></span>
-        <span>Customers: <strong id="stat-customers">--</strong></span>
-    </div>
-    <div>
-        Pending Approvals: <strong id="stat-pending" class="text-yellow-400">--</strong>
-    </div>
-</footer>
 
 <script>
 (function() {
@@ -115,25 +324,40 @@
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-btn');
-    const toolFeedContainer = document.getElementById('tool-feed-container');
     const toolFeed = document.getElementById('tool-feed');
-    const toolFeedToggle = document.getElementById('tool-feed-toggle');
-    const toolFeedArrow = document.getElementById('tool-feed-arrow');
     const approvalList = document.getElementById('approval-list');
     const noApprovals = document.getElementById('no-approvals');
     const pendingBadge = document.getElementById('pending-badge');
 
     let conversationId = null;
     let currentAiMessage = null;
-    let toolFeedOpen = true;
+    let currentAiRaw = '';
     let isStreaming = false;
 
-    // Toggle tool feed
-    toolFeedToggle.addEventListener('click', () => {
-        toolFeedOpen = !toolFeedOpen;
-        toolFeed.classList.toggle('hidden', !toolFeedOpen);
-        toolFeedArrow.style.transform = toolFeedOpen ? 'rotate(180deg)' : 'rotate(0deg)';
-    });
+    // Configure marked for clean output
+    marked.setOptions({ breaks: true, gfm: true });
+
+    // Tool highlighting
+    function highlightTool(toolName, active) {
+        document.querySelectorAll('.tool-item').forEach(el => {
+            if (el.dataset.tool === toolName) {
+                if (active) {
+                    el.classList.add('ring-2', 'ring-qblue', 'shadow-md');
+                    el.querySelector('div:first-child span:first-child').classList.add('tool-pulse');
+                } else {
+                    el.classList.remove('ring-2', 'ring-qblue', 'shadow-md');
+                    el.querySelector('div:first-child span:first-child').classList.remove('tool-pulse');
+                }
+            }
+        });
+    }
+
+    // Demo scenario buttons
+    window.sendDemo = function(btn) {
+        const message = btn.textContent.trim();
+        chatInput.value = message;
+        chatForm.dispatchEvent(new Event('submit'));
+    };
 
     // Send message
     chatForm.addEventListener('submit', async (e) => {
@@ -141,17 +365,17 @@
         const message = chatInput.value.trim();
         if (!message || isStreaming) return;
 
+        // Hide welcome card on first message
+        const welcome = chatMessages.querySelector('.max-w-2xl');
+        if (welcome) welcome.style.display = 'none';
+
         addUserMessage(message);
         chatInput.value = '';
         isStreaming = true;
         sendBtn.disabled = true;
 
-        // Show typing indicator
         const typing = addTypingIndicator();
-
-        // Clear tool feed for new query
         toolFeed.innerHTML = '';
-        toolFeedContainer.classList.remove('hidden');
 
         try {
             const response = await fetch('/api/chat', {
@@ -190,6 +414,12 @@
             addErrorMessage('Connection error. Please try again.');
         }
 
+        // Remove any lingering tool highlights
+        document.querySelectorAll('.tool-item').forEach(el => {
+            el.classList.remove('ring-2', 'ring-qblue', 'shadow-md');
+            el.querySelectorAll('.tool-pulse').forEach(p => p.classList.remove('tool-pulse'));
+        });
+
         isStreaming = false;
         sendBtn.disabled = false;
         chatInput.focus();
@@ -201,21 +431,25 @@
                 if (typing.parentNode) typing.remove();
                 if (!currentAiMessage) {
                     currentAiMessage = addAiMessage('');
+                    currentAiRaw = '';
                 }
-                currentAiMessage.textContent += data.content;
+                currentAiRaw += data.content;
+                currentAiMessage.innerHTML = marked.parse(currentAiRaw);
                 scrollToBottom();
                 break;
 
             case 'tool_call':
-                addToolActivity(`Calling ${data.tool}...`, 'calling');
+                highlightTool(data.tool, true);
+                addToolEntry(`&rarr; ${data.tool}`, 'text-qblue font-medium');
                 break;
 
             case 'tool_result':
-                addToolActivity(`${data.tool} complete`, 'complete');
+                highlightTool(data.tool, false);
+                addToolEntry(`&check; ${data.tool} done`, 'text-green-600');
                 break;
 
             case 'approval_created':
-                addToolActivity(`Created approval: ${data.title}`, 'approval');
+                addToolEntry(`+ Approval: ${data.title}`, 'text-yellow-600 font-medium');
                 fetchApprovals();
                 break;
 
@@ -233,19 +467,25 @@
 
     function addUserMessage(text) {
         const div = document.createElement('div');
-        div.className = 'flex justify-end';
-        div.innerHTML = `<div class="message-user rounded-lg px-4 py-2 max-w-[85%] text-sm">${escapeHtml(text)}</div>`;
+        div.className = 'flex justify-end slide-in';
+        div.innerHTML = `<div class="bg-qblue text-white rounded-2xl rounded-br-md px-4 py-2.5 max-w-[75%] text-sm shadow-sm">${escapeHtml(text)}</div>`;
         chatMessages.appendChild(div);
         scrollToBottom();
     }
 
     function addAiMessage(text) {
         const div = document.createElement('div');
-        div.className = 'flex justify-start';
+        div.className = 'flex justify-start slide-in';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex items-start space-x-2 max-w-[85%]';
+        wrapper.innerHTML = `<div class="w-7 h-7 rounded-full bg-qblue flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="text-white text-xs font-bold">AI</span>
+        </div>`;
         const inner = document.createElement('div');
-        inner.className = 'message-ai rounded-lg px-4 py-3 max-w-[85%] text-sm whitespace-pre-wrap';
+        inner.className = 'msg-md bg-white rounded-2xl rounded-bl-md px-4 py-3 text-sm text-gray-800 shadow-sm border border-gray-100';
         inner.textContent = text;
-        div.appendChild(inner);
+        wrapper.appendChild(inner);
+        div.appendChild(wrapper);
         chatMessages.appendChild(div);
         scrollToBottom();
         return inner;
@@ -253,11 +493,16 @@
 
     function addTypingIndicator() {
         const div = document.createElement('div');
-        div.className = 'flex justify-start';
-        div.innerHTML = `<div class="message-ai rounded-lg px-4 py-3 flex space-x-1">
-            <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
-            <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
-            <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+        div.className = 'flex justify-start slide-in';
+        div.innerHTML = `<div class="flex items-start space-x-2">
+            <div class="w-7 h-7 rounded-full bg-qblue flex items-center justify-center flex-shrink-0">
+                <span class="text-white text-xs font-bold">AI</span>
+            </div>
+            <div class="bg-white rounded-2xl px-4 py-3 flex space-x-1.5 shadow-sm border border-gray-100">
+                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+            </div>
         </div>`;
         chatMessages.appendChild(div);
         scrollToBottom();
@@ -266,18 +511,20 @@
 
     function addErrorMessage(text) {
         const div = document.createElement('div');
-        div.className = 'flex justify-start';
-        div.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-2 max-w-[85%] text-sm">${escapeHtml(text)}</div>`;
+        div.className = 'flex justify-start slide-in';
+        div.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-2.5 max-w-[75%] text-sm">${escapeHtml(text)}</div>`;
         chatMessages.appendChild(div);
         scrollToBottom();
     }
 
-    function addToolActivity(text, status) {
+    function addToolEntry(html, colorClass) {
+        // Remove "waiting" message
+        const waiting = toolFeed.querySelector('.italic');
+        if (waiting) waiting.remove();
+
         const div = document.createElement('div');
-        const icon = status === 'calling' ? '&#9881;' : status === 'approval' ? '&#9989;' : '&#10003;';
-        const color = status === 'calling' ? 'text-yellow-600' : status === 'approval' ? 'text-green-600' : 'text-gray-600';
-        div.className = `tool-activity rounded px-3 py-1.5 text-xs font-mono ${color}`;
-        div.innerHTML = `<span>${icon}</span> ${escapeHtml(text)}`;
+        div.className = `${colorClass} slide-in`;
+        div.innerHTML = html;
         toolFeed.appendChild(div);
         toolFeed.scrollTop = toolFeed.scrollHeight;
     }
@@ -303,53 +550,70 @@
 
     function renderApprovals(approvals) {
         if (approvals.length === 0) {
-            noApprovals.classList.remove('hidden');
+            noApprovals.style.display = '';
             pendingBadge.classList.add('hidden');
-            approvalList.innerHTML = '';
-            approvalList.appendChild(noApprovals);
+            // Clear only approval cards, keep noApprovals
+            approvalList.querySelectorAll('.approval-card').forEach(el => el.remove());
             return;
         }
 
-        noApprovals.classList.add('hidden');
+        noApprovals.style.display = 'none';
         const pending = approvals.filter(a => a.status === 'pending').length;
         if (pending > 0) {
-            pendingBadge.textContent = `${pending} pending`;
+            pendingBadge.textContent = pending;
             pendingBadge.classList.remove('hidden');
         } else {
             pendingBadge.classList.add('hidden');
         }
 
-        approvalList.innerHTML = '';
+        // Remove old cards
+        approvalList.querySelectorAll('.approval-card').forEach(el => el.remove());
+
         approvals.forEach(a => {
             const div = document.createElement('div');
-            div.className = `approval-${a.status} bg-white border border-gray-200 rounded-lg p-3 shadow-sm`;
+            div.className = 'approval-card slide-in';
+
+            const borderColor = a.status === 'pending' ? 'border-l-yellow-400 pulse-border' :
+                                a.status === 'approved' ? 'border-l-green-500' : 'border-l-red-500';
 
             const badge = a.status === 'pending'
-                ? '<span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">Pending</span>'
+                ? '<span class="bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">PENDING</span>'
                 : a.status === 'approved'
-                ? '<span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">Approved</span>'
-                : '<span class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded">Rejected</span>';
+                ? '<span class="bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">APPROVED</span>'
+                : '<span class="bg-red-100 text-red-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">REJECTED</span>';
 
-            const typeBadge = `<span class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded">${escapeHtml(a.recommendation_type)}</span>`;
+            const typeColors = {
+                reorder: 'bg-orange-100 text-orange-700',
+                customer_outreach: 'bg-blue-100 text-blue-700',
+                expiry_alert: 'bg-red-100 text-red-700',
+                draft_response: 'bg-purple-100 text-purple-700',
+                general: 'bg-gray-100 text-gray-700',
+            };
+            const typeColor = typeColors[a.recommendation_type] || typeColors.general;
+            const typeBadge = `<span class="${typeColor} text-[10px] font-medium px-2 py-0.5 rounded-full">${escapeHtml(a.recommendation_type)}</span>`;
 
             const buttons = a.status === 'pending' ? `
-                <div class="flex space-x-2 mt-2">
+                <div class="flex space-x-2 mt-3">
                     <button onclick="handleApproval(${a.id}, 'approved')"
-                            class="bg-green-600 text-white text-xs px-3 py-1 rounded hover:bg-green-700">Approve</button>
+                            class="flex-1 bg-green-600 text-white text-xs py-1.5 rounded-lg hover:bg-green-700 font-medium transition-colors">Approve</button>
                     <button onclick="handleApproval(${a.id}, 'rejected')"
-                            class="bg-red-600 text-white text-xs px-3 py-1 rounded hover:bg-red-700">Reject</button>
+                            class="flex-1 bg-red-500 text-white text-xs py-1.5 rounded-lg hover:bg-red-600 font-medium transition-colors">Reject</button>
                 </div>` : '';
 
-            const reviewer = a.reviewed_by ? `<p class="text-xs text-gray-400 mt-1">Reviewed by ${escapeHtml(a.reviewed_by)}</p>` : '';
+            const reviewer = a.reviewed_by
+                ? `<p class="text-[10px] text-gray-400 mt-1.5">Reviewed by ${escapeHtml(a.reviewed_by)}</p>` : '';
 
             div.innerHTML = `
-                <div class="flex items-center justify-between mb-1">
-                    <div class="flex items-center space-x-2">${typeBadge} ${badge}</div>
+                <div class="bg-white border border-gray-200 ${borderColor} border-l-4 rounded-lg p-3 shadow-sm">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center space-x-1.5">${typeBadge}</div>
+                        ${badge}
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-800">${escapeHtml(a.title)}</h3>
+                    <p class="text-xs text-gray-600 mt-1 leading-relaxed">${escapeHtml(a.content)}</p>
+                    ${reviewer}
+                    ${buttons}
                 </div>
-                <h3 class="text-sm font-medium text-gray-800">${escapeHtml(a.title)}</h3>
-                <p class="text-xs text-gray-600 mt-1">${escapeHtml(a.content)}</p>
-                ${reviewer}
-                ${buttons}
             `;
             approvalList.appendChild(div);
         });
@@ -377,10 +641,218 @@
             document.getElementById('stat-lots').textContent = stats.inventory_lots;
             document.getElementById('stat-customers').textContent = stats.total_customers;
             document.getElementById('stat-pending').textContent = stats.pending_approvals;
+            const pending = stats.pending_approvals;
+            const header = document.getElementById('stat-pending-header');
+            header.className = pending > 0 ? 'text-yellow-300 font-bold' : 'text-blue-200 font-medium';
         } catch (err) {}
     }
 
-    // Initial load and polling
+    // --- Tab Switching ---
+    let selectedItem = null;
+
+    window.switchTab = function(tab) {
+        document.getElementById('panel-chat').classList.toggle('hidden', tab !== 'chat');
+        document.getElementById('panel-data').classList.toggle('hidden', tab !== 'data');
+        document.getElementById('tab-chat').classList.toggle('border-qblue', tab === 'chat');
+        document.getElementById('tab-chat').classList.toggle('text-qblue', tab === 'chat');
+        document.getElementById('tab-chat').classList.toggle('border-transparent', tab !== 'chat');
+        document.getElementById('tab-chat').classList.toggle('text-gray-500', tab !== 'chat');
+        document.getElementById('tab-data').classList.toggle('border-qblue', tab === 'data');
+        document.getElementById('tab-data').classList.toggle('text-qblue', tab === 'data');
+        document.getElementById('tab-data').classList.toggle('border-transparent', tab !== 'data');
+        document.getElementById('tab-data').classList.toggle('text-gray-500', tab !== 'data');
+        if (tab === 'data') loadDataTab('products');
+        if (tab === 'chat') chatInput.focus();
+    };
+
+    window.loadDataTab = function(tab) {
+        document.querySelectorAll('.data-tab').forEach(el => {
+            const active = el.dataset.tab === tab;
+            el.classList.toggle('border-qblue', active);
+            el.classList.toggle('text-qblue', active);
+            el.classList.toggle('border-transparent', !active);
+            el.classList.toggle('text-gray-500', !active);
+        });
+        selectedItem = null;
+        document.getElementById('ask-about-bar').classList.add('hidden');
+
+        const content = document.getElementById('data-content');
+        content.innerHTML = '<p class="text-gray-400 text-sm text-center mt-8">Loading...</p>';
+
+        if (tab === 'products') loadProducts();
+        else if (tab === 'inventory') loadInventory();
+        else if (tab === 'customers') loadCustomers();
+        else if (tab === 'compatibility') loadCompatibility();
+    };
+
+    async function loadProducts() {
+        const res = await fetch('/api/products');
+        const products = await res.json();
+        const content = document.getElementById('data-content');
+
+        let currentCategory = '';
+        let html = '';
+        products.forEach(p => {
+            if (p.category !== currentCategory) {
+                currentCategory = p.category;
+                html += `<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-4 mb-2 first:mt-0">${esc(currentCategory)}</h3>`;
+            }
+            const lowStock = p.total_stock < (p.reorder_point || 0);
+            const stockColor = lowStock ? 'text-red-600 font-semibold' : 'text-green-700';
+            html += `
+                <div class="bg-white border border-gray-200 rounded-lg p-3 mb-2 hover:border-qblue cursor-pointer transition-colors"
+                     onclick="selectProduct('${p.item_id}', '${esc(p.product_name)}')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-mono font-bold text-qblue">#${esc(p.item_id)}</span>
+                                <span class="text-sm text-gray-800">${esc(p.product_name)}</span>
+                            </div>
+                            <div class="flex items-center space-x-3 mt-1 text-[11px] text-gray-500">
+                                <span>${esc(p.material || '--')}</span>
+                                <span class="text-gray-300">|</span>
+                                <span>${esc(p.connection_type || '--')}</span>
+                                ${p.iso_compliance ? `<span class="text-gray-300">|</span><span class="text-green-600 font-medium">${esc(p.iso_compliance)}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="text-right flex-shrink-0 ml-4">
+                            <div class="text-sm font-semibold text-gray-800">$${p.unit_price?.toFixed(2) || '--'}</div>
+                            <div class="${stockColor} text-[11px]">${p.total_stock} in stock</div>
+                        </div>
+                    </div>
+                    ${p.technical_detail ? `<div class="text-[10px] text-gray-400 mt-1 font-mono">${esc(p.technical_detail)}</div>` : ''}
+                </div>`;
+        });
+        content.innerHTML = html;
+    }
+
+    async function loadInventory() {
+        const res = await fetch('/api/inventory');
+        const lots = await res.json();
+        const content = document.getElementById('data-content');
+
+        let html = `<div class="overflow-x-auto"><table class="w-full text-xs">
+            <thead><tr class="bg-gray-50 text-left text-gray-500 uppercase tracking-wider">
+                <th class="px-3 py-2">Part #</th><th class="px-3 py-2">Product</th><th class="px-3 py-2">Lot</th>
+                <th class="px-3 py-2 text-right">Qty</th><th class="px-3 py-2 text-right">Reorder Pt</th>
+                <th class="px-3 py-2">Location</th><th class="px-3 py-2">Expires</th><th class="px-3 py-2">Status</th>
+            </tr></thead><tbody>`;
+
+        lots.forEach(l => {
+            const low = l.quantity_on_hand < l.reorder_point;
+            const expiring = l.expiration_date && new Date(l.expiration_date) < new Date(Date.now() + 180*86400000);
+            let status = '';
+            if (low) status += '<span class="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-[10px] font-medium mr-1">LOW</span>';
+            if (expiring) status += '<span class="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-[10px] font-medium">EXPIRING</span>';
+
+            html += `<tr class="border-t border-gray-100 hover:bg-blue-50 cursor-pointer" onclick="selectProduct('${l.item_id}', '${esc(l.product_name)}')">
+                <td class="px-3 py-2 font-mono font-bold text-qblue">${esc(l.item_id)}</td>
+                <td class="px-3 py-2 text-gray-700">${esc(l.product_name)}</td>
+                <td class="px-3 py-2 font-mono text-gray-500">${esc(l.lot_number)}</td>
+                <td class="px-3 py-2 text-right ${low ? 'text-red-600 font-bold' : 'text-gray-700'}">${l.quantity_on_hand}</td>
+                <td class="px-3 py-2 text-right text-gray-500">${l.reorder_point}</td>
+                <td class="px-3 py-2 font-mono text-gray-500">${esc(l.warehouse_location)}</td>
+                <td class="px-3 py-2 text-gray-500">${l.expiration_date || '--'}</td>
+                <td class="px-3 py-2">${status || '<span class="text-green-600 text-[10px]">OK</span>'}</td>
+            </tr>`;
+        });
+        html += '</tbody></table></div>';
+        content.innerHTML = html;
+    }
+
+    async function loadCustomers() {
+        const res = await fetch('/api/customers');
+        const customers = await res.json();
+        const content = document.getElementById('data-content');
+
+        let html = '';
+        customers.forEach(c => {
+            const tierColor = c.account_tier === 'premium' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600';
+            html += `
+                <div class="bg-white border border-gray-200 rounded-lg p-4 mb-3 hover:border-qblue cursor-pointer transition-colors"
+                     onclick="selectCustomer('${c.customer_id}', '${esc(c.company_name)}')">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="font-mono text-xs font-bold text-qblue">${esc(c.customer_id)}</span>
+                                <span class="text-sm font-semibold text-gray-800">${esc(c.company_name)}</span>
+                                <span class="${tierColor} text-[10px] font-medium px-2 py-0.5 rounded-full uppercase">${esc(c.account_tier)}</span>
+                            </div>
+                            <div class="text-[11px] text-gray-500 mt-0.5">Contact: ${esc(c.contact_name)} &middot; ${esc(c.industry)} &middot; ${esc(c.region)}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-bold text-gray-800">$${c.total_revenue?.toFixed(2)}</div>
+                            <div class="text-[11px] text-gray-500">${c.total_orders} orders</div>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-gray-400">Last order: ${c.last_order_date || 'Never'}</div>
+                </div>`;
+        });
+        content.innerHTML = html;
+    }
+
+    async function loadCompatibility() {
+        const res = await fetch('/api/compatibility');
+        const compat = await res.json();
+        const content = document.getElementById('data-content');
+
+        const direct = compat.filter(c => c.compatibility_type === 'direct_fit');
+        const alt = compat.filter(c => c.compatibility_type === 'same_category_alternative');
+
+        let html = '<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Direct Fit Connections</h3>';
+        direct.forEach(c => {
+            html += `<div class="bg-white border border-gray-200 rounded-lg p-2.5 mb-1.5 text-xs flex items-center">
+                <span class="font-mono font-bold text-qblue w-14">#${esc(c.part_a)}</span>
+                <span class="text-gray-600 flex-1 truncate">${esc(c.part_a_name)}</span>
+                <span class="text-gray-400 mx-2 flex-shrink-0">&harr;</span>
+                <span class="font-mono font-bold text-qblue w-14">#${esc(c.part_b)}</span>
+                <span class="text-gray-600 flex-1 truncate">${esc(c.part_b_name)}</span>
+            </div>`;
+        });
+
+        html += '<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-4">Category Alternatives</h3>';
+        alt.forEach(c => {
+            html += `<div class="bg-white border border-gray-200 rounded-lg p-2.5 mb-1.5 text-xs">
+                <div class="flex items-center">
+                    <span class="font-mono font-bold text-qblue w-14">#${esc(c.part_a)}</span>
+                    <span class="text-gray-600 flex-1 truncate">${esc(c.part_a_name)}</span>
+                    <span class="text-gray-400 mx-2 flex-shrink-0">~</span>
+                    <span class="font-mono font-bold text-qblue w-14">#${esc(c.part_b)}</span>
+                    <span class="text-gray-600 flex-1 truncate">${esc(c.part_b_name)}</span>
+                </div>
+                ${c.notes ? `<div class="text-[10px] text-gray-400 mt-1 ml-14">${esc(c.notes)}</div>` : ''}
+            </div>`;
+        });
+        content.innerHTML = html;
+    }
+
+    window.selectProduct = function(id, name) {
+        selectedItem = { type: 'product', id, name };
+        document.getElementById('ask-about-label').textContent = `Selected: Part #${id} — ${name}`;
+        document.getElementById('ask-about-bar').classList.remove('hidden');
+    };
+
+    window.selectCustomer = function(id, name) {
+        selectedItem = { type: 'customer', id, name };
+        document.getElementById('ask-about-label').textContent = `Selected: ${id} — ${name}`;
+        document.getElementById('ask-about-bar').classList.remove('hidden');
+    };
+
+    window.askAboutSelected = function() {
+        if (!selectedItem) return;
+        let msg = '';
+        if (selectedItem.type === 'product') {
+            msg = `Tell me about part ${selectedItem.id} — check inventory, compatibility, and any concerns`;
+        } else {
+            msg = `Analyze order history for ${selectedItem.id} and identify any patterns or opportunities`;
+        }
+        switchTab('chat');
+        chatInput.value = msg;
+        chatForm.dispatchEvent(new Event('submit'));
+    };
+
+    function esc(str) { return escapeHtml(str || ''); }
+
     fetchStats();
     fetchApprovals();
     setInterval(fetchStats, 10000);

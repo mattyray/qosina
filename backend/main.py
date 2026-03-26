@@ -46,13 +46,24 @@ async def stream_agent_response(message: str, conversation_id: str) -> AsyncGene
     input_messages = {"messages": conversations[conversation_id]}
 
     try:
+        # Use astream to get state updates, then stream tokens from events
+        full_response = ""
+
         async for event in agent.astream_events(input_messages, version="v2"):
             kind = event["event"]
 
             if kind == "on_chat_model_stream":
-                content = event["data"]["chunk"].content
-                if content and isinstance(content, str):
+                chunk = event["data"]["chunk"]
+                # Handle both string content and list content (tool calls)
+                content = chunk.content
+                if isinstance(content, str) and content:
+                    full_response += content
                     yield {"event": "token", "data": json.dumps({"content": content})}
+                elif isinstance(content, list):
+                    for block in content:
+                        if isinstance(block, dict) and block.get("type") == "text" and block.get("text"):
+                            full_response += block["text"]
+                            yield {"event": "token", "data": json.dumps({"content": block["text"]})}
 
             elif kind == "on_tool_start":
                 yield {
@@ -68,7 +79,8 @@ async def stream_agent_response(message: str, conversation_id: str) -> AsyncGene
                 tool_output = event["data"].get("output", "")
                 # Check if an approval was created
                 try:
-                    parsed = json.loads(tool_output) if isinstance(tool_output, str) else tool_output
+                    output_str = tool_output.content if hasattr(tool_output, 'content') else str(tool_output)
+                    parsed = json.loads(output_str) if isinstance(output_str, str) else output_str
                     if isinstance(parsed, dict) and parsed.get("Status") == "pending":
                         yield {
                             "event": "approval_created",
@@ -79,7 +91,7 @@ async def stream_agent_response(message: str, conversation_id: str) -> AsyncGene
                                 "status": "pending",
                             }),
                         }
-                except (json.JSONDecodeError, TypeError):
+                except (json.JSONDecodeError, TypeError, AttributeError):
                     pass
 
                 yield {
@@ -90,10 +102,10 @@ async def stream_agent_response(message: str, conversation_id: str) -> AsyncGene
                     }),
                 }
 
-        # Get the final AI message from the agent's state
-        final_state = await agent.ainvoke(input_messages)
-        ai_message = final_state["messages"][-1]
-        conversations[conversation_id] = final_state["messages"]
+        # Save conversation state without re-invoking
+        from langchain_core.messages import AIMessage
+        if full_response:
+            conversations[conversation_id].append(AIMessage(content=full_response))
 
     except Exception as e:
         yield {"event": "error", "data": json.dumps({"message": f"Agent error: {str(e)}"})}
@@ -166,6 +178,123 @@ def get_stats():
         "pending_approvals": pending_approvals,
         "total_customers": total_customers,
     }
+
+
+# --- Data Explorer endpoints ---
+
+@app.get("/api/products")
+def get_products():
+    """All products with inventory summary."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT p.*,
+                   COALESCE(SUM(i.quantity_on_hand), 0) as total_stock,
+                   MIN(i.reorder_point) as reorder_point
+            FROM products p
+            LEFT JOIN inventory i ON p.item_id = i.item_id
+            GROUP BY p.item_id
+            ORDER BY p.category, p.item_id
+        """).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.get("/api/products/{item_id}")
+def get_product_detail(item_id: str):
+    """Single product with full inventory lots and compatibility."""
+    with get_db() as conn:
+        product = conn.execute("SELECT * FROM products WHERE item_id = ?", (item_id,)).fetchone()
+        if not product:
+            raise HTTPException(404, "Product not found")
+
+        lots = conn.execute(
+            "SELECT * FROM inventory WHERE item_id = ? ORDER BY expiration_date", (item_id,)
+        ).fetchall()
+
+        compat = conn.execute("""
+            SELECT pc.*,
+                   pa.product_name as part_a_name,
+                   pb.product_name as part_b_name
+            FROM product_compatibility pc
+            JOIN products pa ON pc.part_a = pa.item_id
+            JOIN products pb ON pc.part_b = pb.item_id
+            WHERE pc.part_a = ? OR pc.part_b = ?
+        """, (item_id, item_id)).fetchall()
+
+    return {
+        "product": dict(product),
+        "inventory": [dict(r) for r in lots],
+        "compatibility": [dict(r) for r in compat],
+    }
+
+
+@app.get("/api/customers")
+def get_customers():
+    """All customers with order summary."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT c.*,
+                   COUNT(o.order_id) as total_orders,
+                   COALESCE(SUM(o.total_price), 0) as total_revenue,
+                   MAX(o.order_date) as last_order_date
+            FROM customers c
+            LEFT JOIN order_history o ON c.customer_id = o.customer_id
+            GROUP BY c.customer_id
+            ORDER BY total_revenue DESC
+        """).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.get("/api/customers/{customer_id}")
+def get_customer_detail(customer_id: str):
+    """Single customer with full order history."""
+    with get_db() as conn:
+        customer = conn.execute(
+            "SELECT * FROM customers WHERE customer_id = ?", (customer_id,)
+        ).fetchone()
+        if not customer:
+            raise HTTPException(404, "Customer not found")
+
+        orders = conn.execute("""
+            SELECT o.*, p.product_name, p.category
+            FROM order_history o
+            JOIN products p ON o.item_id = p.item_id
+            WHERE o.customer_id = ?
+            ORDER BY o.order_date DESC
+        """, (customer_id,)).fetchall()
+
+    return {
+        "customer": dict(customer),
+        "orders": [dict(r) for r in orders],
+    }
+
+
+@app.get("/api/inventory")
+def get_inventory():
+    """All inventory lots."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT i.*, p.product_name, p.category
+            FROM inventory i
+            JOIN products p ON i.item_id = p.item_id
+            ORDER BY i.item_id, i.expiration_date
+        """).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.get("/api/compatibility")
+def get_compatibility():
+    """All compatibility relationships."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT pc.*,
+                   pa.product_name as part_a_name,
+                   pb.product_name as part_b_name
+            FROM product_compatibility pc
+            JOIN products pa ON pc.part_a = pa.item_id
+            JOIN products pb ON pc.part_b = pb.item_id
+            ORDER BY pc.compatibility_type, pc.part_a
+        """).fetchall()
+    return [dict(r) for r in rows]
 
 
 # Serve static files and index.html

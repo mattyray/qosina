@@ -2,8 +2,9 @@ services:
   app:
     build: .
     ports:
-      - "8000:8000"
+      - "8085:8000"
     env_file:
-      - .env
+      - path: .env
+        required: false
     volumes:
       - ./qosina.db:/app/qosina.db
