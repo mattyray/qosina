@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+qosina.db
+.venv/
+venv/
+.git/
+.DS_Store
+*.md
+!requirements.txt
