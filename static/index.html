@@ -204,7 +204,10 @@
     <div class="flex-1 flex flex-col min-w-0">
         <!-- Tab Bar -->
         <div class="flex border-b border-gray-200 bg-white flex-shrink-0">
-            <button id="tab-chat" onclick="switchTab('chat')" class="px-6 py-2.5 text-sm font-medium border-b-2 border-qblue text-qblue transition-colors">
+            <button id="tab-dash" onclick="switchTab('chat'); showDashboard();" class="px-6 py-2.5 text-sm font-medium border-b-2 border-qblue text-qblue transition-colors">
+                Dashboard
+            </button>
+            <button id="tab-chat" onclick="switchTab('chat')" class="px-6 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
                 AI Chat
             </button>
             <button id="tab-data" onclick="switchTab('data')" class="px-6 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
@@ -793,16 +796,36 @@
     window.switchTab = function(tab) {
         document.getElementById('panel-chat').classList.toggle('hidden', tab !== 'chat');
         document.getElementById('panel-data').classList.toggle('hidden', tab !== 'data');
-        document.getElementById('tab-chat').classList.toggle('border-qblue', tab === 'chat');
-        document.getElementById('tab-chat').classList.toggle('text-qblue', tab === 'chat');
-        document.getElementById('tab-chat').classList.toggle('border-transparent', tab !== 'chat');
-        document.getElementById('tab-chat').classList.toggle('text-gray-500', tab !== 'chat');
-        document.getElementById('tab-data').classList.toggle('border-qblue', tab === 'data');
-        document.getElementById('tab-data').classList.toggle('text-qblue', tab === 'data');
-        document.getElementById('tab-data').classList.toggle('border-transparent', tab !== 'data');
-        document.getElementById('tab-data').classList.toggle('text-gray-500', tab !== 'data');
+        ['tab-dash', 'tab-chat', 'tab-data'].forEach(id => {
+            const el = document.getElementById(id);
+            const active = (id === 'tab-' + tab) || (tab === 'chat' && id === 'tab-chat');
+            el.classList.toggle('border-qblue', active);
+            el.classList.toggle('text-qblue', active);
+            el.classList.toggle('border-transparent', !active);
+            el.classList.toggle('text-gray-500', !active);
+        });
+        // When switching to chat via AI Chat tab, deactivate dashboard tab
+        if (tab === 'chat') {
+            document.getElementById('tab-dash').classList.remove('border-qblue', 'text-qblue');
+            document.getElementById('tab-dash').classList.add('border-transparent', 'text-gray-500');
+            document.getElementById('tab-chat').classList.add('border-qblue', 'text-qblue');
+            document.getElementById('tab-chat').classList.remove('border-transparent', 'text-gray-500');
+        }
         if (tab === 'data') loadDataTab('products');
         if (tab === 'chat') chatInput.focus();
+    };
+
+    window.showDashboard = function() {
+        const dash = document.getElementById('welcome-dashboard');
+        if (dash) dash.style.display = '';
+        // Scroll to top to see dashboard
+        chatMessages.scrollTop = 0;
+        fetchDashboard();
+        // Highlight dashboard tab
+        document.getElementById('tab-dash').classList.add('border-qblue', 'text-qblue');
+        document.getElementById('tab-dash').classList.remove('border-transparent', 'text-gray-500');
+        document.getElementById('tab-chat').classList.remove('border-qblue', 'text-qblue');
+        document.getElementById('tab-chat').classList.add('border-transparent', 'text-gray-500');
     };
 
     window.loadDataTab = function(tab) {
