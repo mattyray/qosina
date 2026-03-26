@@ -108,14 +108,12 @@ def create_approval(recommendation_type: str, title: str, content: str) -> str:
     Use this whenever you identify an action that should be taken — you cannot take actions directly.
 
     IMPORTANT RULES FOR APPROVALS:
-    1. BATCH related items into ONE approval. Do NOT create separate approvals for each item.
-       BAD: 4 separate "Reorder Part #X" approvals
-       GOOD: 1 "Reorder 4 Low Stock Items" approval listing all parts
-    2. Keep content SHORT. Max 4-5 lines. Use bullet format for multiple items.
-    3. Example format:
-       Title: "Reorder 4 Low Stock Items"
-       Content: "- #91050 High-Flow Check Valve: 45 units (reorder: 100)\n- #97337 Flow Control Switch: 75 units (reorder: 100)\n- #14054 Roller Clamp: 45 units (reorder: 100)\n- #T1006 Silicone Tubing: 18 units (reorder: 30)"
-    4. The reviewer needs to scan this in seconds, not read paragraphs."""
+    1. Create ONE approval per actionable item. Each part, lot, or customer gets its own approval so they can be approved/rejected individually.
+    2. Keep each approval SHORT — 2-3 lines max. Title should identify the specific item.
+    3. Example:
+       Title: "Reorder Part #91050 — High-Flow Check Valve"
+       Content: "Stock: 45 units. Reorder point: 100. Recommend ordering 500 units."
+    4. Do NOT write paragraphs or include background context. Just: what, how much, recommended action."""
     return json.dumps(_create_approval(recommendation_type, title, content), indent=2)
 
 
