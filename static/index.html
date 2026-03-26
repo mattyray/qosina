@@ -285,16 +285,24 @@
 
     <!-- RIGHT: Approval Queue -->
     <div class="w-[320px] bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
-        <div class="px-4 py-3 border-b border-gray-200 bg-yellow-50">
+        <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <h2 class="font-semibold text-gray-800 text-sm">Approval Queue</h2>
-                </div>
-                <span id="pending-badge" class="bg-yellow-400 text-yellow-900 text-xs font-bold px-2.5 py-0.5 rounded-full hidden">
-                    0
-                </span>
+                <h2 class="font-semibold text-gray-800 text-sm">Approval Queue</h2>
+                <span id="pending-badge" class="bg-yellow-400 text-yellow-900 text-xs font-bold px-2.5 py-0.5 rounded-full hidden">0</span>
             </div>
             <p class="text-[10px] text-gray-500 mt-1">AI recommendations require human approval before any action is taken</p>
+        </div>
+        <!-- Filter Tabs -->
+        <div class="flex border-b border-gray-200 bg-white flex-shrink-0">
+            <button onclick="filterApprovals('pending')" class="approval-filter flex-1 px-2 py-2 text-xs font-medium border-b-2 border-qblue text-qblue" data-filter="pending">
+                Pending <span id="filter-pending-count" class="bg-yellow-100 text-yellow-800 rounded-full px-1.5 ml-0.5"></span>
+            </button>
+            <button onclick="filterApprovals('approved')" class="approval-filter flex-1 px-2 py-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-filter="approved">
+                Approved <span id="filter-approved-count" class="text-gray-400 ml-0.5"></span>
+            </button>
+            <button onclick="filterApprovals('rejected')" class="approval-filter flex-1 px-2 py-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-filter="rejected">
+                Rejected <span id="filter-rejected-count" class="text-gray-400 ml-0.5"></span>
+            </button>
         </div>
         <div id="approval-list" class="flex-1 overflow-y-auto p-3 space-y-3">
             <div id="no-approvals" class="text-center mt-12 px-4">
@@ -302,17 +310,14 @@
                     <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 </div>
                 <p class="text-sm text-gray-400 font-medium">No recommendations yet</p>
-                <p class="text-xs text-gray-300 mt-1">When the AI identifies actions to take (reorder, alert, outreach), they'll appear here for your approval.</p>
-                <div class="mt-4 p-3 bg-gray-50 rounded-lg text-left">
-                    <p class="text-[10px] font-semibold text-gray-500 uppercase mb-1.5">Approval Types</p>
-                    <div class="space-y-1 text-[11px] text-gray-500">
-                        <div class="flex items-center space-x-2"><span class="w-2 h-2 rounded-full bg-orange-400"></span><span>Reorder Recommendations</span></div>
-                        <div class="flex items-center space-x-2"><span class="w-2 h-2 rounded-full bg-blue-400"></span><span>Customer Outreach</span></div>
-                        <div class="flex items-center space-x-2"><span class="w-2 h-2 rounded-full bg-red-400"></span><span>Expiry Alerts</span></div>
-                        <div class="flex items-center space-x-2"><span class="w-2 h-2 rounded-full bg-purple-400"></span><span>Draft Responses</span></div>
-                    </div>
-                </div>
+                <p class="text-xs text-gray-300 mt-1">Ask the AI to check low stock, expiring inventory, or customer patterns — it will create recommendations here.</p>
             </div>
+        </div>
+        <!-- Clear Resolved -->
+        <div id="clear-resolved-bar" class="border-t border-gray-200 p-2 bg-gray-50 flex-shrink-0 hidden">
+            <button onclick="clearResolved()" class="w-full text-xs text-gray-500 hover:text-red-600 py-1 transition-colors">
+                Clear resolved items
+            </button>
         </div>
     </div>
 
@@ -540,55 +545,84 @@
     }
 
     // --- Approvals ---
+    let allApprovals = [];
+    let currentFilter = 'pending';
+
     async function fetchApprovals() {
         try {
             const res = await fetch('/api/approvals');
-            const approvals = await res.json();
-            renderApprovals(approvals);
+            allApprovals = await res.json();
+            updateApprovalCounts();
+            renderFilteredApprovals();
         } catch (err) {}
     }
 
-    function renderApprovals(approvals) {
-        if (approvals.length === 0) {
-            noApprovals.style.display = '';
-            pendingBadge.classList.add('hidden');
-            // Clear only approval cards, keep noApprovals
-            approvalList.querySelectorAll('.approval-card').forEach(el => el.remove());
-            return;
-        }
+    function updateApprovalCounts() {
+        const counts = { pending: 0, approved: 0, rejected: 0 };
+        allApprovals.forEach(a => counts[a.status] = (counts[a.status] || 0) + 1);
 
-        noApprovals.style.display = 'none';
-        const pending = approvals.filter(a => a.status === 'pending').length;
-        if (pending > 0) {
-            pendingBadge.textContent = pending;
+        document.getElementById('filter-pending-count').textContent = counts.pending || '';
+        document.getElementById('filter-approved-count').textContent = counts.approved ? `(${counts.approved})` : '';
+        document.getElementById('filter-rejected-count').textContent = counts.rejected ? `(${counts.rejected})` : '';
+
+        if (counts.pending > 0) {
+            pendingBadge.textContent = counts.pending;
             pendingBadge.classList.remove('hidden');
         } else {
             pendingBadge.classList.add('hidden');
         }
 
-        // Remove old cards
+        // Show clear button when there are resolved items
+        const clearBar = document.getElementById('clear-resolved-bar');
+        clearBar.classList.toggle('hidden', counts.approved + counts.rejected === 0 || currentFilter === 'pending');
+    }
+
+    window.filterApprovals = function(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.approval-filter').forEach(el => {
+            const active = el.dataset.filter === filter;
+            el.classList.toggle('border-qblue', active);
+            el.classList.toggle('text-qblue', active);
+            el.classList.toggle('border-transparent', !active);
+            el.classList.toggle('text-gray-500', !active);
+        });
+        updateApprovalCounts();
+        renderFilteredApprovals();
+    };
+
+    function renderFilteredApprovals() {
+        const filtered = allApprovals.filter(a => a.status === currentFilter);
         approvalList.querySelectorAll('.approval-card').forEach(el => el.remove());
 
-        approvals.forEach(a => {
+        if (filtered.length === 0) {
+            noApprovals.style.display = '';
+            const msgs = {
+                pending: 'No pending recommendations. Ask the AI to check low stock or expiring inventory.',
+                approved: 'No approved items yet.',
+                rejected: 'No rejected items.',
+            };
+            noApprovals.querySelector('p.text-sm').textContent = currentFilter === 'pending' ? 'No pending recommendations' : msgs[currentFilter];
+            noApprovals.querySelector('p.text-xs').textContent = msgs[currentFilter];
+            return;
+        }
+
+        noApprovals.style.display = 'none';
+
+        const typeColors = {
+            reorder: 'bg-orange-100 text-orange-700',
+            customer_outreach: 'bg-blue-100 text-blue-700',
+            expiry_alert: 'bg-red-100 text-red-700',
+            draft_response: 'bg-purple-100 text-purple-700',
+            general: 'bg-gray-100 text-gray-700',
+        };
+
+        filtered.forEach(a => {
             const div = document.createElement('div');
             div.className = 'approval-card slide-in';
 
             const borderColor = a.status === 'pending' ? 'border-l-yellow-400 pulse-border' :
                                 a.status === 'approved' ? 'border-l-green-500' : 'border-l-red-500';
 
-            const badge = a.status === 'pending'
-                ? '<span class="bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">PENDING</span>'
-                : a.status === 'approved'
-                ? '<span class="bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">APPROVED</span>'
-                : '<span class="bg-red-100 text-red-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">REJECTED</span>';
-
-            const typeColors = {
-                reorder: 'bg-orange-100 text-orange-700',
-                customer_outreach: 'bg-blue-100 text-blue-700',
-                expiry_alert: 'bg-red-100 text-red-700',
-                draft_response: 'bg-purple-100 text-purple-700',
-                general: 'bg-gray-100 text-gray-700',
-            };
             const typeColor = typeColors[a.recommendation_type] || typeColors.general;
             const typeBadge = `<span class="${typeColor} text-[10px] font-medium px-2 py-0.5 rounded-full">${escapeHtml(a.recommendation_type)}</span>`;
 
@@ -603,15 +637,17 @@
             const reviewer = a.reviewed_by
                 ? `<p class="text-[10px] text-gray-400 mt-1.5">Reviewed by ${escapeHtml(a.reviewed_by)}</p>` : '';
 
+            const timestamp = a.ai_generated_at ? `<p class="text-[10px] text-gray-300 mt-1">${new Date(a.ai_generated_at).toLocaleString()}</p>` : '';
+
             div.innerHTML = `
                 <div class="bg-white border border-gray-200 ${borderColor} border-l-4 rounded-lg p-3 shadow-sm">
                     <div class="flex items-center justify-between mb-1.5">
                         <div class="flex items-center space-x-1.5">${typeBadge}</div>
-                        ${badge}
                     </div>
                     <h3 class="text-sm font-semibold text-gray-800">${escapeHtml(a.title)}</h3>
                     <p class="text-xs text-gray-600 mt-1 leading-relaxed">${escapeHtml(a.content)}</p>
                     ${reviewer}
+                    ${timestamp}
                     ${buttons}
                 </div>
             `;
@@ -630,6 +666,13 @@
         } catch (err) {
             alert('Failed to update approval');
         }
+    };
+
+    window.clearResolved = async function() {
+        try {
+            await fetch('/api/approvals/resolved', { method: 'DELETE' });
+            fetchApprovals();
+        } catch (err) {}
     };
 
     // --- Stats ---

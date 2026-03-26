@@ -161,6 +161,16 @@ def update_approval(approval_id: int, update: ApprovalUpdate):
     return dict(row)
 
 
+@app.delete("/api/approvals/resolved")
+def clear_resolved():
+    """Delete all non-pending approval items."""
+    with get_db() as conn:
+        result = conn.execute(
+            "DELETE FROM approval_queue WHERE status != 'pending'"
+        )
+    return {"deleted": result.rowcount}
+
+
 @app.get("/api/stats")
 def get_stats():
     """Database stats for the status bar."""
