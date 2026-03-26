@@ -344,42 +344,45 @@
     </div>
 
     <!-- RIGHT: Approval Queue -->
-    <div class="w-[320px] bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
+    <div class="w-[380px] bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
         <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
             <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-gray-800 text-sm">Approval Queue</h2>
-                <span id="pending-badge" class="bg-yellow-400 text-yellow-900 text-xs font-bold px-2.5 py-0.5 rounded-full hidden">0</span>
+                <div>
+                    <h2 class="font-semibold text-gray-800 text-sm">Approval Queue</h2>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Human review required before action</p>
+                </div>
+                <span id="pending-badge" class="bg-yellow-400 text-yellow-900 text-xs font-bold px-2.5 py-1 rounded-full hidden">0</span>
             </div>
-            <p class="text-[10px] text-gray-500 mt-1">AI recommendations require human approval before any action is taken</p>
         </div>
-        <!-- Filter Tabs -->
-        <div class="flex border-b border-gray-200 bg-white flex-shrink-0">
-            <button onclick="filterApprovals('pending')" class="approval-filter flex-1 px-2 py-2 text-xs font-medium border-b-2 border-qblue text-qblue" data-filter="pending">
-                Pending <span id="filter-pending-count" class="bg-yellow-100 text-yellow-800 rounded-full px-1.5 ml-0.5"></span>
-            </button>
-            <button onclick="filterApprovals('approved')" class="approval-filter flex-1 px-2 py-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-filter="approved">
-                Approved <span id="filter-approved-count" class="text-gray-400 ml-0.5"></span>
-            </button>
-            <button onclick="filterApprovals('rejected')" class="approval-filter flex-1 px-2 py-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-filter="rejected">
-                Rejected <span id="filter-rejected-count" class="text-gray-400 ml-0.5"></span>
-            </button>
+        <!-- Status + Type Filters -->
+        <div class="border-b border-gray-200 bg-white flex-shrink-0">
+            <div class="flex">
+                <button onclick="filterApprovals('pending')" class="approval-filter flex-1 px-2 py-2 text-xs font-medium border-b-2 border-qblue text-qblue" data-filter="pending">
+                    Pending <span id="filter-pending-count" class="bg-yellow-100 text-yellow-800 rounded-full px-1.5 ml-0.5"></span>
+                </button>
+                <button onclick="filterApprovals('approved')" class="approval-filter flex-1 px-2 py-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-filter="approved">
+                    Approved <span id="filter-approved-count" class="text-gray-400 ml-0.5"></span>
+                </button>
+                <button onclick="filterApprovals('rejected')" class="approval-filter flex-1 px-2 py-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-filter="rejected">
+                    Rejected <span id="filter-rejected-count" class="text-gray-400 ml-0.5"></span>
+                </button>
+            </div>
+            <div class="flex flex-wrap gap-1 px-3 py-1.5 bg-gray-50">
+                <button onclick="filterByType('all')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-qblue text-white font-medium" data-type="all">All</button>
+                <button onclick="filterByType('reorder')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="reorder">Reorder</button>
+                <button onclick="filterByType('expiry_alert')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="expiry_alert">Expiry</button>
+                <button onclick="filterByType('customer_outreach')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="customer_outreach">Outreach</button>
+                <button onclick="filterByType('draft_response')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="draft_response">Draft</button>
+                <button onclick="filterByType('general')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="general">General</button>
+            </div>
         </div>
-        <!-- Type filter chips -->
-        <div class="flex flex-wrap gap-1 px-3 py-2 bg-gray-50 border-b border-gray-100 flex-shrink-0">
-            <button onclick="filterByType('all')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-qblue text-white font-medium" data-type="all">All</button>
-            <button onclick="filterByType('reorder')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="reorder">Reorder</button>
-            <button onclick="filterByType('expiry_alert')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="expiry_alert">Expiry</button>
-            <button onclick="filterByType('customer_outreach')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="customer_outreach">Outreach</button>
-            <button onclick="filterByType('draft_response')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="draft_response">Draft</button>
-            <button onclick="filterByType('general')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="general">General</button>
-        </div>
-        <div id="approval-list" class="flex-1 overflow-y-auto p-3 space-y-3">
+        <div id="approval-list" class="flex-1 overflow-y-auto p-3 space-y-2">
             <div id="no-approvals" class="text-center mt-12 px-4">
                 <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
                     <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 </div>
                 <p class="text-sm text-gray-400 font-medium">No recommendations yet</p>
-                <p class="text-xs text-gray-300 mt-1">Ask the AI to check low stock, expiring inventory, or customer patterns — it will create recommendations here.</p>
+                <p class="text-xs text-gray-300 mt-1">Use Dashboard quick actions to generate recommendations.</p>
             </div>
         </div>
         <!-- Clear Resolved -->
@@ -551,7 +554,7 @@
                 fetchApprovals();
                 fetchDashboard();
                 // Flash the approval panel
-                const aq = document.querySelector('.w-\\[320px\\]');
+                const aq = document.querySelector('.w-\\[380px\\]');
                 if (aq) { aq.classList.add('ring-2', 'ring-yellow-400'); setTimeout(() => aq.classList.remove('ring-2', 'ring-yellow-400'), 2000); }
                 break;
 
@@ -726,54 +729,65 @@
 
         noApprovals.style.display = 'none';
 
-        const typeColors = {
-            reorder: 'bg-orange-100 text-orange-700',
-            customer_outreach: 'bg-blue-100 text-blue-700',
-            expiry_alert: 'bg-red-100 text-red-700',
-            draft_response: 'bg-purple-100 text-purple-700',
-            general: 'bg-gray-100 text-gray-700',
+        const typeConfig = {
+            reorder: { color: 'bg-orange-100 text-orange-700', border: 'border-l-orange-400', icon: 'bg-orange-500', label: 'REORDER' },
+            customer_outreach: { color: 'bg-blue-100 text-blue-700', border: 'border-l-blue-400', icon: 'bg-blue-500', label: 'OUTREACH' },
+            expiry_alert: { color: 'bg-red-100 text-red-700', border: 'border-l-red-400', icon: 'bg-red-500', label: 'EXPIRY' },
+            draft_response: { color: 'bg-purple-100 text-purple-700', border: 'border-l-purple-400', icon: 'bg-purple-500', label: 'DRAFT' },
+            general: { color: 'bg-gray-100 text-gray-700', border: 'border-l-gray-400', icon: 'bg-gray-500', label: 'GENERAL' },
         };
 
-        filtered.forEach(a => {
+        filtered.forEach((a, idx) => {
             const div = document.createElement('div');
             div.className = 'approval-card slide-in';
+            const cardId = `card-${a.id}`;
 
-            const borderColor = a.status === 'pending' ? 'border-l-yellow-400 pulse-border' :
-                                a.status === 'approved' ? 'border-l-green-500' : 'border-l-red-500';
-
-            const typeColor = typeColors[a.recommendation_type] || typeColors.general;
-            const typeBadge = `<span class="${typeColor} text-[10px] font-medium px-2 py-0.5 rounded-full">${escapeHtml(a.recommendation_type)}</span>`;
+            const tc = typeConfig[a.recommendation_type] || typeConfig.general;
+            const statusBorder = a.status === 'pending' ? tc.border : a.status === 'approved' ? 'border-l-green-500' : 'border-l-red-500';
 
             const buttons = a.status === 'pending' ? `
-                <div class="flex space-x-2 mt-3">
-                    <button onclick="handleApproval(${a.id}, 'approved')"
-                            class="flex-1 bg-green-600 text-white text-xs py-1.5 rounded-lg hover:bg-green-700 font-medium transition-colors">Approve</button>
-                    <button onclick="handleApproval(${a.id}, 'rejected')"
-                            class="flex-1 bg-red-500 text-white text-xs py-1.5 rounded-lg hover:bg-red-600 font-medium transition-colors">Reject</button>
+                <div class="flex space-x-2 mt-2 pt-2 border-t border-gray-100">
+                    <button onclick="event.stopPropagation(); handleApproval(${a.id}, 'approved')"
+                            class="flex-1 bg-green-600 text-white text-[11px] py-1.5 rounded hover:bg-green-700 font-medium transition-colors">Approve</button>
+                    <button onclick="event.stopPropagation(); handleApproval(${a.id}, 'rejected')"
+                            class="flex-1 bg-gray-200 text-gray-700 text-[11px] py-1.5 rounded hover:bg-red-500 hover:text-white font-medium transition-colors">Reject</button>
                 </div>` : '';
 
             const reviewer = a.reviewed_by
-                ? `<p class="text-[10px] text-gray-400 mt-1.5">Reviewed by ${escapeHtml(a.reviewed_by)}</p>` : '';
+                ? `<div class="text-[10px] text-gray-400 mt-1">by ${escapeHtml(a.reviewed_by)}</div>` : '';
 
-            const timestamp = a.ai_generated_at ? `<p class="text-[10px] text-gray-300 mt-1">${new Date(a.ai_generated_at).toLocaleString()}</p>` : '';
-
-            // Format content: split lines, highlight part numbers
+            // Format content
             const formattedContent = escapeHtml(a.content)
                 .replace(/(#\d{4,5}|Part\s*#?\d{4,5})/g, '<strong class="text-qblue">$1</strong>')
                 .replace(/(CUST-\d{3})/g, '<strong class="text-qblue">$1</strong>')
+                .replace(/(LOT-[\w-]+)/g, '<span class="font-mono text-gray-500">$1</span>')
                 .replace(/(\d+\s*units?)/gi, '<strong>$1</strong>')
-                .replace(/\n/g, '<br>');
+                .replace(/\n/g, '<br>')
+                .replace(/- /g, '<br>&bull; ');
 
             div.innerHTML = `
-                <div class="bg-white border border-gray-200 ${borderColor} border-l-4 rounded-lg p-3 shadow-sm">
-                    <div class="flex items-center justify-between mb-1">
-                        ${typeBadge}
-                        <span class="text-[9px] text-gray-300">${a.ai_generated_at ? new Date(a.ai_generated_at).toLocaleTimeString() : ''}</span>
+                <div class="${statusBorder} border-l-4 rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow bg-white border border-gray-200"
+                     onclick="document.getElementById('${cardId}-detail').classList.toggle('hidden')">
+                    <div class="p-3">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2 min-w-0">
+                                <span class="w-2 h-2 rounded-full ${tc.icon} flex-shrink-0 mt-1"></span>
+                                <div class="min-w-0">
+                                    <div class="flex items-center space-x-1.5">
+                                        <span class="${tc.color} text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">${tc.label}</span>
+                                        <span class="text-[9px] text-gray-300">${a.ai_generated_at ? new Date(a.ai_generated_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : ''}</span>
+                                    </div>
+                                    <h3 class="text-xs font-semibold text-gray-800 mt-1 leading-snug">${escapeHtml(a.title)}</h3>
+                                </div>
+                            </div>
+                            <svg class="w-4 h-4 text-gray-300 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
                     </div>
-                    <h3 class="text-[13px] font-semibold text-gray-800 leading-snug">${escapeHtml(a.title)}</h3>
-                    <div class="text-[11px] text-gray-600 mt-1.5 leading-relaxed">${formattedContent}</div>
-                    ${reviewer}
-                    ${buttons}
+                    <div id="${cardId}-detail" class="hidden px-3 pb-3">
+                        <div class="text-[11px] text-gray-600 leading-relaxed bg-gray-50 rounded p-2">${formattedContent}</div>
+                        ${reviewer}
+                        ${buttons}
+                    </div>
                 </div>
             `;
             approvalList.appendChild(div);
