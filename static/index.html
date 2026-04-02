@@ -90,12 +90,11 @@
         <div class="flex items-center space-x-4">
             <span class="flex items-center space-x-1">
                 <span class="text-green-400">&#9679;</span>
-                <span>SQLite (mocks D365 F&O)</span>
+                <span>Primary: Claude Sonnet 4 (via OpenRouter)</span>
             </span>
             <span class="text-white/30">|</span>
             <span class="flex items-center space-x-1">
-                <span class="text-green-400">&#9679;</span>
-                <span>6 Read-Only Tools + 1 Approval Tool</span>
+                <span class="text-blue-300">Fallbacks: GPT-4o &rarr; Gemini</span>
             </span>
             <span class="text-white/30">|</span>
             <span class="flex items-center space-x-1">
@@ -205,15 +204,27 @@
     <!-- CENTER: Chat + Data Explorer -->
     <div class="flex-1 flex flex-col min-w-0">
         <!-- Tab Bar -->
-        <div class="flex border-b border-gray-200 bg-white flex-shrink-0">
-            <button id="tab-dash" onclick="switchTab('dash')" class="px-6 py-2.5 text-sm font-medium border-b-2 border-qblue text-qblue transition-colors">
+        <div class="flex border-b border-gray-200 bg-white flex-shrink-0 overflow-x-auto">
+            <button id="tab-dash" onclick="switchTab('dash')" class="px-4 py-2.5 text-xs font-medium border-b-2 border-qblue text-qblue transition-colors whitespace-nowrap">
                 Dashboard
             </button>
-            <button id="tab-chat" onclick="switchTab('chat')" class="px-6 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
-                AI Chat
+            <button id="tab-uc1" onclick="switchTab('uc1')" class="px-4 py-2.5 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap">
+                Sales Order Entry
             </button>
-            <button id="tab-data" onclick="switchTab('data')" class="px-6 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
+            <button id="tab-uc2" onclick="switchTab('uc2')" class="px-4 py-2.5 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap">
+                AP Processing
+            </button>
+            <button id="tab-uc3" onclick="switchTab('uc3')" class="px-4 py-2.5 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap">
+                Product Data Entry
+            </button>
+            <button id="tab-chat" onclick="switchTab('chat')" class="px-4 py-2.5 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap">
+                General Chat
+            </button>
+            <button id="tab-data" onclick="switchTab('data')" class="px-4 py-2.5 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap">
                 Data Explorer
+            </button>
+            <button id="tab-arch" onclick="switchTab('arch')" class="px-4 py-2.5 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap">
+                Architecture
             </button>
         </div>
 
@@ -295,6 +306,312 @@
             </div>
         </div>
 
+        <!-- UC1: Sales Order Entry Panel -->
+        <div id="panel-uc1" class="flex-1 flex flex-col min-h-0 hidden">
+            <div class="p-4 bg-blue-50 border-b border-blue-100 flex-shrink-0">
+                <div class="flex items-center justify-between max-w-3xl mx-auto">
+                    <div>
+                        <h2 class="text-sm font-bold text-gray-800">Use Case 1: Automate Sales Order Entry</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Paste a PO &rarr; AI extracts &amp; matches &rarr; Confidence scores &rarr; Approval queue</p>
+                    </div>
+                    <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">CX Department</span>
+                </div>
+            </div>
+            <div class="p-4 bg-white border-b border-gray-100 flex-shrink-0">
+                <div class="max-w-3xl mx-auto">
+                    <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Load Sample PO</div>
+                    <div class="flex space-x-2">
+                        <button onclick="loadSamplePO('acme')" class="text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2 transition-colors text-left flex-1">
+                            <div class="font-semibold">Acme Medical</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Known customer, contracted pricing</div>
+                        </button>
+                        <button onclick="loadSamplePO('bioflow')" class="text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2 transition-colors text-left flex-1">
+                            <div class="font-semibold">BioFlow Systems</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Vague descriptions, fuzzy matching</div>
+                        </button>
+                        <button onclick="loadSamplePO('unknown')" class="text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2 transition-colors text-left flex-1">
+                            <div class="font-semibold">New Customer</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Unknown customer, email format</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="uc1-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+            <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0 shadow-inner">
+                <form id="uc1-form" class="max-w-2xl mx-auto flex space-x-3">
+                    <textarea id="uc1-input" rows="3" placeholder="Paste a purchase order document here, or load a sample above..."
+                           class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20 resize-none"></textarea>
+                    <button type="submit" class="bg-qblue text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-qblue-dark transition-colors self-end">
+                        Process PO
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- UC2: AP Processing Panel -->
+        <div id="panel-uc2" class="flex-1 flex flex-col min-h-0 hidden">
+            <div class="p-4 bg-green-50 border-b border-green-100 flex-shrink-0">
+                <div class="flex items-center justify-between max-w-3xl mx-auto">
+                    <div>
+                        <h2 class="text-sm font-bold text-gray-800">Use Case 2: Accounts Payable Processing</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Three-way matching &bull; Cash application &bull; Collections prioritization</p>
+                    </div>
+                    <span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Finance Department</span>
+                </div>
+            </div>
+            <div class="p-4 bg-white border-b border-gray-100 flex-shrink-0">
+                <div class="max-w-3xl mx-auto">
+                    <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Quick Actions</div>
+                    <div class="flex space-x-2">
+                        <button onclick="sendUC2('Run three-way match on all pending vendor invoices. For each invoice, compare the PO, receipt, and invoice. Create an approval for each with the match result.')"
+                            class="text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2 transition-colors text-left flex-1">
+                            <div class="font-semibold">Three-Way Match All</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">PO vs Receipt vs Invoice</div>
+                        </button>
+                        <button onclick="sendUC2('Check for any unapplied customer payments and try to match them to open invoices. Create an approval for each suggested application.')"
+                            class="text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2 transition-colors text-left flex-1">
+                            <div class="font-semibold">Cash Application</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Match payments to invoices</div>
+                        </button>
+                        <button onclick="sendUC2('Run collections prioritization. Score all overdue customer accounts by risk and recommend outreach actions. Create an approval for each.')"
+                            class="text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2 transition-colors text-left flex-1">
+                            <div class="font-semibold">Collections Priority</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Rank overdue accounts by risk</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="uc2-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+            <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0 shadow-inner">
+                <form id="uc2-form" class="max-w-2xl mx-auto flex space-x-3">
+                    <input id="uc2-input" type="text" placeholder="Ask about invoices, payments, or collections..."
+                           class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20" autocomplete="off">
+                    <button type="submit" class="bg-qblue text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-qblue-dark transition-colors">Send</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- UC3: Product Data Entry Panel -->
+        <div id="panel-uc3" class="flex-1 flex flex-col min-h-0 hidden">
+            <div class="p-4 bg-purple-50 border-b border-purple-100 flex-shrink-0">
+                <div class="flex items-center justify-between max-w-3xl mx-auto">
+                    <div>
+                        <h2 class="text-sm font-bold text-gray-800">Use Case 3: New Product Data Entry</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Paste spec sheet &rarr; AI extracts 30+ fields &rarr; Constitutional framework normalizes &rarr; Approval</p>
+                    </div>
+                    <span class="text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">Product Development</span>
+                </div>
+            </div>
+            <div class="p-4 bg-white border-b border-gray-100 flex-shrink-0">
+                <div class="max-w-3xl mx-auto">
+                    <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Load Sample Spec Sheet</div>
+                    <div class="flex space-x-2">
+                        <button onclick="loadSampleSpec('stopcock')" class="text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2 transition-colors text-left flex-1">
+                            <div class="font-semibold">New Stopcock</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Tests naming convention normalization</div>
+                        </button>
+                        <button onclick="loadSampleSpec('tubing')" class="text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2 transition-colors text-left flex-1">
+                            <div class="font-semibold">Silicone Tubing</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Imperial measurements, unit conversion</div>
+                        </button>
+                        <button onclick="loadSampleSpec('filter')" class="text-xs bg-gray-50 hover:bg-qblue hover:text-white border border-gray-200 rounded-lg px-3 py-2 transition-colors text-left flex-1">
+                            <div class="font-semibold">Hydrophilic Filter</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">European supplier, metric specs</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="uc3-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+            <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0 shadow-inner">
+                <form id="uc3-form" class="max-w-2xl mx-auto flex space-x-3">
+                    <textarea id="uc3-input" rows="3" placeholder="Paste a supplier spec sheet here, or load a sample above..."
+                           class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20 resize-none"></textarea>
+                    <button type="submit" class="bg-qblue text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-qblue-dark transition-colors self-end">
+                        Extract Fields
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Architecture Panel -->
+        <div id="panel-arch" class="flex-1 overflow-y-auto p-6 hidden">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="text-center mb-6">
+                    <h2 class="text-lg font-bold text-gray-800">Implementation Architecture</h2>
+                    <p class="text-sm text-gray-500 mt-1">Three approaches evaluated per use case. Demo built in Custom Python; diagrams show n8n and Power Platform alternatives.</p>
+                </div>
+
+                <!-- Shared Foundation -->
+                <div class="bg-white rounded-xl border border-gray-200 p-5">
+                    <h3 class="text-sm font-bold text-gray-800 mb-3">Shared Foundation (All Use Cases)</h3>
+                    <div class="grid grid-cols-4 gap-3 text-xs">
+                        <div class="bg-blue-50 rounded-lg p-3 text-center">
+                            <div class="font-bold text-qblue">LLM Provider</div>
+                            <div class="text-gray-500 mt-1">OpenRouter</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Claude &rarr; GPT-4o &rarr; Gemini</div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-3 text-center">
+                            <div class="font-bold text-green-700">Agent Framework</div>
+                            <div class="text-gray-500 mt-1">LangGraph ReAct</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Reason &rarr; Act &rarr; Observe</div>
+                        </div>
+                        <div class="bg-yellow-50 rounded-lg p-3 text-center">
+                            <div class="font-bold text-yellow-700">Approval Queue</div>
+                            <div class="text-gray-500 mt-1">Human-in-the-Loop</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Agent cannot write to SoR</div>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-3 text-center">
+                            <div class="font-bold text-purple-700">Data Layer</div>
+                            <div class="text-gray-500 mt-1">SQLite &rarr; D365 OData</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">Config change, not rewrite</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UC1 Architecture -->
+                <div class="bg-white rounded-xl border border-blue-200 p-5">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">UC1</span>
+                        <h3 class="text-sm font-bold text-gray-800">Sales Order Entry</h3>
+                        <span class="text-xs text-green-600 font-medium ml-auto">Recommendation: Hybrid (n8n + Custom Python)</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 text-xs">
+                        <div class="border border-green-300 bg-green-50 rounded-lg p-3">
+                            <div class="font-bold text-green-700 mb-1">n8n (Email Trigger)</div>
+                            <div class="text-gray-600 space-y-0.5">
+                                <div>&bull; Watch inbox for PO emails</div>
+                                <div>&bull; Extract attachments</div>
+                                <div>&bull; Route to AI webhook</div>
+                                <div>&bull; Visual flow, easy to modify</div>
+                            </div>
+                        </div>
+                        <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
+                            <div class="font-bold text-qblue mb-1">Custom Python (AI Engine)</div>
+                            <div class="text-gray-600 space-y-0.5">
+                                <div>&bull; Claude parses documents</div>
+                                <div>&bull; Fuzzy match vs 5K+ catalog</div>
+                                <div>&bull; Confidence scoring</div>
+                                <div>&bull; Full test coverage</div>
+                            </div>
+                            <div class="text-[10px] text-qblue font-medium mt-1">* Built in this demo</div>
+                        </div>
+                        <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
+                            <div class="font-bold text-gray-600 mb-1">Power Platform</div>
+                            <div class="text-gray-500 space-y-0.5">
+                                <div>&bull; AI Builder for OCR</div>
+                                <div>&bull; Power Automate approvals</div>
+                                <div>&bull; Limited fuzzy matching</div>
+                                <div class="text-orange-500">&bull; Can't use Claude natively</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UC2 Architecture -->
+                <div class="bg-white rounded-xl border border-green-200 p-5">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded">UC2</span>
+                        <h3 class="text-sm font-bold text-gray-800">AP Processing</h3>
+                        <span class="text-xs text-green-600 font-medium ml-auto">Recommendation: Power Platform + Custom Python</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 text-xs">
+                        <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
+                            <div class="font-bold text-gray-600 mb-1">n8n</div>
+                            <div class="text-gray-500 space-y-0.5">
+                                <div>&bull; Could work, but no advantage</div>
+                                <div>&bull; D365 F&O needs HTTP node</div>
+                                <div>&bull; Another system to maintain</div>
+                                <div class="text-orange-500">&bull; No native D365 F&O node</div>
+                            </div>
+                        </div>
+                        <div class="border border-green-300 bg-green-50 rounded-lg p-3">
+                            <div class="font-bold text-green-700 mb-1">Power Platform (Core)</div>
+                            <div class="text-gray-600 space-y-0.5">
+                                <div>&bull; Native D365 F&O connectors</div>
+                                <div>&bull; AI Builder invoice parsing</div>
+                                <div>&bull; Teams approval cards</div>
+                                <div>&bull; Finance team owns it</div>
+                            </div>
+                            <div class="text-[10px] text-green-600 font-medium mt-1">* Best fit for matching</div>
+                        </div>
+                        <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
+                            <div class="font-bold text-qblue mb-1">Custom Python (Intelligence)</div>
+                            <div class="text-gray-600 space-y-0.5">
+                                <div>&bull; Collections risk scoring</div>
+                                <div>&bull; Payment pattern analysis</div>
+                                <div>&bull; Claude reasoning engine</div>
+                                <div>&bull; Trend detection</div>
+                            </div>
+                            <div class="text-[10px] text-qblue font-medium mt-1">* Built in this demo</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UC3 Architecture -->
+                <div class="bg-white rounded-xl border border-purple-200 p-5">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded">UC3</span>
+                        <h3 class="text-sm font-bold text-gray-800">Product Data Entry</h3>
+                        <span class="text-xs text-green-600 font-medium ml-auto">Recommendation: Full Custom Python</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 text-xs">
+                        <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
+                            <div class="font-bold text-gray-600 mb-1">n8n</div>
+                            <div class="text-gray-500 space-y-0.5">
+                                <div>&bull; AI Agent node available</div>
+                                <div>&bull; Can call Claude</div>
+                                <div class="text-orange-500">&bull; Constitutional framework too complex</div>
+                                <div class="text-orange-500">&bull; Hard to test/validate rules</div>
+                            </div>
+                        </div>
+                        <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
+                            <div class="font-bold text-gray-600 mb-1">Power Platform</div>
+                            <div class="text-gray-500 space-y-0.5">
+                                <div>&bull; AI Builder for basic OCR</div>
+                                <div class="text-orange-500">&bull; No constitutional AI</div>
+                                <div class="text-orange-500">&bull; Can't enforce naming rules</div>
+                                <div class="text-orange-500">&bull; Not Claude-native</div>
+                            </div>
+                        </div>
+                        <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
+                            <div class="font-bold text-qblue mb-1">Custom Python (Full)</div>
+                            <div class="text-gray-600 space-y-0.5">
+                                <div>&bull; Constitutional framework in prompt</div>
+                                <div>&bull; Validation in code (belt + suspenders)</div>
+                                <div>&bull; Consistency check vs 8K SKUs</div>
+                                <div>&bull; Full Claude reasoning</div>
+                            </div>
+                            <div class="text-[10px] text-qblue font-medium mt-1">* Built in this demo</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- D365 Integration Pattern -->
+                <div class="bg-white rounded-xl border border-gray-200 p-5">
+                    <h3 class="text-sm font-bold text-gray-800 mb-3">Production Integration: SQLite &rarr; D365 F&O</h3>
+                    <div class="flex items-center justify-center space-x-3 text-xs">
+                        <div class="bg-gray-100 rounded-lg px-4 py-3 text-center">
+                            <div class="font-bold text-gray-600">Demo (Today)</div>
+                            <div class="font-mono text-[10px] text-gray-500 mt-1">SQLite query</div>
+                            <div class="font-mono text-[10px] text-gray-500">OData-formatted JSON</div>
+                        </div>
+                        <div class="text-2xl text-gray-300">&rarr;</div>
+                        <div class="bg-qblue/10 rounded-lg px-4 py-3 text-center border border-qblue/30">
+                            <div class="font-bold text-qblue">Production</div>
+                            <div class="font-mono text-[10px] text-gray-500 mt-1">HTTP GET to D365 OData</div>
+                            <div class="font-mono text-[10px] text-gray-500">Same JSON format</div>
+                        </div>
+                        <div class="text-2xl text-gray-300">&rarr;</div>
+                        <div class="bg-green-50 rounded-lg px-4 py-3 text-center border border-green-200">
+                            <div class="font-bold text-green-700">What Changes</div>
+                            <div class="font-mono text-[10px] text-gray-500 mt-1">URL + Azure AD OAuth</div>
+                            <div class="font-mono text-[10px] text-green-600 font-medium">Architecture stays identical</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Chat Panel (separate from dashboard) -->
         <div id="panel-chat" class="flex-1 flex flex-col min-h-0 hidden">
             <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
@@ -371,11 +688,14 @@
             </div>
             <div class="flex flex-wrap gap-1 px-3 py-1.5 bg-gray-50">
                 <button onclick="filterByType('all')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-qblue text-white font-medium" data-type="all">All</button>
+                <button onclick="filterByType('sales_order')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="sales_order">Sales Order</button>
+                <button onclick="filterByType('invoice_match')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="invoice_match">Invoice</button>
+                <button onclick="filterByType('payment_application')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="payment_application">Payment</button>
+                <button onclick="filterByType('collection_outreach')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="collection_outreach">Collections</button>
+                <button onclick="filterByType('product_entry')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="product_entry">Product</button>
                 <button onclick="filterByType('reorder')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="reorder">Reorder</button>
                 <button onclick="filterByType('expiry_alert')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="expiry_alert">Expiry</button>
-                <button onclick="filterByType('customer_outreach')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="customer_outreach">Outreach</button>
-                <button onclick="filterByType('draft_response')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="draft_response">Draft</button>
-                <button onclick="filterByType('general')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="general">General</button>
+                <button onclick="filterByType('general')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="general">Other</button>
             </div>
         </div>
         <div id="approval-list" class="flex-1 overflow-y-auto p-3 space-y-2">
@@ -484,7 +804,7 @@
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, conversation_id: conversationId }),
+                body: JSON.stringify({ message, conversation_id: conversationId, use_case: activeUseCase }),
             });
 
             const reader = response.body.getReader();
@@ -736,6 +1056,11 @@
             customer_outreach: { color: 'bg-blue-100 text-blue-700', border: 'border-l-blue-400', icon: 'bg-blue-500', label: 'OUTREACH' },
             expiry_alert: { color: 'bg-red-100 text-red-700', border: 'border-l-red-400', icon: 'bg-red-500', label: 'EXPIRY' },
             draft_response: { color: 'bg-purple-100 text-purple-700', border: 'border-l-purple-400', icon: 'bg-purple-500', label: 'DRAFT' },
+            sales_order: { color: 'bg-blue-100 text-blue-700', border: 'border-l-blue-500', icon: 'bg-blue-600', label: 'SALES ORDER' },
+            invoice_match: { color: 'bg-green-100 text-green-700', border: 'border-l-green-500', icon: 'bg-green-600', label: 'INVOICE' },
+            payment_application: { color: 'bg-teal-100 text-teal-700', border: 'border-l-teal-500', icon: 'bg-teal-600', label: 'PAYMENT' },
+            collection_outreach: { color: 'bg-amber-100 text-amber-700', border: 'border-l-amber-500', icon: 'bg-amber-600', label: 'COLLECTIONS' },
+            product_entry: { color: 'bg-purple-100 text-purple-700', border: 'border-l-purple-500', icon: 'bg-purple-600', label: 'PRODUCT' },
             general: { color: 'bg-gray-100 text-gray-700', border: 'border-l-gray-400', icon: 'bg-gray-500', label: 'GENERAL' },
         };
 
@@ -841,22 +1166,34 @@
 
     // --- Tab Switching ---
     let selectedItem = null;
+    let activeUseCase = 'general';
 
     window.switchTab = function(tab) {
-        document.getElementById('panel-dash').classList.toggle('hidden', tab !== 'dash');
-        document.getElementById('panel-chat').classList.toggle('hidden', tab !== 'chat');
-        document.getElementById('panel-data').classList.toggle('hidden', tab !== 'data');
-        ['tab-dash', 'tab-chat', 'tab-data'].forEach(id => {
-            const el = document.getElementById(id);
-            const active = id === 'tab-' + tab;
-            el.classList.toggle('border-qblue', active);
-            el.classList.toggle('text-qblue', active);
-            el.classList.toggle('border-transparent', !active);
-            el.classList.toggle('text-gray-500', !active);
+        const panels = ['dash', 'uc1', 'uc2', 'uc3', 'chat', 'data', 'arch'];
+        panels.forEach(p => {
+            const el = document.getElementById('panel-' + p);
+            if (el) el.classList.toggle('hidden', p !== tab);
+        });
+        panels.forEach(p => {
+            const el = document.getElementById('tab-' + p);
+            if (el) {
+                const active = p === tab;
+                el.classList.toggle('border-qblue', active);
+                el.classList.toggle('text-qblue', active);
+                el.classList.toggle('border-transparent', !active);
+                el.classList.toggle('text-gray-500', !active);
+            }
         });
         if (tab === 'data') loadDataTab('products');
         if (tab === 'chat') chatInput.focus();
         if (tab === 'dash') fetchDashboard();
+        if (tab === 'uc1') document.getElementById('uc1-input').focus();
+        if (tab === 'uc2') document.getElementById('uc2-input').focus();
+        if (tab === 'uc3') document.getElementById('uc3-input').focus();
+
+        // Map tab to use_case for routing
+        const ucMap = { uc1: 'sales_orders', uc2: 'ap_processing', uc3: 'product_data', chat: 'general' };
+        activeUseCase = ucMap[tab] || 'general';
     };
 
     window.loadDataTab = function(tab) {
@@ -1062,6 +1399,161 @@
     };
 
     function esc(str) { return escapeHtml(str || ''); }
+
+    // --- UC-specific chat helpers ---
+    function sendToUC(useCase, message, messagesContainerId) {
+        const container = document.getElementById(messagesContainerId);
+        // Add user message
+        const userDiv = document.createElement('div');
+        userDiv.className = 'flex justify-end slide-in';
+        const preview = message.length > 120 ? message.substring(0, 120) + '...' : message;
+        userDiv.innerHTML = `<div class="bg-qblue text-white rounded-2xl rounded-br-md px-4 py-2.5 max-w-[75%] text-sm shadow-sm whitespace-pre-wrap">${escapeHtml(preview)}</div>`;
+        container.appendChild(userDiv);
+
+        // Add typing indicator
+        const typing = document.createElement('div');
+        typing.className = 'flex justify-start slide-in';
+        typing.innerHTML = `<div class="flex items-start space-x-2">
+            <div class="w-7 h-7 rounded-full bg-qblue flex items-center justify-center flex-shrink-0">
+                <span class="text-white text-xs font-bold">AI</span>
+            </div>
+            <div class="bg-white rounded-2xl px-4 py-3 flex space-x-1.5 shadow-sm border border-gray-100">
+                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+            </div>
+        </div>`;
+        container.appendChild(typing);
+        container.scrollTop = container.scrollHeight;
+
+        toolFeed.innerHTML = '';
+        let aiEl = null;
+        let aiRaw = '';
+
+        fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, conversation_id: null, use_case: useCase }),
+        }).then(response => {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let evtType = null;
+
+            function read() {
+                reader.read().then(({ done, value }) => {
+                    if (done) return;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    for (const line of lines) {
+                        if (line.startsWith('event: ')) {
+                            evtType = line.slice(7).trim();
+                        } else if (line.startsWith('data: ') && evtType) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (evtType === 'token') {
+                                    if (typing.parentNode) typing.remove();
+                                    if (!aiEl) {
+                                        const aiDiv = document.createElement('div');
+                                        aiDiv.className = 'flex justify-start slide-in';
+                                        const wrapper = document.createElement('div');
+                                        wrapper.className = 'flex items-start space-x-2 max-w-[85%]';
+                                        wrapper.innerHTML = `<div class="w-7 h-7 rounded-full bg-qblue flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-white text-xs font-bold">AI</span></div>`;
+                                        aiEl = document.createElement('div');
+                                        aiEl.className = 'msg-md bg-white rounded-2xl rounded-bl-md px-4 py-3 text-sm text-gray-800 shadow-sm border border-gray-100';
+                                        wrapper.appendChild(aiEl);
+                                        aiDiv.appendChild(wrapper);
+                                        container.appendChild(aiDiv);
+                                    }
+                                    aiRaw += data.content;
+                                    aiEl.innerHTML = marked.parse(aiRaw);
+                                    container.scrollTop = container.scrollHeight;
+                                } else if (evtType === 'tool_call') {
+                                    highlightTool(data.tool, true);
+                                    addToolEntry(`&rarr; ${data.tool}`, 'text-qblue font-medium');
+                                } else if (evtType === 'tool_result') {
+                                    highlightTool(data.tool, false);
+                                    addToolEntry(`&check; ${data.tool} done`, 'text-green-600');
+                                } else if (evtType === 'approval_created') {
+                                    addToolEntry(`+ Approval: ${data.title}`, 'text-yellow-600 font-medium');
+                                    fetchApprovals();
+                                    fetchDashboard();
+                                } else if (evtType === 'error') {
+                                    if (typing.parentNode) typing.remove();
+                                    const errDiv = document.createElement('div');
+                                    errDiv.className = 'flex justify-start slide-in';
+                                    errDiv.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-2.5 max-w-[75%] text-sm">${escapeHtml(data.message)}</div>`;
+                                    container.appendChild(errDiv);
+                                } else if (evtType === 'done') {
+                                    if (typing.parentNode) typing.remove();
+                                }
+                            } catch(e) {}
+                            evtType = null;
+                        }
+                    }
+                    read();
+                });
+            }
+            read();
+        });
+    }
+
+    // UC1 form
+    document.getElementById('uc1-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = document.getElementById('uc1-input');
+        const msg = input.value.trim();
+        if (!msg) return;
+        sendToUC('sales_orders', 'Process this purchase order and create a sales order approval:\n\n' + msg, 'uc1-messages');
+        input.value = '';
+    });
+
+    // UC2 form
+    document.getElementById('uc2-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = document.getElementById('uc2-input');
+        const msg = input.value.trim();
+        if (!msg) return;
+        sendToUC('ap_processing', msg, 'uc2-messages');
+        input.value = '';
+    });
+
+    window.sendUC2 = function(msg) {
+        sendToUC('ap_processing', msg, 'uc2-messages');
+    };
+
+    // UC3 form
+    document.getElementById('uc3-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = document.getElementById('uc3-input');
+        const msg = input.value.trim();
+        if (!msg) return;
+        sendToUC('product_data', 'Extract product data from this supplier spec sheet. Apply the constitutional naming framework, validate consistency, find similar products, and create an approval:\n\n' + msg, 'uc3-messages');
+        input.value = '';
+    });
+
+    // Sample PO loading
+    const samplePOs = {
+        acme: `PURCHASE ORDER\n\nFrom: Acme Medical Devices\nAttn: Sarah Chen, Procurement Manager\nDate: March 28, 2026\nPO Number: ACME-PO-2026-0412\n\nShip To:\nAcme Medical Devices\n1200 Innovation Drive\nBoston, MA 02101\n\nPayment Terms: Net 30\n\nLine Items:\n1. Part #11195 - 1-Way Stopcock, Female Luer Lock - Qty: 500 - Unit Price: $2.57 ea\n2. Part #99720 - 2-Way Stopcock - Qty: 200 - Unit Price: $3.11 ea\n3. Part #11455 - Luer Lock Connector, Gamma Stable - Qty: 300 - Unit Price: $1.08 ea\n\nRequested Delivery: April 15, 2026\nNotes: Please include Certificate of Compliance with shipment.\nContact: Sarah Chen, schen@acmemedical.com, (617) 555-0142`,
+        bioflow: `Purchase Order #BFS-7891\n\nBioFlow Systems Inc.\n2500 Research Parkway\nAtlanta, GA 30301\n\nDate: March 30, 2026\nContact: James Rodriguez\n\nItems Requested:\n- 25 coils of 1/4" silicone tubing (50 ft each) @ $65.00\n- 100 units barbed check valve for 1/4" tubing @ $4.50\n- 200 hydrophilic filters with luer connections @ $3.50\n- 500 ratchet-style pinch clamps @ $0.65\n\nShipping: Standard Ground\nTerms: Net 30\nDeliver by: April 20, 2026`,
+        unknown: `Subject: Order Request\n\nHi Qosina team,\n\nWe'd like to place an order for the following items:\n\n- 50 units of your needleless injection site (the swabbable one with luer locks) - $6.75 each\n- 100 extension lines, 6 inch, luer lock both ends - $2.10 each\n- 25 Y-connectors with spin lock - $4.50 each\n\nWe're a new customer - Pacific Coast Medical Supplies out of San Diego. My name is Jennifer Walsh, jwalsh@pacificcoastmed.com.\n\nCan you send us a quote or confirm these prices? We'd need delivery by end of April.\n\nThanks,\nJennifer Walsh\nPurchasing Director\nPacific Coast Medical Supplies\n(858) 555-0199`,
+    };
+
+    window.loadSamplePO = function(key) {
+        document.getElementById('uc1-input').value = samplePOs[key] || '';
+    };
+
+    // Sample spec sheet loading
+    const sampleSpecs = {
+        stopcock: `SUPPLIER SPECIFICATION SHEET\n\nVendor: Precision Plastics Corp\nPart: SP-NEW-4401\nDescription: 3-way valve, luer type, PC material\n\nSpecifications:\n- Type: Three-way valve with luer connections\n- Material: PC plastic\n- Connections: M Luer Lock x F Luer Lock x F Luer Lock\n- Bore Size: 0.106" (2.69mm)\n- Max Pressure: 29 psi\n- Handle: HDPE, white\n- Seal: Silicone O-ring\n- Manufacturing: Clean room (ISO Class 8)\n- Sterilization: Gamma and EtO compatible\n- Shelf Life: 60 months (36 months post-irradiation)\n- Compliance: ISO 80369-7\n\nDimensions:\n- Overall Length: 1.5" (38.1mm)\n- OD: 0.19" (4.83mm)\n- ID: 0.106" (2.69mm)\n- Weight: 8.5g\n\nOrigin: China\nLead Time: 45 days\nMOQ: 5,000 units\nUnit Cost: $1.85\nUnits per case: 100`,
+        tubing: `PRODUCT DATA SHEET\n\nAllied Silicone Products\nCatalog #: ASP-T5050\n\nPlatinum-Cured Silicone Tubing, 50A Durometer\n\nSpecifications:\n- Material: Medical-grade silicone rubber\n- Durometer: 50A Shore\n- Inner Diameter: 3/16 inch\n- Outer Diameter: 5/16 inch\n- Wall Thickness: 1/16 inch\n- Tensile Strength: 1,200 psi\n- Elongation: 400%\n- Color: Translucent\n- Biocompatibility: USP Class VI, ISO 10993\n- Sterilization: Autoclave, Gamma, EtO\n- Temperature Range: -60C to +200C\n- Coil Length: 50 feet\n\nPackaging: 50 ft coils\nCountry of Origin: United States\nLead Time: 14-21 days\nCertification: FDA compliant, USP Class VI\nTariff Code: 3917.40`,
+        filter: `TECHNISCHES DATENBLATT / TECHNICAL DATA SHEET\n\nEuroFlex Medical GmbH\nProduct: Hydrophilic Membrane Filter\nModel: EFM-HF-022-LL\n\nTechnical Specifications:\n- Filter Media: Polyethersulfone (PES)\n- Pore Size: 0.22 micron\n- Housing Material: ABS\n- Inlet Connection: Female Luer Lock\n- Outlet Connection: Male Luer Lock\n- Effective Filtration Area: 4.5 cm2\n- Maximum Pressure: 4.0 bar (58 psi)\n- Priming Volume: 0.5 mL\n- Flow Rate (water): >40 mL/min at 1 bar\n\nDimensions:\n- Overall Length: 58.0mm\n- Maximum Diameter: 22.0mm\n- Weight: 16.0g\n\nRegulatory:\n- ISO 80369-7 compliant\n- ISO 13485 manufactured\n- CE marked (MDR 2017/745)\n- Biocompatibility per ISO 10993-1\n\nSterilization: Gamma irradiation, EtO\nShelf Life: 60 months\nCountry of Origin: Germany\nMOQ: 500 units\nUnit Price: EUR 2.80`,
+    };
+
+    window.loadSampleSpec = function(key) {
+        document.getElementById('uc3-input').value = sampleSpecs[key] || '';
+    };
 
     fetchStats();
     fetchApprovals();

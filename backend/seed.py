@@ -289,8 +289,249 @@ def seed():
             orders
         )
 
+        # --- UC1: Customer Pricing (contracted rates for premium customers) ---
+        customer_pricing = [
+            # CUST-001 (Acme Medical) — 10% discount on stopcocks, 5% on connectors
+            ("CUST-001", "11195", 2.57, 10, "2025-01-01", "2026-12-31"),
+            ("CUST-001", "99720", 3.11, 10, "2025-01-01", "2026-12-31"),
+            ("CUST-001", "99722", 4.68, 10, "2025-01-01", "2026-12-31"),
+            ("CUST-001", "11455", 1.08, 10, "2025-01-01", "2026-12-31"),
+            ("CUST-001", "99740", 2.79, 10, "2025-01-01", "2026-12-31"),
+            # CUST-002 (BioFlow) — catalog prices (no special discount)
+            ("CUST-002", "T1006", 65.00, 0, "2025-01-01", "2026-12-31"),
+            ("CUST-002", "91050", 4.50, 0, "2025-01-01", "2026-12-31"),
+            ("CUST-002", "28213", 3.50, 0, "2025-01-01", "2026-12-31"),
+            # CUST-005 (Atlantic Bioprocess) — 5% discount on tubing
+            ("CUST-005", "T4306", 30.40, 5, "2025-01-01", "2026-12-31"),
+            ("CUST-005", "T1006", 61.75, 5, "2025-01-01", "2026-12-31"),
+        ]
+
+        conn.executemany(
+            """INSERT INTO customer_pricing
+               (customer_id, item_id, contracted_price, discount_pct, effective_date, expiry_date)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            customer_pricing
+        )
+
+        # --- UC2: Vendors ---
+        vendors = [
+            ("VEND-001", "Precision Plastics Corp", "Mike Johnson", "Net 30", "Domestic"),
+            ("VEND-002", "SinoMed Components Ltd", "Wei Zhang", "Net 60", "Asia Pacific"),
+            ("VEND-003", "EuroFlex Medical GmbH", "Hans Mueller", "Net 30", "Europe"),
+            ("VEND-004", "Allied Silicone Products", "Karen White", "Net 45", "Domestic"),
+            ("VEND-005", "TechValve International", "Raj Patel", "Net 30", "Asia Pacific"),
+        ]
+
+        conn.executemany(
+            "INSERT INTO vendors VALUES (?, ?, ?, ?, ?)",
+            vendors
+        )
+
+        # --- UC2: Purchase Orders ---
+        purchase_orders = [
+            ("PO-2026-001", "VEND-001", "2026-02-15", "2026-03-15", "confirmed", 5700.00),
+            ("PO-2026-002", "VEND-002", "2026-02-20", "2026-03-25", "confirmed", 2250.00),
+            ("PO-2026-003", "VEND-003", "2026-03-01", "2026-04-01", "confirmed", 3500.00),
+            ("PO-2026-004", "VEND-004", "2026-03-05", "2026-04-10", "confirmed", 6500.00),
+            ("PO-2026-005", "VEND-005", "2026-03-10", "2026-04-15", "confirmed", 1975.00),
+        ]
+
+        conn.executemany(
+            "INSERT INTO purchase_orders VALUES (?, ?, ?, ?, ?, ?)",
+            purchase_orders
+        )
+
+        # --- UC2: PO Lines ---
+        po_lines = [
+            # PO-001: stopcocks from Precision Plastics
+            ("PO-2026-001", "11195", 1000, 2.85, 2850.00),
+            ("PO-2026-001", "99720", 500, 3.45, 1725.00),
+            ("PO-2026-001", "99740", 400, 2.81, 1125.00),
+            # PO-002: connectors from SinoMed
+            ("PO-2026-002", "11096", 5000, 0.45, 2250.00),
+            # PO-003: filters from EuroFlex
+            ("PO-2026-003", "28213", 500, 3.50, 1750.00),
+            ("PO-2026-003", "28217", 500, 3.25, 1625.00),
+            # PO-004: tubing from Allied Silicone
+            ("PO-2026-004", "T1006", 100, 65.00, 6500.00),
+            # PO-005: valves from TechValve
+            ("PO-2026-005", "80071", 500, 3.95, 1975.00),
+        ]
+
+        conn.executemany(
+            "INSERT INTO po_lines (po_number, item_id, quantity_ordered, unit_price, line_total) VALUES (?, ?, ?, ?, ?)",
+            po_lines
+        )
+
+        # --- UC2: Receipts (some with discrepancies) ---
+        receipts = [
+            ("REC-2026-001", "PO-2026-001", "2026-03-14", "Bob Martinez"),
+            ("REC-2026-002", "PO-2026-002", "2026-03-24", "Lisa Park"),
+            ("REC-2026-003", "PO-2026-003", "2026-03-30", "Bob Martinez"),
+            ("REC-2026-004", "PO-2026-004", "2026-04-08", "Lisa Park"),
+            ("REC-2026-005", "PO-2026-005", "2026-04-14", "Bob Martinez"),
+        ]
+
+        conn.executemany(
+            "INSERT INTO receipts VALUES (?, ?, ?, ?)",
+            receipts
+        )
+
+        # --- UC2: Receipt Lines (intentional discrepancies) ---
+        receipt_lines = [
+            # PO-001: received 1000, 500, 400 — PERFECT MATCH
+            ("REC-2026-001", "11195", 1000, "LOT-2026-0401"),
+            ("REC-2026-001", "99720", 500, "LOT-2026-0402"),
+            ("REC-2026-001", "99740", 400, "LOT-2026-0403"),
+            # PO-002: ordered 5000, received 4980 — SHORT SHIPMENT (20 units)
+            ("REC-2026-002", "11096", 4980, "LOT-2026-0404"),
+            # PO-003: PERFECT MATCH
+            ("REC-2026-003", "28213", 500, "LOT-2026-0405"),
+            ("REC-2026-003", "28217", 500, "LOT-2026-0406"),
+            # PO-004: ordered 100 coils, received 100 — PERFECT MATCH
+            ("REC-2026-004", "T1006", 100, "LOT-2026-0407"),
+            # PO-005: ordered 500, received 480 — SHORT SHIPMENT (20 units)
+            ("REC-2026-005", "80071", 480, "LOT-2026-0408"),
+        ]
+
+        conn.executemany(
+            "INSERT INTO receipt_lines (receipt_id, item_id, quantity_received, lot_number) VALUES (?, ?, ?, ?)",
+            receipt_lines
+        )
+
+        # --- UC2: Vendor Invoices (some with discrepancies) ---
+        vendor_invoices = [
+            # INV-001: matches PO-001 PERFECTLY
+            ("VINV-2026-001", "VEND-001", "PO-2026-001", "2026-03-16", "2026-04-15", 5700.00, "pending", "unmatched"),
+            # INV-002: PO was $2250, but invoice has PENNY DISCREPANCY ($0.03 over from rounding)
+            ("VINV-2026-002", "VEND-002", "PO-2026-002", "2026-03-26", "2026-05-25", 2250.03, "pending", "unmatched"),
+            # INV-003: matches PO-003 PERFECTLY
+            ("VINV-2026-003", "VEND-003", "PO-2026-003", "2026-04-01", "2026-05-01", 3375.00, "pending", "unmatched"),
+            # INV-004: matches PO-004 PERFECTLY
+            ("VINV-2026-004", "VEND-004", "PO-2026-004", "2026-04-10", "2026-05-25", 6500.00, "pending", "unmatched"),
+            # INV-005: invoiced for 500 units but only 480 received — QUANTITY MISMATCH
+            ("VINV-2026-005", "VEND-005", "PO-2026-005", "2026-04-16", "2026-05-16", 1975.00, "pending", "unmatched"),
+        ]
+
+        conn.executemany(
+            "INSERT INTO vendor_invoices VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            vendor_invoices
+        )
+
+        # --- UC2: Invoice Lines ---
+        invoice_lines = [
+            # INV-001: perfect match
+            ("VINV-2026-001", "11195", 1000, 2.85, 2850.00),
+            ("VINV-2026-001", "99720", 500, 3.45, 1725.00),
+            ("VINV-2026-001", "99740", 400, 2.8125, 1125.00),  # penny rounding
+            # INV-002: penny discrepancy — 5000 x $0.45 = $2250.00, invoice says $2250.03
+            ("VINV-2026-002", "11096", 5000, 0.450006, 2250.03),
+            # INV-003: matches PO-003 (vendor adjusted to received qty for 28217 credit)
+            ("VINV-2026-003", "28213", 500, 3.50, 1750.00),
+            ("VINV-2026-003", "28217", 500, 3.25, 1625.00),
+            # INV-004: perfect
+            ("VINV-2026-004", "T1006", 100, 65.00, 6500.00),
+            # INV-005: billed for 500 but only 480 received
+            ("VINV-2026-005", "80071", 500, 3.95, 1975.00),
+        ]
+
+        conn.executemany(
+            "INSERT INTO invoice_lines (invoice_id, item_id, quantity_invoiced, unit_price, line_total) VALUES (?, ?, ?, ?, ?)",
+            invoice_lines
+        )
+
+        # --- UC2: Customer Invoices (AR - money owed TO Qosina) ---
+        customer_invoices = [
+            # CUST-001: 3 invoices, will be fully paid
+            ("CINV-2026-001", "CUST-001", "2026-01-20", "2026-02-19", 1425.00, 1425.00, "paid"),
+            ("CINV-2026-002", "CUST-001", "2026-02-15", "2026-03-17", 2115.00, 2115.00, "paid"),
+            ("CINV-2026-003", "CUST-001", "2026-03-12", "2026-04-11", 2137.50, 0, "open"),
+            # CUST-002: 2 invoices, one paid, one open
+            ("CINV-2026-004", "CUST-002", "2026-01-15", "2026-02-14", 1750.00, 1750.00, "paid"),
+            ("CINV-2026-005", "CUST-002", "2026-02-22", "2026-03-24", 1025.00, 0, "open"),
+            # CUST-003: overdue invoices (churn risk customer)
+            ("CINV-2026-006", "CUST-003", "2025-11-10", "2025-12-10", 1012.50, 0, "overdue"),
+            ("CINV-2026-007", "CUST-003", "2026-01-12", "2026-02-11", 337.50, 0, "overdue"),
+            # CUST-004: one open, paid on time historically
+            ("CINV-2026-008", "CUST-004", "2026-03-18", "2026-04-17", 420.00, 0, "open"),
+            # CUST-005: large balances, mostly current
+            ("CINV-2026-009", "CUST-005", "2026-01-10", "2026-02-09", 2600.00, 2600.00, "paid"),
+            ("CINV-2026-010", "CUST-005", "2026-02-18", "2026-03-20", 3212.50, 3212.50, "paid"),
+            ("CINV-2026-011", "CUST-005", "2026-03-20", "2026-04-19", 650.00, 0, "open"),
+            # CUST-006: overdue — 13 months of silence
+            ("CINV-2026-012", "CUST-006", "2025-03-05", "2025-04-04", 867.50, 0, "overdue"),
+        ]
+
+        conn.executemany(
+            "INSERT INTO customer_invoices VALUES (?, ?, ?, ?, ?, ?, ?)",
+            customer_invoices
+        )
+
+        # --- UC2: Payments ---
+        payments = [
+            # CUST-001: pays on time
+            ("PAY-2026-001", "CUST-001", "2026-02-18", 1425.00, "Wire Ref 88201", "CINV-2026-001", "applied"),
+            ("PAY-2026-002", "CUST-001", "2026-03-15", 2115.00, "Wire Ref 88415", "CINV-2026-002", "applied"),
+            # CUST-002: paid first invoice
+            ("PAY-2026-003", "CUST-002", "2026-02-12", 1750.00, "Check #4521", "CINV-2026-004", "applied"),
+            # CUST-005: good payer
+            ("PAY-2026-004", "CUST-005", "2026-02-08", 2600.00, "ACH Ref 90112", "CINV-2026-009", "applied"),
+            ("PAY-2026-005", "CUST-005", "2026-03-19", 3212.50, "ACH Ref 90445", "CINV-2026-010", "applied"),
+            # UNAPPLIED payment — $1,345.00 from CUST-003, doesn't exactly match either invoice
+            ("PAY-2026-006", "CUST-003", "2026-03-28", 1345.00, "Check #7892", None, "unapplied"),
+        ]
+
+        conn.executemany(
+            "INSERT INTO payments VALUES (?, ?, ?, ?, ?, ?, ?)",
+            payments
+        )
+
+        # --- UC3: Extended product fields ---
+        product_extended = [
+            ("11195", 2.69, 4.83, 38.1, 8.5, "Clear/White", "+/- 0.05mm", "Gamma, EtO", "ISO 10993", "China", "SP-11195-A", "9018.90", 100, 45, "VEND-001"),
+            ("99720", 2.69, 4.83, 42.0, 10.2, "Clear/White", "+/- 0.05mm", "Gamma, EtO", "ISO 10993", "China", "SP-99720-A", "9018.90", 50, 45, "VEND-001"),
+            ("91050", 6.35, 12.7, 50.8, 12.0, "Clear", "+/- 0.10mm", "Gamma, EtO, Autoclave", "ISO 10993", "USA", "SP-91050-A", "9018.90", 50, 14, "VEND-005"),
+            ("T1006", 6.35, 9.53, None, None, "Clear", "+/- 0.25mm", "Gamma, EtO, Autoclave", "ISO 10993, USP Class VI", "USA", "SP-T1006-A", "3917.40", 1, 21, "VEND-004"),
+            ("28213", None, None, 55.0, 15.0, "White/Clear", "+/- 0.10mm", "Gamma, EtO", "ISO 10993", "Germany", "SP-28213-A", "8421.29", 50, 60, "VEND-003"),
+            ("80147", 2.76, 15.0, 45.0, 18.0, "Clear/Blue", "+/- 0.05mm", "Gamma, EtO", "ISO 10993", "China", "SP-80147-A", "9018.90", 25, 45, "VEND-001"),
+        ]
+
+        conn.executemany(
+            """INSERT INTO product_extended VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            product_extended
+        )
+
+        # --- UC3: Naming Conventions (Constitutional Framework) ---
+        naming_conventions = [
+            ("product_name", "format", "[Type], [Connection 1], [Connection 2]", "1-Way Stopcock, Female Luer Lock, Male Luer Lock", "stopcock 1 way luer"),
+            ("material", "full_name_with_abbrev", "Full Name (Abbreviation)", "Polycarbonate (PC)", "PC"),
+            ("material", "full_name_with_abbrev", "Full Name (Abbreviation)", "High-Density Polyethylene (HDPE)", "HDPE plastic"),
+            ("material", "full_name_with_abbrev", "Full Name (Abbreviation)", "Polyvinyl Chloride (PVC)", "PVC plastic"),
+            ("material", "full_name_with_abbrev", "Full Name (Abbreviation)", "Polypropylene (PP)", "PP"),
+            ("material", "full_name_with_abbrev", "Full Name (Abbreviation)", "Silicone", "silicone rubber"),
+            ("connection_type", "iso_terminology", "Male/Female Luer Lock/Slip per ISO 80369-7", "Male Luer Lock", "M Luer"),
+            ("connection_type", "iso_terminology", "Male/Female Luer Lock/Slip per ISO 80369-7", "Female Luer Lock", "F Luer Lock"),
+            ("connection_type", "iso_terminology", "Male/Female Luer Lock/Slip per ISO 80369-7", "Male Luer Slip", "male luer slip"),
+            ("dimension", "millimeters", "Always in mm, format: X.Xmm", "2.69mm", '0.106"'),
+            ("dimension", "millimeters", "Always in mm, format: X.Xmm", "4.83mm", "4.83 millimeters"),
+            ("category", "qosina_taxonomy", "Use existing Qosina categories", "Stopcocks & Manifolds", "Valves"),
+            ("category", "qosina_taxonomy", "Use existing Qosina categories", "Connectors", "Fittings"),
+            ("category", "qosina_taxonomy", "Use existing Qosina categories", "Clamps & Clips", "Clamps"),
+            ("product_type", "qosina_naming", "valve with luer connections = Stopcock", "Stopcock", "Valve"),
+            ("product_type", "qosina_naming", "fitting with luer = Connector", "Connector", "Fitting"),
+        ]
+
+        conn.executemany(
+            "INSERT INTO naming_conventions (field_name, rule_type, pattern, example_correct, example_incorrect) VALUES (?, ?, ?, ?, ?)",
+            naming_conventions
+        )
+
     print(f"Seeded database: {len(products)} products, {len(inventory)} inventory lots, "
           f"{len(customers)} customers, {len(orders)} orders, {len(compatibility)} compatibility records.")
+    print(f"  UC1: {len(customer_pricing)} customer pricing records")
+    print(f"  UC2: {len(vendors)} vendors, {len(purchase_orders)} POs, {len(receipts)} receipts, "
+          f"{len(vendor_invoices)} vendor invoices, {len(customer_invoices)} customer invoices, {len(payments)} payments")
+    print(f"  UC3: {len(product_extended)} extended product records, {len(naming_conventions)} naming convention rules")
 
 
 if __name__ == "__main__":

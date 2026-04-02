@@ -1,9 +1,10 @@
 """LangGraph ReAct agent setup for Qosina Enterprise AI Assistant."""
 
 import json
-from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
+
+from backend.shared.llm_provider import get_model
 
 from backend.tools import (
     search_products as _search_products,
@@ -178,5 +179,5 @@ TOOLS = [
 
 def create_agent():
     """Create and return the LangGraph ReAct agent."""
-    model = ChatAnthropic(model="claude-sonnet-4-20250514", temperature=0)
+    model = get_model()
     return create_react_agent(model, tools=TOOLS, prompt=SYSTEM_PROMPT)

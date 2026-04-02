@@ -14,7 +14,7 @@ from langchain_core.messages import HumanMessage
 
 from backend.models import ChatRequest, ApprovalUpdate
 from backend.database import init_db, get_db
-from backend.agent import create_agent
+from backend.agent import create_agent as create_general_agent
 
 app = FastAPI(title="Qosina Enterprise AI Assistant")
 
@@ -28,16 +28,34 @@ app.add_middleware(
 # Store conversation histories in memory (sufficient for demo)
 conversations: dict[str, list] = {}
 
+# Agent registry — lazily initialized per use case
+_agents: dict[str, object] = {}
+
+
+def get_agent(use_case: str):
+    """Get or create the agent for a given use case."""
+    if use_case not in _agents:
+        if use_case == "sales_orders":
+            from backend.use_case_1.agent import create_uc1_agent
+            _agents[use_case] = create_uc1_agent()
+        elif use_case == "ap_processing":
+            from backend.use_case_2.agent import create_uc2_agent
+            _agents[use_case] = create_uc2_agent()
+        elif use_case == "product_data":
+            from backend.use_case_3.agent import create_uc3_agent
+            _agents[use_case] = create_uc3_agent()
+        else:
+            _agents[use_case] = create_general_agent()
+    return _agents[use_case]
+
+
 # Initialize database on startup
 @app.on_event("startup")
 def startup():
     init_db()
 
-# Create agent once
-agent = create_agent()
 
-
-async def stream_agent_response(message: str, conversation_id: str) -> AsyncGenerator[dict, None]:
+async def stream_agent_response(agent, message: str, conversation_id: str) -> AsyncGenerator[dict, None]:
     """Run the agent and yield SSE events."""
     if conversation_id not in conversations:
         conversations[conversation_id] = []
@@ -124,9 +142,11 @@ async def stream_agent_response(message: str, conversation_id: str) -> AsyncGene
 async def chat(request: ChatRequest):
     """SSE streaming chat endpoint."""
     conversation_id = request.conversation_id or str(uuid.uuid4())
+    use_case = request.use_case or "general"
+    agent = get_agent(use_case)
 
     async def event_generator():
-        async for event in stream_agent_response(request.message, conversation_id):
+        async for event in stream_agent_response(agent, request.message, conversation_id):
             yield event
 
     return EventSourceResponse(event_generator())
