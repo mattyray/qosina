@@ -247,32 +247,30 @@
                     <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">CX Department</span>
                 </div>
             </div>
-            <div id="uc1-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
-            <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0 shadow-inner">
-                <div class="max-w-2xl mx-auto">
-                    <!-- File upload drop zone -->
-                    <div id="uc1-dropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-3 mb-3 text-center cursor-pointer hover:border-qblue hover:bg-blue-50/30 transition-colors"
-                         onclick="document.getElementById('uc1-file').click()"
-                         ondragover="event.preventDefault(); this.classList.add('border-qblue','bg-blue-50')"
-                         ondragleave="this.classList.remove('border-qblue','bg-blue-50')"
-                         ondrop="event.preventDefault(); this.classList.remove('border-qblue','bg-blue-50'); handleFileDrop(event, 'uc1')">
-                        <input type="file" id="uc1-file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(this, 'uc1')">
-                        <div id="uc1-file-label" class="text-xs text-gray-400">
-                            <span class="font-medium text-gray-500">Drop a PO file here</span> (PDF, image, photo of handwritten PO) or click to browse
-                        </div>
-                    </div>
-                    <div class="flex space-x-3">
-                        <textarea id="uc1-input" rows="3" placeholder="...or paste PO text here, or load a sample above"
-                               class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20 resize-none"></textarea>
-                        <div class="flex flex-col space-y-2 self-end">
-                            <button type="button" onclick="submitUC1Text()" class="bg-qblue text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-qblue-dark transition-colors">
-                                Process Text
-                            </button>
-                            <button type="button" id="uc1-upload-btn" onclick="submitUC1File()" class="bg-green-600 text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors hidden">
-                                Process File
-                            </button>
-                        </div>
-                    </div>
+            <div id="uc1-messages" class="flex-1 overflow-y-auto p-6 space-y-4"
+                 ondragover="event.preventDefault(); this.classList.add('ring-2','ring-qblue','ring-inset')"
+                 ondragleave="this.classList.remove('ring-2','ring-qblue','ring-inset')"
+                 ondrop="event.preventDefault(); this.classList.remove('ring-2','ring-qblue','ring-inset'); ucDrop(event,'uc1')">
+            </div>
+            <div id="uc1-file-chip" class="hidden px-4 py-1 bg-blue-50 border-t border-blue-100 flex-shrink-0">
+                <div class="max-w-2xl mx-auto flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-qblue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                    <span id="uc1-file-name" class="text-xs text-qblue font-medium truncate"></span>
+                    <button onclick="clearUCFile('uc1')" class="text-gray-400 hover:text-red-500 text-xs font-bold">&times;</button>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 p-3 bg-white flex-shrink-0">
+                <div class="max-w-2xl mx-auto flex items-end space-x-2">
+                    <input type="file" id="uc1-file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" onchange="ucFileSelect(this,'uc1')">
+                    <button onclick="document.getElementById('uc1-file').click()" class="p-2 text-gray-400 hover:text-qblue transition-colors" title="Attach file">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                    </button>
+                    <input id="uc1-input" type="text" placeholder="Type a message, paste text, or drop a file..."
+                           class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20" autocomplete="off"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();ucSend('uc1')}">
+                    <button onclick="ucSend('uc1')" class="bg-qblue text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-qblue-dark transition-colors">
+                        Send
+                    </button>
                 </div>
             </div>
         </div>
@@ -310,28 +308,30 @@
                     </div>
                 </div>
             </div>
-            <div id="uc2-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
-            <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0 shadow-inner">
-                <div class="max-w-2xl mx-auto">
-                    <!-- File upload drop zone for vendor invoices / remittances -->
-                    <div id="uc2-dropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-3 mb-3 text-center cursor-pointer hover:border-green-400 hover:bg-green-50/30 transition-colors"
-                         onclick="document.getElementById('uc2-file').click()"
-                         ondragover="event.preventDefault(); this.classList.add('border-green-400','bg-green-50')"
-                         ondragleave="this.classList.remove('border-green-400','bg-green-50')"
-                         ondrop="event.preventDefault(); this.classList.remove('border-green-400','bg-green-50'); handleFileDrop(event, 'uc2')">
-                        <input type="file" id="uc2-file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(this, 'uc2')">
-                        <div id="uc2-file-label" class="text-xs text-gray-400">
-                            <span class="font-medium text-gray-500">Drop a vendor invoice or payment remittance here</span> (PDF, image) or click to browse
-                        </div>
-                    </div>
-                    <div class="flex space-x-3">
-                        <input id="uc2-input" type="text" placeholder="Ask about invoices, payments, or collections..."
-                               class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20" autocomplete="off">
-                        <button type="button" onclick="submitUC2Text()" class="bg-qblue text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-qblue-dark transition-colors">Send</button>
-                        <button type="button" id="uc2-upload-btn" onclick="submitUC2File()" class="bg-green-600 text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors hidden">
-                            Process File
-                        </button>
-                    </div>
+            <div id="uc2-messages" class="flex-1 overflow-y-auto p-6 space-y-4"
+                 ondragover="event.preventDefault(); this.classList.add('ring-2','ring-green-500','ring-inset')"
+                 ondragleave="this.classList.remove('ring-2','ring-green-500','ring-inset')"
+                 ondrop="event.preventDefault(); this.classList.remove('ring-2','ring-green-500','ring-inset'); ucDrop(event,'uc2')">
+            </div>
+            <div id="uc2-file-chip" class="hidden px-4 py-1 bg-green-50 border-t border-green-100 flex-shrink-0">
+                <div class="max-w-2xl mx-auto flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                    <span id="uc2-file-name" class="text-xs text-green-700 font-medium truncate"></span>
+                    <button onclick="clearUCFile('uc2')" class="text-gray-400 hover:text-red-500 text-xs font-bold">&times;</button>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 p-3 bg-white flex-shrink-0">
+                <div class="max-w-2xl mx-auto flex items-end space-x-2">
+                    <input type="file" id="uc2-file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" onchange="ucFileSelect(this,'uc2')">
+                    <button onclick="document.getElementById('uc2-file').click()" class="p-2 text-gray-400 hover:text-green-600 transition-colors" title="Attach file">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                    </button>
+                    <input id="uc2-input" type="text" placeholder="Type a message, or drop a vendor invoice / remittance..."
+                           class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20" autocomplete="off"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();ucSend('uc2')}">
+                    <button onclick="ucSend('uc2')" class="bg-qblue text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-qblue-dark transition-colors">
+                        Send
+                    </button>
                 </div>
             </div>
         </div>
@@ -347,32 +347,30 @@
                     <span class="text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">Product Development</span>
                 </div>
             </div>
-            <div id="uc3-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
-            <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0 shadow-inner">
-                <div class="max-w-2xl mx-auto">
-                    <!-- File upload drop zone -->
-                    <div id="uc3-dropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-3 mb-3 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/30 transition-colors"
-                         onclick="document.getElementById('uc3-file').click()"
-                         ondragover="event.preventDefault(); this.classList.add('border-purple-400','bg-purple-50')"
-                         ondragleave="this.classList.remove('border-purple-400','bg-purple-50')"
-                         ondrop="event.preventDefault(); this.classList.remove('border-purple-400','bg-purple-50'); handleFileDrop(event, 'uc3')">
-                        <input type="file" id="uc3-file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(this, 'uc3')">
-                        <div id="uc3-file-label" class="text-xs text-gray-400">
-                            <span class="font-medium text-gray-500">Drop a spec sheet here</span> (PDF, image, catalog page) or click to browse
-                        </div>
-                    </div>
-                    <div class="flex space-x-3">
-                        <textarea id="uc3-input" rows="3" placeholder="...or paste spec sheet text here, or load a sample above"
-                               class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20 resize-none"></textarea>
-                        <div class="flex flex-col space-y-2 self-end">
-                            <button type="button" onclick="submitUC3Text()" class="bg-qblue text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-qblue-dark transition-colors">
-                                Process Text
-                            </button>
-                            <button type="button" id="uc3-upload-btn" onclick="submitUC3File()" class="bg-green-600 text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors hidden">
-                                Process File
-                            </button>
-                        </div>
-                    </div>
+            <div id="uc3-messages" class="flex-1 overflow-y-auto p-6 space-y-4"
+                 ondragover="event.preventDefault(); this.classList.add('ring-2','ring-purple-500','ring-inset')"
+                 ondragleave="this.classList.remove('ring-2','ring-purple-500','ring-inset')"
+                 ondrop="event.preventDefault(); this.classList.remove('ring-2','ring-purple-500','ring-inset'); ucDrop(event,'uc3')">
+            </div>
+            <div id="uc3-file-chip" class="hidden px-4 py-1 bg-purple-50 border-t border-purple-100 flex-shrink-0">
+                <div class="max-w-2xl mx-auto flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                    <span id="uc3-file-name" class="text-xs text-purple-700 font-medium truncate"></span>
+                    <button onclick="clearUCFile('uc3')" class="text-gray-400 hover:text-red-500 text-xs font-bold">&times;</button>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 p-3 bg-white flex-shrink-0">
+                <div class="max-w-2xl mx-auto flex items-end space-x-2">
+                    <input type="file" id="uc3-file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" onchange="ucFileSelect(this,'uc3')">
+                    <button onclick="document.getElementById('uc3-file').click()" class="p-2 text-gray-400 hover:text-purple-600 transition-colors" title="Attach file">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                    </button>
+                    <input id="uc3-input" type="text" placeholder="Type a message, paste text, or drop a spec sheet..."
+                           class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20" autocomplete="off"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();ucSend('uc3')}">
+                    <button onclick="ucSend('uc3')" class="bg-qblue text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-qblue-dark transition-colors">
+                        Send
+                    </button>
                 </div>
             </div>
         </div>
@@ -1534,38 +1532,73 @@
         });
     }
 
-    // --- File upload handling ---
-    let pendingFiles = { uc1: null, uc2: null, uc3: null };
+    // --- Unified UC input: text + file in one bar ---
+    let ucFiles = { uc1: null, uc2: null, uc3: null };
+    const ucMap = { uc1: 'sales_orders', uc2: 'ap_processing', uc3: 'product_data' };
 
-    window.handleFileDrop = function(event, uc) {
-        const file = event.dataTransfer.files[0];
-        if (file) setFile(uc, file);
-    };
-
-    window.handleFileSelect = function(input, uc) {
+    window.ucFileSelect = function(input, uc) {
         const file = input.files[0];
-        if (file) setFile(uc, file);
+        if (file) {
+            ucFiles[uc] = file;
+            document.getElementById(uc + '-file-name').textContent = file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
+            document.getElementById(uc + '-file-chip').classList.remove('hidden');
+        }
     };
 
-    function setFile(uc, file) {
-        pendingFiles[uc] = file;
-        const label = document.getElementById(uc + '-file-label');
-        label.innerHTML = `<span class="font-medium text-green-600">Selected: ${escapeHtml(file.name)}</span> (${(file.size / 1024).toFixed(0)} KB)`;
-        document.getElementById(uc + '-upload-btn').classList.remove('hidden');
-    }
+    window.ucDrop = function(event, uc) {
+        const file = event.dataTransfer.files[0];
+        if (file) {
+            ucFiles[uc] = file;
+            document.getElementById(uc + '-file-name').textContent = file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
+            document.getElementById(uc + '-file-chip').classList.remove('hidden');
+        }
+    };
 
-    function uploadFile(uc, useCase, messagesContainerId) {
-        const file = pendingFiles[uc];
-        if (!file) return;
+    window.clearUCFile = function(uc) {
+        ucFiles[uc] = null;
+        document.getElementById(uc + '-file-chip').classList.add('hidden');
+        document.getElementById(uc + '-file').value = '';
+    };
 
-        const container = document.getElementById(messagesContainerId);
-        // Show user message
-        const userDiv = document.createElement('div');
-        userDiv.className = 'flex justify-end slide-in';
-        userDiv.innerHTML = `<div class="bg-qblue text-white rounded-2xl rounded-br-md px-4 py-2.5 max-w-[75%] text-sm shadow-sm">Uploaded: ${escapeHtml(file.name)}</div>`;
-        container.appendChild(userDiv);
+    window.ucSend = function(uc) {
+        const input = document.getElementById(uc + '-input');
+        const msg = input.value.trim();
+        const file = ucFiles[uc];
+        const useCase = ucMap[uc];
+        const container = document.getElementById(uc + '-messages');
 
-        // Typing indicator
+        if (!msg && !file) return;
+
+        // If file attached, upload it (with optional text prompt)
+        if (file) {
+            // Show user message
+            const label = msg ? msg + ' [+ ' + file.name + ']' : 'Uploaded: ' + file.name;
+            const userDiv = document.createElement('div');
+            userDiv.className = 'flex justify-end slide-in';
+            userDiv.innerHTML = `<div class="bg-qblue text-white rounded-2xl rounded-br-md px-4 py-2.5 max-w-[75%] text-sm shadow-sm">${escapeHtml(label)}</div>`;
+            container.appendChild(userDiv);
+
+            const typing = addTypingTo(container);
+            toolFeed.innerHTML = '';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('use_case', useCase);
+            if (msg) formData.append('prompt', msg);
+
+            streamUpload(formData, container, typing);
+
+            input.value = '';
+            clearUCFile(uc);
+            return;
+        }
+
+        // Text only
+        input.value = '';
+        sendToUC(useCase, msg, uc + '-messages');
+    };
+
+    function addTypingTo(container) {
         const typing = document.createElement('div');
         typing.className = 'flex justify-start slide-in';
         typing.innerHTML = `<div class="flex items-start space-x-2">
@@ -1580,12 +1613,10 @@
         </div>`;
         container.appendChild(typing);
         container.scrollTop = container.scrollHeight;
-        toolFeed.innerHTML = '';
+        return typing;
+    }
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('use_case', useCase);
-
+    function streamUpload(formData, container, typing) {
         let aiEl = null;
         let aiRaw = '';
 
@@ -1651,50 +1682,12 @@
             }
             read();
         });
-
-        // Reset
-        pendingFiles[uc] = null;
-        document.getElementById(uc + '-file-label').innerHTML = `<span class="font-medium text-gray-500">Drop a file here</span> or click to browse`;
-        document.getElementById(uc + '-upload-btn').classList.add('hidden');
-        document.getElementById(uc + '-file').value = '';
     }
 
-    // UC1 text and file submit
-    window.submitUC1Text = function() {
-        const input = document.getElementById('uc1-input');
-        const msg = input.value.trim();
-        if (!msg) return;
-        sendToUC('sales_orders', 'Process this purchase order and create a sales order approval:\n\n' + msg, 'uc1-messages');
-        input.value = '';
-    };
-    window.submitUC1File = function() { uploadFile('uc1', 'sales_orders', 'uc1-messages'); };
-
-    // UC2 text, file, and quick action submit
-    window.submitUC2Text = function() {
-        const input = document.getElementById('uc2-input');
-        const msg = input.value.trim();
-        if (!msg) return;
-        sendToUC('ap_processing', msg, 'uc2-messages');
-        input.value = '';
-    };
-    // Also handle Enter key in the input
-    document.getElementById('uc2-input').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); submitUC2Text(); }
-    });
-    window.submitUC2File = function() { uploadFile('uc2', 'ap_processing', 'uc2-messages'); };
+    // UC2 quick action buttons still use text
     window.sendUC2 = function(msg) {
         sendToUC('ap_processing', msg, 'uc2-messages');
     };
-
-    // UC3 text and file submit
-    window.submitUC3Text = function() {
-        const input = document.getElementById('uc3-input');
-        const msg = input.value.trim();
-        if (!msg) return;
-        sendToUC('product_data', 'Extract product data from this supplier spec sheet. Apply the constitutional naming framework, validate consistency, find similar products, and create an approval:\n\n' + msg, 'uc3-messages');
-        input.value = '';
-    };
-    window.submitUC3File = function() { uploadFile('uc3', 'product_data', 'uc3-messages'); };
 
     // Sample PO loading
     const samplePOs = {
