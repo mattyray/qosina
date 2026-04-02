@@ -2,10 +2,11 @@
 
 import json
 import uuid
+import base64
 from datetime import datetime
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -55,8 +56,8 @@ def startup():
     init_db()
 
 
-async def stream_agent_response(agent, message: str, conversation_id: str) -> AsyncGenerator[dict, None]:
-    """Run the agent and yield SSE events."""
+async def stream_agent_response(agent, message, conversation_id: str) -> AsyncGenerator[dict, None]:
+    """Run the agent and yield SSE events. message can be str or list (multimodal content blocks)."""
     if conversation_id not in conversations:
         conversations[conversation_id] = []
 
@@ -147,6 +148,69 @@ async def chat(request: ChatRequest):
 
     async def event_generator():
         async for event in stream_agent_response(agent, request.message, conversation_id):
+            yield event
+
+    return EventSourceResponse(event_generator())
+
+
+@app.post("/api/upload")
+async def upload_file(
+    file: UploadFile = File(...),
+    use_case: str = Form("general"),
+    prompt: str = Form(""),
+):
+    """Upload a file (PDF, image) for AI processing. Returns SSE stream."""
+    conversation_id = str(uuid.uuid4())
+    agent = get_agent(use_case)
+
+    file_bytes = await file.read()
+    b64 = base64.b64encode(file_bytes).decode("utf-8")
+
+    # Determine media type
+    filename = (file.filename or "").lower()
+    is_pdf = filename.endswith(".pdf")
+
+    if is_pdf:
+        media_type = "image/png"
+    elif filename.endswith((".jpg", ".jpeg")):
+        media_type = "image/jpeg"
+    elif filename.endswith(".png"):
+        media_type = "image/png"
+    elif filename.endswith(".gif"):
+        media_type = "image/gif"
+    elif filename.endswith(".webp"):
+        media_type = "image/webp"
+    else:
+        media_type = "image/png"
+
+    # Build multimodal message: text prompt + document/image
+    uc_prompts = {
+        "sales_orders": "Process this purchase order document. Extract all fields, match the customer, match the products against our catalog, validate pricing, and create a sales order approval.",
+        "product_data": "Extract product data from this supplier document. Apply the Qosina constitutional naming framework, validate consistency against our catalog, find similar products, and create a product entry approval.",
+    }
+    text_prompt = prompt or uc_prompts.get(use_case, "Analyze this document and extract all relevant information.")
+
+    # For PDFs, render each page to an image
+    if is_pdf:
+        from backend.pdf_utils import pdf_to_images
+        page_images = pdf_to_images(file_bytes)
+        content_blocks = [{"type": "text", "text": text_prompt}]
+        for page_b64 in page_images:
+            content_blocks.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:image/png;base64,{page_b64}"},
+            })
+    else:
+        content_blocks = [
+            {"type": "text", "text": text_prompt},
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:{media_type};base64,{b64}"},
+            },
+        ]
+
+    async def event_generator():
+        async for event in stream_agent_response(agent, content_blocks, conversation_id):
             yield event
 
     return EventSourceResponse(event_generator())

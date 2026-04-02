@@ -338,13 +338,31 @@
             </div>
             <div id="uc1-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
             <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0 shadow-inner">
-                <form id="uc1-form" class="max-w-2xl mx-auto flex space-x-3">
-                    <textarea id="uc1-input" rows="3" placeholder="Paste a purchase order document here, or load a sample above..."
-                           class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20 resize-none"></textarea>
-                    <button type="submit" class="bg-qblue text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-qblue-dark transition-colors self-end">
-                        Process PO
-                    </button>
-                </form>
+                <div class="max-w-2xl mx-auto">
+                    <!-- File upload drop zone -->
+                    <div id="uc1-dropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-3 mb-3 text-center cursor-pointer hover:border-qblue hover:bg-blue-50/30 transition-colors"
+                         onclick="document.getElementById('uc1-file').click()"
+                         ondragover="event.preventDefault(); this.classList.add('border-qblue','bg-blue-50')"
+                         ondragleave="this.classList.remove('border-qblue','bg-blue-50')"
+                         ondrop="event.preventDefault(); this.classList.remove('border-qblue','bg-blue-50'); handleFileDrop(event, 'uc1')">
+                        <input type="file" id="uc1-file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(this, 'uc1')">
+                        <div id="uc1-file-label" class="text-xs text-gray-400">
+                            <span class="font-medium text-gray-500">Drop a PO file here</span> (PDF, image, photo of handwritten PO) or click to browse
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <textarea id="uc1-input" rows="3" placeholder="...or paste PO text here, or load a sample above"
+                               class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20 resize-none"></textarea>
+                        <div class="flex flex-col space-y-2 self-end">
+                            <button type="button" onclick="submitUC1Text()" class="bg-qblue text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-qblue-dark transition-colors">
+                                Process Text
+                            </button>
+                            <button type="button" id="uc1-upload-btn" onclick="submitUC1File()" class="bg-green-600 text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors hidden">
+                                Process File
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -423,13 +441,31 @@
             </div>
             <div id="uc3-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
             <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0 shadow-inner">
-                <form id="uc3-form" class="max-w-2xl mx-auto flex space-x-3">
-                    <textarea id="uc3-input" rows="3" placeholder="Paste a supplier spec sheet here, or load a sample above..."
-                           class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20 resize-none"></textarea>
-                    <button type="submit" class="bg-qblue text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-qblue-dark transition-colors self-end">
-                        Extract Fields
-                    </button>
-                </form>
+                <div class="max-w-2xl mx-auto">
+                    <!-- File upload drop zone -->
+                    <div id="uc3-dropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-3 mb-3 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/30 transition-colors"
+                         onclick="document.getElementById('uc3-file').click()"
+                         ondragover="event.preventDefault(); this.classList.add('border-purple-400','bg-purple-50')"
+                         ondragleave="this.classList.remove('border-purple-400','bg-purple-50')"
+                         ondrop="event.preventDefault(); this.classList.remove('border-purple-400','bg-purple-50'); handleFileDrop(event, 'uc3')">
+                        <input type="file" id="uc3-file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(this, 'uc3')">
+                        <div id="uc3-file-label" class="text-xs text-gray-400">
+                            <span class="font-medium text-gray-500">Drop a spec sheet here</span> (PDF, image, catalog page) or click to browse
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <textarea id="uc3-input" rows="3" placeholder="...or paste spec sheet text here, or load a sample above"
+                               class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20 resize-none"></textarea>
+                        <div class="flex flex-col space-y-2 self-end">
+                            <button type="button" onclick="submitUC3Text()" class="bg-qblue text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-qblue-dark transition-colors">
+                                Process Text
+                            </button>
+                            <button type="button" id="uc3-upload-btn" onclick="submitUC3File()" class="bg-green-600 text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors hidden">
+                                Process File
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1499,15 +1535,140 @@
         });
     }
 
-    // UC1 form
-    document.getElementById('uc1-form').addEventListener('submit', (e) => {
-        e.preventDefault();
+    // --- File upload handling ---
+    let pendingFiles = { uc1: null, uc3: null };
+
+    window.handleFileDrop = function(event, uc) {
+        const file = event.dataTransfer.files[0];
+        if (file) setFile(uc, file);
+    };
+
+    window.handleFileSelect = function(input, uc) {
+        const file = input.files[0];
+        if (file) setFile(uc, file);
+    };
+
+    function setFile(uc, file) {
+        pendingFiles[uc] = file;
+        const label = document.getElementById(uc + '-file-label');
+        label.innerHTML = `<span class="font-medium text-green-600">Selected: ${escapeHtml(file.name)}</span> (${(file.size / 1024).toFixed(0)} KB)`;
+        document.getElementById(uc + '-upload-btn').classList.remove('hidden');
+    }
+
+    function uploadFile(uc, useCase, messagesContainerId) {
+        const file = pendingFiles[uc];
+        if (!file) return;
+
+        const container = document.getElementById(messagesContainerId);
+        // Show user message
+        const userDiv = document.createElement('div');
+        userDiv.className = 'flex justify-end slide-in';
+        userDiv.innerHTML = `<div class="bg-qblue text-white rounded-2xl rounded-br-md px-4 py-2.5 max-w-[75%] text-sm shadow-sm">Uploaded: ${escapeHtml(file.name)}</div>`;
+        container.appendChild(userDiv);
+
+        // Typing indicator
+        const typing = document.createElement('div');
+        typing.className = 'flex justify-start slide-in';
+        typing.innerHTML = `<div class="flex items-start space-x-2">
+            <div class="w-7 h-7 rounded-full bg-qblue flex items-center justify-center flex-shrink-0">
+                <span class="text-white text-xs font-bold">AI</span>
+            </div>
+            <div class="bg-white rounded-2xl px-4 py-3 flex space-x-1.5 shadow-sm border border-gray-100">
+                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+            </div>
+        </div>`;
+        container.appendChild(typing);
+        container.scrollTop = container.scrollHeight;
+        toolFeed.innerHTML = '';
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('use_case', useCase);
+
+        let aiEl = null;
+        let aiRaw = '';
+
+        fetch('/api/upload', { method: 'POST', body: formData }).then(response => {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let evtType = null;
+
+            function read() {
+                reader.read().then(({ done, value }) => {
+                    if (done) return;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    for (const line of lines) {
+                        if (line.startsWith('event: ')) {
+                            evtType = line.slice(7).trim();
+                        } else if (line.startsWith('data: ') && evtType) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (evtType === 'token') {
+                                    if (typing.parentNode) typing.remove();
+                                    if (!aiEl) {
+                                        const aiDiv = document.createElement('div');
+                                        aiDiv.className = 'flex justify-start slide-in';
+                                        const wrapper = document.createElement('div');
+                                        wrapper.className = 'flex items-start space-x-2 max-w-[85%]';
+                                        wrapper.innerHTML = `<div class="w-7 h-7 rounded-full bg-qblue flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-white text-xs font-bold">AI</span></div>`;
+                                        aiEl = document.createElement('div');
+                                        aiEl.className = 'msg-md bg-white rounded-2xl rounded-bl-md px-4 py-3 text-sm text-gray-800 shadow-sm border border-gray-100';
+                                        wrapper.appendChild(aiEl);
+                                        aiDiv.appendChild(wrapper);
+                                        container.appendChild(aiDiv);
+                                    }
+                                    aiRaw += data.content;
+                                    aiEl.innerHTML = marked.parse(aiRaw);
+                                    container.scrollTop = container.scrollHeight;
+                                } else if (evtType === 'tool_call') {
+                                    highlightTool(data.tool, true);
+                                    addToolEntry(`&rarr; ${data.tool}`, 'text-qblue font-medium');
+                                } else if (evtType === 'tool_result') {
+                                    highlightTool(data.tool, false);
+                                    addToolEntry(`&check; ${data.tool} done`, 'text-green-600');
+                                } else if (evtType === 'approval_created') {
+                                    addToolEntry(`+ Approval: ${data.title}`, 'text-yellow-600 font-medium');
+                                    fetchApprovals(); fetchDashboard();
+                                } else if (evtType === 'error') {
+                                    if (typing.parentNode) typing.remove();
+                                    const errDiv = document.createElement('div');
+                                    errDiv.className = 'flex justify-start slide-in';
+                                    errDiv.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-2.5 max-w-[75%] text-sm">${escapeHtml(data.message)}</div>`;
+                                    container.appendChild(errDiv);
+                                } else if (evtType === 'done') {
+                                    if (typing.parentNode) typing.remove();
+                                }
+                            } catch(e) {}
+                            evtType = null;
+                        }
+                    }
+                    read();
+                });
+            }
+            read();
+        });
+
+        // Reset
+        pendingFiles[uc] = null;
+        document.getElementById(uc + '-file-label').innerHTML = `<span class="font-medium text-gray-500">Drop a file here</span> or click to browse`;
+        document.getElementById(uc + '-upload-btn').classList.add('hidden');
+        document.getElementById(uc + '-file').value = '';
+    }
+
+    // UC1 text and file submit
+    window.submitUC1Text = function() {
         const input = document.getElementById('uc1-input');
         const msg = input.value.trim();
         if (!msg) return;
         sendToUC('sales_orders', 'Process this purchase order and create a sales order approval:\n\n' + msg, 'uc1-messages');
         input.value = '';
-    });
+    };
+    window.submitUC1File = function() { uploadFile('uc1', 'sales_orders', 'uc1-messages'); };
 
     // UC2 form
     document.getElementById('uc2-form').addEventListener('submit', (e) => {
@@ -1523,15 +1684,15 @@
         sendToUC('ap_processing', msg, 'uc2-messages');
     };
 
-    // UC3 form
-    document.getElementById('uc3-form').addEventListener('submit', (e) => {
-        e.preventDefault();
+    // UC3 text and file submit
+    window.submitUC3Text = function() {
         const input = document.getElementById('uc3-input');
         const msg = input.value.trim();
         if (!msg) return;
         sendToUC('product_data', 'Extract product data from this supplier spec sheet. Apply the constitutional naming framework, validate consistency, find similar products, and create an approval:\n\n' + msg, 'uc3-messages');
         input.value = '';
-    });
+    };
+    window.submitUC3File = function() { uploadFile('uc3', 'product_data', 'uc3-messages'); };
 
     // Sample PO loading
     const samplePOs = {
