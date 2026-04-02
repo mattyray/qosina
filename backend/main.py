@@ -128,12 +128,14 @@ async def stream_agent_response(agent, message, conversation_id: str) -> AsyncGe
 
     except Exception as e:
         error_str = str(e)
+        import traceback
+        traceback.print_exc()
         if "overloaded" in error_str.lower() or "rate" in error_str.lower() or "529" in error_str:
             friendly = "Claude is temporarily busy. Please wait a moment and try again."
         elif "auth" in error_str.lower() or "api_key" in error_str.lower() or "401" in error_str:
             friendly = "API authentication error. Please check the API key configuration."
         else:
-            friendly = "Something went wrong. Please try again."
+            friendly = f"Something went wrong: {error_str[:200]}"
         yield {"event": "error", "data": json.dumps({"message": friendly})}
 
     yield {"event": "done", "data": json.dumps({"conversation_id": conversation_id})}

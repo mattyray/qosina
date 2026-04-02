@@ -16,7 +16,7 @@ def get_model(temperature: float = 0):
     """
     if os.getenv("USE_OPENROUTER", "true").lower() == "true":
         return ChatOpenAI(
-            model=os.getenv("PRIMARY_MODEL", "anthropic/claude-sonnet-4-20250514"),
+            model=os.getenv("PRIMARY_MODEL", "anthropic/claude-sonnet-4"),
             base_url="https://openrouter.ai/api/v1",
             api_key=os.getenv("OPENROUTER_API_KEY"),
             temperature=temperature,
