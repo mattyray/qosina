@@ -1027,14 +1027,11 @@
             const reviewer = a.reviewed_by
                 ? `<div class="text-[10px] text-gray-400 mt-1">by ${escapeHtml(a.reviewed_by)}</div>` : '';
 
-            // Format content
-            const formattedContent = escapeHtml(a.content)
+            // Format content — render markdown then highlight domain terms
+            const formattedContent = marked.parse(a.content || '')
                 .replace(/(#\d{4,5}|Part\s*#?\d{4,5})/g, '<strong class="text-qblue">$1</strong>')
                 .replace(/(CUST-\d{3})/g, '<strong class="text-qblue">$1</strong>')
-                .replace(/(LOT-[\w-]+)/g, '<span class="font-mono text-gray-500">$1</span>')
-                .replace(/(\d+\s*units?)/gi, '<strong>$1</strong>')
-                .replace(/\n/g, '<br>')
-                .replace(/- /g, '<br>&bull; ');
+                .replace(/(LOT-[\w-]+)/g, '<span class="font-mono text-gray-500">$1</span>');
 
             div.innerHTML = `
                 <div class="${statusBorder} border-l-4 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-white border border-gray-200">
@@ -1054,7 +1051,7 @@
                         </div>
                     </div>
                     <div id="${cardId}-detail" class="px-3 pb-3">
-                        <div class="text-[11px] text-gray-600 leading-relaxed bg-gray-50 rounded p-2">${formattedContent}</div>
+                        <div class="msg-md text-[11px] text-gray-600 leading-relaxed bg-gray-50 rounded p-2">${formattedContent}</div>
                         ${reviewer}
                         ${buttons}
                     </div>
