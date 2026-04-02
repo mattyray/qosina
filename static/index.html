@@ -1536,23 +1536,47 @@
     let ucFiles = { uc1: null, uc2: null, uc3: null };
     const ucMap = { uc1: 'sales_orders', uc2: 'ap_processing', uc3: 'product_data' };
 
+    function attachFile(uc, file) {
+        ucFiles[uc] = file;
+        document.getElementById(uc + '-file-name').textContent = file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
+        document.getElementById(uc + '-file-chip').classList.remove('hidden');
+    }
+
     window.ucFileSelect = function(input, uc) {
-        const file = input.files[0];
-        if (file) {
-            ucFiles[uc] = file;
-            document.getElementById(uc + '-file-name').textContent = file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
-            document.getElementById(uc + '-file-chip').classList.remove('hidden');
-        }
+        if (input.files[0]) attachFile(uc, input.files[0]);
     };
 
     window.ucDrop = function(event, uc) {
-        const file = event.dataTransfer.files[0];
-        if (file) {
-            ucFiles[uc] = file;
-            document.getElementById(uc + '-file-name').textContent = file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
-            document.getElementById(uc + '-file-chip').classList.remove('hidden');
-        }
+        if (event.dataTransfer.files[0]) attachFile(uc, event.dataTransfer.files[0]);
     };
+
+    // Wire up paste (Cmd+V image) and drop on the input fields too
+    ['uc1', 'uc2', 'uc3'].forEach(uc => {
+        const input = document.getElementById(uc + '-input');
+        if (!input) return;
+
+        // Paste image from clipboard
+        input.addEventListener('paste', (e) => {
+            const items = (e.clipboardData || {}).items || [];
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    if (file) attachFile(uc, new File([file], 'pasted-image.png', { type: file.type }));
+                    return;
+                }
+            }
+            // If not an image, let normal text paste happen
+        });
+
+        // Prevent drop on input from inserting filename as text
+        input.addEventListener('dragover', (e) => e.preventDefault());
+        input.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.dataTransfer.files[0]) attachFile(uc, e.dataTransfer.files[0]);
+        });
+    });
 
     window.clearUCFile = function(uc) {
         ucFiles[uc] = null;
