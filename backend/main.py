@@ -232,21 +232,30 @@ def get_approvals():
 
 @app.patch("/api/approvals/{approval_id}")
 def update_approval(approval_id: int, update: ApprovalUpdate):
-    """Approve or reject an approval queue item."""
-    if update.status not in ("approved", "rejected"):
-        raise HTTPException(400, "Status must be 'approved' or 'rejected'")
+    """Approve, reject, or revert an approval queue item."""
+    if update.status not in ("approved", "rejected", "pending"):
+        raise HTTPException(400, "Status must be 'approved', 'rejected', or 'pending'")
 
     now = datetime.now().isoformat()
 
     with get_db() as conn:
-        result = conn.execute(
-            """UPDATE approval_queue
-               SET status = ?, reviewed_by = ?, reviewed_at = ?
-               WHERE id = ? AND status = 'pending'""",
-            (update.status, update.reviewed_by, now, approval_id)
-        )
+        if update.status == "pending":
+            # Undo — move back to pending
+            result = conn.execute(
+                """UPDATE approval_queue
+                   SET status = 'pending', reviewed_by = NULL, reviewed_at = NULL
+                   WHERE id = ?""",
+                (approval_id,)
+            )
+        else:
+            result = conn.execute(
+                """UPDATE approval_queue
+                   SET status = ?, reviewed_by = ?, reviewed_at = ?
+                   WHERE id = ? AND status = 'pending'""",
+                (update.status, update.reviewed_by, now, approval_id)
+            )
         if result.rowcount == 0:
-            raise HTTPException(404, "Approval not found or already reviewed")
+            raise HTTPException(404, "Approval not found")
 
         row = conn.execute(
             "SELECT * FROM approval_queue WHERE id = ?", (approval_id,)

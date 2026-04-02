@@ -630,16 +630,8 @@
                     Rejected <span id="filter-rejected-count" class="text-gray-400 ml-0.5"></span>
                 </button>
             </div>
-            <div class="flex flex-wrap gap-1 px-3 py-1.5 bg-gray-50">
-                <button onclick="filterByType('all')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-qblue text-white font-medium" data-type="all">All</button>
-                <button onclick="filterByType('sales_order')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="sales_order">Sales Order</button>
-                <button onclick="filterByType('invoice_match')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="invoice_match">Invoice</button>
-                <button onclick="filterByType('payment_application')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="payment_application">Payment</button>
-                <button onclick="filterByType('collection_outreach')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="collection_outreach">Collections</button>
-                <button onclick="filterByType('product_entry')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="product_entry">Product</button>
-                <button onclick="filterByType('reorder')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="reorder">Reorder</button>
-                <button onclick="filterByType('expiry_alert')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="expiry_alert">Expiry</button>
-                <button onclick="filterByType('general')" class="type-chip text-[10px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium" data-type="general">Other</button>
+            <div id="approval-tab-label" class="px-3 py-1 bg-gray-50 text-[10px] text-gray-400 font-medium">
+                Showing: All approvals
             </div>
         </div>
         <div id="approval-list" class="flex-1 overflow-y-auto p-3 space-y-2">
@@ -913,19 +905,7 @@
     // --- Approvals ---
     let allApprovals = [];
     let currentFilter = 'pending';
-    let currentTypeFilter = 'all';
-
-    window.filterByType = function(type) {
-        currentTypeFilter = type;
-        document.querySelectorAll('.type-chip').forEach(el => {
-            const active = el.dataset.type === type;
-            el.classList.toggle('bg-qblue', active);
-            el.classList.toggle('text-white', active);
-            el.classList.toggle('bg-gray-200', !active);
-            el.classList.toggle('text-gray-600', !active);
-        });
-        renderFilteredApprovals();
-    };
+    let currentTabTypes = null; // null = show all, array = filter to these types
 
     async function fetchApprovals() {
         try {
@@ -938,7 +918,10 @@
 
     function updateApprovalCounts() {
         const counts = { pending: 0, approved: 0, rejected: 0 };
-        allApprovals.forEach(a => counts[a.status] = (counts[a.status] || 0) + 1);
+        const tabFiltered = currentTabTypes
+            ? allApprovals.filter(a => currentTabTypes.includes(a.recommendation_type))
+            : allApprovals;
+        tabFiltered.forEach(a => counts[a.status] = (counts[a.status] || 0) + 1);
 
         document.getElementById('filter-pending-count').textContent = counts.pending || '';
         document.getElementById('filter-approved-count').textContent = counts.approved ? `(${counts.approved})` : '';
@@ -971,8 +954,8 @@
 
     function renderFilteredApprovals() {
         let filtered = allApprovals.filter(a => a.status === currentFilter);
-        if (currentTypeFilter !== 'all') {
-            filtered = filtered.filter(a => a.recommendation_type === currentTypeFilter);
+        if (currentTabTypes) {
+            filtered = filtered.filter(a => currentTabTypes.includes(a.recommendation_type));
         }
         approvalList.querySelectorAll('.approval-card').forEach(el => el.remove());
 
@@ -1016,13 +999,22 @@
             const tc = typeConfig[a.recommendation_type] || typeConfig.general;
             const statusBorder = a.status === 'pending' ? tc.border : a.status === 'approved' ? 'border-l-green-500' : 'border-l-red-500';
 
-            const buttons = a.status === 'pending' ? `
+            let buttons = '';
+            if (a.status === 'pending') {
+                buttons = `
                 <div class="flex space-x-2 mt-2 pt-2 border-t border-gray-100">
                     <button onclick="event.stopPropagation(); handleApproval(${a.id}, 'approved')"
                             class="flex-1 bg-green-600 text-white text-[11px] py-1.5 rounded hover:bg-green-700 font-medium transition-colors">Approve</button>
                     <button onclick="event.stopPropagation(); handleApproval(${a.id}, 'rejected')"
                             class="flex-1 bg-gray-200 text-gray-700 text-[11px] py-1.5 rounded hover:bg-red-500 hover:text-white font-medium transition-colors">Reject</button>
-                </div>` : '';
+                </div>`;
+            } else {
+                buttons = `
+                <div class="flex space-x-2 mt-2 pt-2 border-t border-gray-100">
+                    <button onclick="event.stopPropagation(); handleApproval(${a.id}, 'pending')"
+                            class="flex-1 bg-yellow-100 text-yellow-800 text-[11px] py-1.5 rounded hover:bg-yellow-200 font-medium transition-colors">Undo &mdash; Move to Pending</button>
+                </div>`;
+            }
 
             const reviewer = a.reviewed_by
                 ? `<div class="text-[10px] text-gray-400 mt-1">by ${escapeHtml(a.reviewed_by)}</div>` : '';
@@ -1136,8 +1128,28 @@
         const ucMap = { uc1: 'sales_orders', uc2: 'ap_processing', uc3: 'product_data', chat: 'general' };
         activeUseCase = ucMap[tab] || 'general';
 
-        // Update tools panel for this tab
+        // Update tools panel and approval filter for this tab
         updateToolsPanel(tab);
+
+        // Auto-filter approvals by tab
+        const tabTypeMap = {
+            dash: null,        // show all
+            chat: null,        // show all
+            data: null,        // show all
+            arch: null,        // show all
+            uc1: ['sales_order'],
+            uc2: ['invoice_match', 'payment_application', 'collection_outreach'],
+            uc3: ['product_entry'],
+        };
+        currentTabTypes = tabTypeMap[tab] || null;
+        const labels = {
+            dash: 'All approvals', chat: 'All approvals', data: 'All approvals', arch: 'All approvals',
+            uc1: 'Sales Order approvals', uc2: 'AP Processing approvals', uc3: 'Product Data approvals',
+        };
+        const labelEl = document.getElementById('approval-tab-label');
+        if (labelEl) labelEl.textContent = 'Showing: ' + (labels[tab] || 'All approvals');
+        updateApprovalCounts();
+        renderFilteredApprovals();
     };
 
     function updateToolsPanel(tab) {
