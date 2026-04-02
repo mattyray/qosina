@@ -117,78 +117,8 @@
             <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Agent Tools</h2>
             <p class="text-[10px] text-gray-400 mt-0.5">Tools light up when the AI uses them</p>
         </div>
-        <div class="flex-1 overflow-y-auto p-3 space-y-1">
-            <!-- Read-Only Section -->
-            <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest px-1 pt-1 pb-0.5">Read-Only (6 tools)</div>
-            <div class="tool-item rounded-lg p-2 bg-blue-50 border border-blue-100" data-tool="search_products">
-                <div class="flex items-center space-x-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0"></span>
-                    <span class="text-xs font-medium text-gray-700">Search Products</span>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-0.5 ml-4">Name, category, material, connection type</p>
-            </div>
-            <div class="tool-item rounded-lg p-2 bg-green-50 border border-green-100" data-tool="check_inventory">
-                <div class="flex items-center space-x-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0"></span>
-                    <span class="text-xs font-medium text-gray-700">Check Inventory</span>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-0.5 ml-4">Stock levels, lot #s, expiration, location</p>
-            </div>
-            <div class="tool-item rounded-lg p-2 bg-purple-50 border border-purple-100" data-tool="find_compatible_parts">
-                <div class="flex items-center space-x-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0"></span>
-                    <span class="text-xs font-medium text-gray-700">Find Compatible Parts</span>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-0.5 ml-4">ISO 80369-7 luer connections, barbed fits</p>
-            </div>
-            <div class="tool-item rounded-lg p-2 bg-orange-50 border border-orange-100" data-tool="check_expiring_inventory">
-                <div class="flex items-center space-x-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500 flex-shrink-0"></span>
-                    <span class="text-xs font-medium text-gray-700">Expiring Inventory</span>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-0.5 ml-4">Lots approaching expiry (FDA traceability)</p>
-            </div>
-            <div class="tool-item rounded-lg p-2 bg-red-50 border border-red-100" data-tool="check_low_stock">
-                <div class="flex items-center space-x-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0"></span>
-                    <span class="text-xs font-medium text-gray-700">Low Stock Alerts</span>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-0.5 ml-4">Parts below reorder point threshold</p>
-            </div>
-            <div class="tool-item rounded-lg p-2 bg-indigo-50 border border-indigo-100" data-tool="get_customer_order_history">
-                <div class="flex items-center space-x-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0"></span>
-                    <span class="text-xs font-medium text-gray-700">Customer Order History</span>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-0.5 ml-4">Purchase patterns, volume, revenue</p>
-            </div>
-
-            <!-- Write Section -->
-            <div class="border-t border-gray-200 mt-2 pt-2">
-                <div class="text-[9px] font-bold text-yellow-600 uppercase tracking-widest px-1 pb-0.5">Write Action (1 tool)</div>
-                <div class="tool-item rounded-lg p-2 bg-yellow-50 border-2 border-yellow-300" data-tool="create_approval">
-                    <div class="flex items-center space-x-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 flex-shrink-0"></span>
-                        <span class="text-xs font-medium text-gray-700">Create Approval</span>
-                    </div>
-                    <p class="text-[10px] text-gray-500 mt-0.5 ml-4">Sends recommendation to approval queue</p>
-                    <div class="mt-1.5 ml-4 space-y-0.5">
-                        <p class="text-[9px] text-gray-400">Generates 5 types:</p>
-                        <div class="flex flex-wrap gap-1 mt-0.5">
-                            <span class="bg-orange-100 text-orange-700 text-[8px] font-medium px-1.5 py-0.5 rounded">reorder</span>
-                            <span class="bg-blue-100 text-blue-700 text-[8px] font-medium px-1.5 py-0.5 rounded">outreach</span>
-                            <span class="bg-red-100 text-red-700 text-[8px] font-medium px-1.5 py-0.5 rounded">expiry alert</span>
-                            <span class="bg-purple-100 text-purple-700 text-[8px] font-medium px-1.5 py-0.5 rounded">draft response</span>
-                            <span class="bg-gray-100 text-gray-600 text-[8px] font-medium px-1.5 py-0.5 rounded">general</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Architecture Note -->
-            <div class="border-t border-gray-200 mt-2 pt-2 px-1">
-                <p class="text-[9px] text-gray-400 leading-relaxed">The agent <strong class="text-gray-500">cannot</strong> modify products, inventory, or customer records. It can only read data and submit recommendations. This is enforced architecturally — there are no write tools.</p>
-            </div>
+        <div id="tools-panel" class="flex-1 overflow-y-auto p-3 space-y-1">
+            <!-- Populated dynamically per tab -->
         </div>
         <!-- Tool Activity Log -->
         <div class="border-t border-gray-200">
@@ -1246,7 +1176,89 @@
         // Map tab to use_case for routing
         const ucMap = { uc1: 'sales_orders', uc2: 'ap_processing', uc3: 'product_data', chat: 'general' };
         activeUseCase = ucMap[tab] || 'general';
+
+        // Update tools panel for this tab
+        updateToolsPanel(tab);
     };
+
+    function updateToolsPanel(tab) {
+        const panel = document.getElementById('tools-panel');
+        const toolsets = {
+            dash: {
+                label: 'General Agent', color: 'blue',
+                read: [
+                    { name: 'search_products', label: 'Search Products', desc: 'Name, category, material, connection type', color: 'blue' },
+                    { name: 'check_inventory', label: 'Check Inventory', desc: 'Stock levels, lot #s, expiration, location', color: 'green' },
+                    { name: 'find_compatible_parts', label: 'Find Compatible Parts', desc: 'ISO 80369-7 luer connections, barbed fits', color: 'purple' },
+                    { name: 'check_expiring_inventory', label: 'Expiring Inventory', desc: 'Lots approaching expiry (FDA traceability)', color: 'orange' },
+                    { name: 'check_low_stock', label: 'Low Stock Alerts', desc: 'Parts below reorder point threshold', color: 'red' },
+                    { name: 'get_customer_order_history', label: 'Customer Order History', desc: 'Purchase patterns, volume, revenue', color: 'indigo' },
+                ],
+            },
+            uc1: {
+                label: 'Sales Order Agent', color: 'blue',
+                read: [
+                    { name: 'match_customer', label: 'Match Customer', desc: 'Fuzzy match against customer master data', color: 'blue' },
+                    { name: 'match_products', label: 'Match Products', desc: 'Fuzzy match descriptions to 5,000+ SKU catalog', color: 'green' },
+                    { name: 'validate_pricing', label: 'Validate Pricing', desc: 'Check contracted rates vs catalog prices', color: 'purple' },
+                    { name: 'check_inventory', label: 'Check Inventory', desc: 'Verify stock availability per part', color: 'orange' },
+                    { name: 'get_sample_pos', label: 'Get Sample POs', desc: 'Load demo purchase order documents', color: 'gray' },
+                ],
+            },
+            uc2: {
+                label: 'AP Processing Agent', color: 'green',
+                read: [
+                    { name: 'get_vendor_invoices', label: 'Get Vendor Invoices', desc: 'List all pending vendor invoices', color: 'blue' },
+                    { name: 'three_way_match', label: 'Three-Way Match', desc: 'PO vs Receipt vs Invoice comparison', color: 'green' },
+                    { name: 'get_unapplied_payments', label: 'Get Unapplied Payments', desc: 'Payments needing cash application', color: 'purple' },
+                    { name: 'match_payment', label: 'Match Payment', desc: 'Match payment to open invoices', color: 'orange' },
+                    { name: 'score_collections', label: 'Score Collections', desc: 'Rank overdue accounts by risk', color: 'red' },
+                ],
+            },
+            uc3: {
+                label: 'Product Data Agent', color: 'purple',
+                read: [
+                    { name: 'get_naming_conventions', label: 'Get Naming Conventions', desc: 'Load constitutional framework rules', color: 'blue' },
+                    { name: 'find_similar_products', label: 'Find Similar Products', desc: 'Find existing catalog entries for consistency', color: 'green' },
+                    { name: 'validate_consistency', label: 'Validate Consistency', desc: 'Check fields against rules + catalog patterns', color: 'purple' },
+                    { name: 'get_sample_spec_sheets', label: 'Get Sample Specs', desc: 'Load demo supplier spec sheets', color: 'gray' },
+                ],
+            },
+        };
+
+        const ts = toolsets[tab] || toolsets.dash;
+        let html = `<div class="text-[9px] font-bold text-${ts.color}-600 uppercase tracking-widest px-1 pt-1 pb-1">${ts.label} &mdash; Read-Only (${ts.read.length} tools)</div>`;
+
+        ts.read.forEach(t => {
+            html += `<div class="tool-item rounded-lg p-2 bg-${t.color}-50 border border-${t.color}-100" data-tool="${t.name}">
+                <div class="flex items-center space-x-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-${t.color}-500 flex-shrink-0"></span>
+                    <span class="text-xs font-medium text-gray-700">${t.label}</span>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-0.5 ml-4">${t.desc}</p>
+            </div>`;
+        });
+
+        html += `<div class="border-t border-gray-200 mt-2 pt-2">
+            <div class="text-[9px] font-bold text-yellow-600 uppercase tracking-widest px-1 pb-0.5">Write Action (1 tool)</div>
+            <div class="tool-item rounded-lg p-2 bg-yellow-50 border-2 border-yellow-300" data-tool="create_approval">
+                <div class="flex items-center space-x-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 flex-shrink-0"></span>
+                    <span class="text-xs font-medium text-gray-700">Create Approval</span>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-0.5 ml-4">Sends recommendation to approval queue</p>
+            </div>
+        </div>`;
+
+        html += `<div class="border-t border-gray-200 mt-2 pt-2 px-1">
+            <p class="text-[9px] text-gray-400 leading-relaxed">The agent <strong class="text-gray-500">cannot</strong> modify products, inventory, or customer records. It can only read data and submit recommendations.</p>
+        </div>`;
+
+        panel.innerHTML = html;
+    }
+
+    // Initialize tools panel for dashboard
+    updateToolsPanel('dash');
 
     window.loadDataTab = function(tab) {
         document.querySelectorAll('.data-tab').forEach(el => {
