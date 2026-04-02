@@ -188,6 +188,7 @@ async def upload_file(
     # Build multimodal message: text prompt + document/image
     uc_prompts = {
         "sales_orders": "Process this purchase order document. Extract all fields, match the customer, match the products against our catalog, validate pricing, and create a sales order approval.",
+        "ap_processing": "Process this document. If it's a vendor invoice, extract the vendor, PO reference, line items, and amounts, then run a three-way match against our PO and receipt data. If it's a payment remittance, extract the payment details and match against open invoices. Create an approval with the result.",
         "product_data": "Extract product data from this supplier document. Apply the Qosina constitutional naming framework, validate consistency against our catalog, find similar products, and create a product entry approval.",
     }
     text_prompt = prompt or uc_prompts.get(use_case, "Analyze this document and extract all relevant information.")

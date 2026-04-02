@@ -401,11 +401,27 @@
             </div>
             <div id="uc2-messages" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
             <div class="border-t border-gray-200 p-4 bg-white flex-shrink-0 shadow-inner">
-                <form id="uc2-form" class="max-w-2xl mx-auto flex space-x-3">
-                    <input id="uc2-input" type="text" placeholder="Ask about invoices, payments, or collections..."
-                           class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20" autocomplete="off">
-                    <button type="submit" class="bg-qblue text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-qblue-dark transition-colors">Send</button>
-                </form>
+                <div class="max-w-2xl mx-auto">
+                    <!-- File upload drop zone for vendor invoices / remittances -->
+                    <div id="uc2-dropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-3 mb-3 text-center cursor-pointer hover:border-green-400 hover:bg-green-50/30 transition-colors"
+                         onclick="document.getElementById('uc2-file').click()"
+                         ondragover="event.preventDefault(); this.classList.add('border-green-400','bg-green-50')"
+                         ondragleave="this.classList.remove('border-green-400','bg-green-50')"
+                         ondrop="event.preventDefault(); this.classList.remove('border-green-400','bg-green-50'); handleFileDrop(event, 'uc2')">
+                        <input type="file" id="uc2-file" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(this, 'uc2')">
+                        <div id="uc2-file-label" class="text-xs text-gray-400">
+                            <span class="font-medium text-gray-500">Drop a vendor invoice or payment remittance here</span> (PDF, image) or click to browse
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <input id="uc2-input" type="text" placeholder="Ask about invoices, payments, or collections..."
+                               class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-qblue focus:ring-2 focus:ring-qblue/20" autocomplete="off">
+                        <button type="button" onclick="submitUC2Text()" class="bg-qblue text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-qblue-dark transition-colors">Send</button>
+                        <button type="button" id="uc2-upload-btn" onclick="submitUC2File()" class="bg-green-600 text-white px-5 py-2 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors hidden">
+                            Process File
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1536,7 +1552,7 @@
     }
 
     // --- File upload handling ---
-    let pendingFiles = { uc1: null, uc3: null };
+    let pendingFiles = { uc1: null, uc2: null, uc3: null };
 
     window.handleFileDrop = function(event, uc) {
         const file = event.dataTransfer.files[0];
@@ -1670,16 +1686,19 @@
     };
     window.submitUC1File = function() { uploadFile('uc1', 'sales_orders', 'uc1-messages'); };
 
-    // UC2 form
-    document.getElementById('uc2-form').addEventListener('submit', (e) => {
-        e.preventDefault();
+    // UC2 text, file, and quick action submit
+    window.submitUC2Text = function() {
         const input = document.getElementById('uc2-input');
         const msg = input.value.trim();
         if (!msg) return;
         sendToUC('ap_processing', msg, 'uc2-messages');
         input.value = '';
+    };
+    // Also handle Enter key in the input
+    document.getElementById('uc2-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); submitUC2Text(); }
     });
-
+    window.submitUC2File = function() { uploadFile('uc2', 'ap_processing', 'uc2-messages'); };
     window.sendUC2 = function(msg) {
         sendToUC('ap_processing', msg, 'uc2-messages');
     };

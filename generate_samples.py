@@ -325,10 +325,281 @@ def generate_handwritten_po():
     print(f"Generated: {path}")
 
 
+def generate_vendor_invoice_perfect():
+    """Vendor invoice that matches PO-2026-001 perfectly. Should auto-approve."""
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "Precision Plastics Corp", ln=True)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, "8200 Industrial Blvd, Suite 400, Charlotte, NC 28273", ln=True)
+    pdf.cell(0, 5, "Phone: (704) 555-0188  |  AP@precisionplastics.com", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 8, "INVOICE", ln=True)
+    pdf.ln(2)
+
+    # Invoice details
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(47, 7, "Invoice #", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "Date", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "PO Reference", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "Terms", border=1, fill=True, align="C", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(47, 7, "VINV-2026-001", border=1, align="C")
+    pdf.cell(47, 7, "March 16, 2026", border=1, align="C")
+    pdf.cell(47, 7, "PO-2026-001", border=1, align="C")
+    pdf.cell(47, 7, "Net 30", border=1, align="C", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(95, 6, "Bill To:", ln=False)
+    pdf.cell(95, 6, "Due Date: April 15, 2026", ln=True)
+    pdf.cell(95, 5, "Qosina Corp", ln=True)
+    pdf.cell(95, 5, "150-Q Executive Drive", ln=True)
+    pdf.cell(95, 5, "Ronkonkoma, NY 11779", ln=True)
+    pdf.ln(4)
+
+    # Line items
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(25, 7, "Part #", border=1, fill=True, align="C")
+    pdf.cell(70, 7, "Description", border=1, fill=True)
+    pdf.cell(20, 7, "Qty", border=1, fill=True, align="C")
+    pdf.cell(30, 7, "Unit Price", border=1, fill=True, align="R")
+    pdf.cell(35, 7, "Line Total", border=1, fill=True, align="R", ln=True)
+
+    items = [
+        ("11195", "1-Way Stopcock, Female Luer Lock", "1,000", "$2.85", "$2,850.00"),
+        ("99720", "2-Way Stopcock, 2 Female Luer Locks", "500", "$3.45", "$1,725.00"),
+        ("99740", "1-Way Stopcock, Female Luer Lock", "400", "$2.81", "$1,125.00"),
+    ]
+    pdf.set_font("Helvetica", "", 10)
+    for item in items:
+        pdf.cell(25, 7, item[0], border=1, align="C")
+        pdf.cell(70, 7, item[1], border=1)
+        pdf.cell(20, 7, item[2], border=1, align="C")
+        pdf.cell(30, 7, item[3], border=1, align="R")
+        pdf.cell(35, 7, item[4], border=1, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(115, 8, "", border=0)
+    pdf.cell(30, 8, "TOTAL:", border=1, align="R")
+    pdf.cell(35, 8, "$5,700.00", border=1, align="R", ln=True)
+
+    pdf.ln(6)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, "Please remit payment to: Precision Plastics Corp, Account #4412-8890, Routing #053100300", ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "vendor_invoice_precision_plastics.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
+def generate_vendor_invoice_discrepancy():
+    """Vendor invoice for PO-2026-005 — bills for 500 units but only 480 were received."""
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "TechValve International", ln=True)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, "12 Orchard Road, #08-01, Singapore 238826", ln=True)
+    pdf.cell(0, 5, "billing@techvalveintl.com  |  +65 6555 0142", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 8, "INVOICE", ln=True)
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(47, 7, "Invoice #", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "Date", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "PO Reference", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "Terms", border=1, fill=True, align="C", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(47, 7, "VINV-2026-005", border=1, align="C")
+    pdf.cell(47, 7, "April 16, 2026", border=1, align="C")
+    pdf.cell(47, 7, "PO-2026-005", border=1, align="C")
+    pdf.cell(47, 7, "Net 30", border=1, align="C", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(95, 6, "Bill To: Qosina Corp", ln=True)
+    pdf.cell(95, 5, "150-Q Executive Drive, Ronkonkoma, NY 11779", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(25, 7, "Part #", border=1, fill=True, align="C")
+    pdf.cell(80, 7, "Description", border=1, fill=True)
+    pdf.cell(20, 7, "Qty", border=1, fill=True, align="C")
+    pdf.cell(25, 7, "Unit Price", border=1, fill=True, align="R")
+    pdf.cell(30, 7, "Total", border=1, fill=True, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(25, 7, "80071", border=1, align="C")
+    pdf.cell(80, 7, "Check Valve, Female Luer Lock / Male Luer Lock", border=1)
+    pdf.cell(20, 7, "500", border=1, align="C")
+    pdf.cell(25, 7, "$3.95", border=1, align="R")
+    pdf.cell(30, 7, "$1,975.00", border=1, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(125, 8, "", border=0)
+    pdf.cell(25, 8, "TOTAL:", border=1, align="R")
+    pdf.cell(30, 8, "$1,975.00", border=1, align="R", ln=True)
+
+    pdf.ln(6)
+    pdf.set_font("Helvetica", "I", 9)
+    pdf.cell(0, 5, "Note: Shipped 500 units per PO-2026-005. Please verify receipt and remit.", ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "vendor_invoice_techvalve_discrepancy.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
+def generate_vendor_invoice_penny():
+    """Vendor invoice for PO-2026-002 — $0.03 penny discrepancy from rounding."""
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "SinoMed Components Ltd", ln=True)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, "Building 8, Zhangjiang Hi-Tech Park, Shanghai 201203, China", ln=True)
+    pdf.cell(0, 5, "accounts@sinomed-components.cn  |  +86 21 5555 0288", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 8, "COMMERCIAL INVOICE", ln=True)
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(47, 7, "Invoice #", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "Date", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "Your PO #", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "Payment", border=1, fill=True, align="C", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(47, 7, "VINV-2026-002", border=1, align="C")
+    pdf.cell(47, 7, "March 26, 2026", border=1, align="C")
+    pdf.cell(47, 7, "PO-2026-002", border=1, align="C")
+    pdf.cell(47, 7, "Net 60", border=1, align="C", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 6, "Ship To: Qosina Corp, 150-Q Executive Drive, Ronkonkoma, NY 11779", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(25, 7, "Item", border=1, fill=True, align="C")
+    pdf.cell(80, 7, "Description", border=1, fill=True)
+    pdf.cell(20, 7, "Qty", border=1, fill=True, align="C")
+    pdf.cell(25, 7, "Unit Price", border=1, fill=True, align="R")
+    pdf.cell(30, 7, "Amount", border=1, fill=True, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(25, 7, "11096", border=1, align="C")
+    pdf.cell(80, 7, "Female Luer Lock, Tubing Port, Clear", border=1)
+    pdf.cell(20, 7, "5,000", border=1, align="C")
+    pdf.cell(25, 7, "$0.4501", border=1, align="R")
+    pdf.cell(30, 7, "$2,250.03", border=1, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(125, 8, "", border=0)
+    pdf.cell(25, 8, "TOTAL:", border=1, align="R")
+    pdf.cell(30, 8, "$2,250.03", border=1, align="R", ln=True)
+
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, "Wire transfer to: SinoMed Components Ltd, HSBC Shanghai, SWIFT: HSBCSGSG", ln=True)
+    pdf.cell(0, 5, "Account: 400-123456-001  |  Reference: VINV-2026-002", ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "vendor_invoice_sinomed_penny.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
+def generate_payment_remittance():
+    """Payment remittance from MedLine — $1,345 that doesn't exactly match their invoices."""
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "MedLine Innovations", ln=True)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, "750 Technology Way, Suite 200, Chicago, IL 60601", ln=True)
+    pdf.cell(0, 5, "AP Department  |  ap@medlineinnovations.com", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 8, "REMITTANCE ADVICE", ln=True)
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(60, 7, "Payment Date", border=1, fill=True, align="C")
+    pdf.cell(60, 7, "Check Number", border=1, fill=True, align="C")
+    pdf.cell(60, 7, "Total Payment", border=1, fill=True, align="C", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(60, 7, "March 28, 2026", border=1, align="C")
+    pdf.cell(60, 7, "#7892", border=1, align="C")
+    pdf.cell(60, 7, "$1,345.00", border=1, align="C", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 6, "Payee: Qosina Corp", ln=True)
+    pdf.cell(0, 6, "Customer Account: CUST-003 / MedLine Innovations", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(0, 7, "Invoices covered by this payment:", ln=True)
+    pdf.ln(2)
+
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(50, 7, "Invoice #", border=1, fill=True, align="C")
+    pdf.cell(40, 7, "Invoice Date", border=1, fill=True, align="C")
+    pdf.cell(40, 7, "Invoice Amount", border=1, fill=True, align="R")
+    pdf.cell(40, 7, "Amount Paid", border=1, fill=True, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(50, 7, "CINV-2026-006", border=1, align="C")
+    pdf.cell(40, 7, "Nov 10, 2025", border=1, align="C")
+    pdf.cell(40, 7, "$1,012.50", border=1, align="R")
+    pdf.cell(40, 7, "$1,012.50", border=1, align="R", ln=True)
+
+    pdf.cell(50, 7, "CINV-2026-007", border=1, align="C")
+    pdf.cell(40, 7, "Jan 12, 2026", border=1, align="C")
+    pdf.cell(40, 7, "$337.50", border=1, align="R")
+    pdf.cell(40, 7, "$332.50", border=1, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(130, 8, "", border=0)
+    pdf.cell(40, 8, "$1,345.00", border=1, align="R", ln=True)
+
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "I", 9)
+    pdf.cell(0, 5, "Note: Deducted $5.00 from CINV-2026-007 for damaged goods on order ORD-2025-0106.", ln=True)
+    pdf.cell(0, 5, "Please apply payment and adjust balance accordingly.", ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "payment_remittance_medline.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
 if __name__ == "__main__":
     generate_po_acme()
     generate_po_bioflow()
     generate_spec_sheet_stopcock()
     generate_spec_sheet_filter()
     generate_handwritten_po()
+    generate_vendor_invoice_perfect()
+    generate_vendor_invoice_discrepancy()
+    generate_vendor_invoice_penny()
+    generate_payment_remittance()
     print(f"\nAll samples generated in {OUTPUT_DIR}/")
