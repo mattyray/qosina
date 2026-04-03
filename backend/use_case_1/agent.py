@@ -88,10 +88,29 @@ def check_inventory(part_number: str) -> str:
 
 
 @tool
-def create_approval(recommendation_type: str, title: str, content: str) -> str:
+def create_approval(recommendation_type: str, title: str, content: str, structured_data: str = "") -> str:
     """Submit the structured sales order for human review in the approval queue.
-    Type should be 'sales_order'. Include customer, PO#, line items summary, total, and any flags."""
-    return json.dumps(_create_approval(recommendation_type, title, content), indent=2)
+    Type should be 'sales_order'.
+
+    IMPORTANT: You MUST pass structured_data as a JSON string containing the editable fields with confidence scores.
+    Format:
+    {
+        "fields": {
+            "customer_id": {"value": "CUST-001", "confidence": 0.95, "label": "Customer ID"},
+            "customer_name": {"value": "Acme Medical", "confidence": 0.95, "label": "Customer"},
+            "po_number": {"value": "ACME-PO-2026-0412", "confidence": 0.99, "label": "PO Number"},
+            "delivery_date": {"value": "2026-04-15", "confidence": 0.90, "label": "Delivery Date"},
+            "payment_terms": {"value": "Net 30", "confidence": 0.95, "label": "Payment Terms"},
+            "ship_to": {"value": "...", "confidence": 0.85, "label": "Ship To"}
+        },
+        "line_items": [
+            {"item_id": "11195", "description": "1-Way Stopcock", "quantity": 500, "unit_price": 2.57, "confidence": 0.99},
+            ...
+        ],
+        "total": 2231.00
+    }
+    Confidence: 0.95+ = high (exact match), 0.70-0.94 = medium (fuzzy), below 0.70 = low (needs review)."""
+    return json.dumps(_create_approval(recommendation_type, title, content, structured_data=structured_data), indent=2)
 
 
 @tool

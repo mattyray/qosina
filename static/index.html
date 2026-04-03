@@ -396,6 +396,52 @@
             </div>
         </div>
 
+        <!-- Review Panel (opens when clicking an approval card) -->
+        <div id="panel-review" class="flex-1 flex flex-col min-h-0 hidden">
+            <div class="p-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
+                <div class="flex items-center justify-between max-w-5xl mx-auto">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="closeReview()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        </button>
+                        <div>
+                            <h2 id="review-title" class="text-sm font-bold text-gray-800"></h2>
+                            <p id="review-type-badge" class="text-[10px] font-medium mt-0.5"></p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="reviewApprove()" class="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
+                            Approve
+                        </button>
+                        <button onclick="reviewReject()" class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium hover:bg-red-500 hover:text-white transition-colors">
+                            Reject
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+                <div class="max-w-5xl mx-auto p-6">
+                    <!-- Confidence legend -->
+                    <div class="flex items-center space-x-4 mb-4 text-[10px] text-gray-500">
+                        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-green-500"></span><span>High confidence (95%+)</span></span>
+                        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-yellow-500"></span><span>Medium (70-94%)</span></span>
+                        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-red-500"></span><span>Low (&lt;70%) — needs review</span></span>
+                    </div>
+                    <!-- Two-column: AI summary left, editable form right -->
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">AI Summary</h3>
+                            <div id="review-summary" class="msg-md bg-white rounded-lg border border-gray-200 p-4 text-sm text-gray-700"></div>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Editable Fields <span class="text-gray-400 font-normal normal-case">&mdash; fix any errors before approving</span></h3>
+                            <div id="review-form" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Architecture Panel -->
         <div id="panel-arch" class="flex-1 overflow-y-auto p-6 hidden">
             <div class="max-w-4xl mx-auto space-y-6">
@@ -1046,7 +1092,7 @@
 
             div.innerHTML = `
                 <div class="${statusBorder} border-l-4 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-white border border-gray-200">
-                    <div class="p-3 cursor-pointer" onclick="toggleCard('${cardId}')">
+                    <div class="p-3 cursor-pointer" onclick="${a.status === 'pending' ? `openReview(${a.id})` : `toggleCard('${cardId}')`}">
                         <div class="flex items-start justify-between">
                             <div class="flex items-center space-x-2 min-w-0">
                                 <span class="w-2 h-2 rounded-full ${tc.icon} flex-shrink-0 mt-1"></span>
@@ -1782,6 +1828,280 @@
 
     window.loadSampleSpec = function(key) {
         document.getElementById('uc3-input').value = sampleSpecs[key] || '';
+    };
+
+    // --- Review panel ---
+    let reviewingApproval = null;
+    let previousTab = 'dash';
+
+    window.openReview = function(approvalId) {
+        const approval = allApprovals.find(a => a.id === approvalId);
+        if (!approval) return;
+
+        reviewingApproval = approval;
+
+        // Remember which tab we came from
+        const panels = ['dash', 'uc1', 'uc2', 'uc3', 'chat', 'data', 'arch'];
+        for (const p of panels) {
+            if (!document.getElementById('panel-' + p).classList.contains('hidden')) {
+                previousTab = p;
+                break;
+            }
+        }
+
+        // Hide all panels, show review
+        panels.forEach(p => { const el = document.getElementById('panel-' + p); if (el) el.classList.add('hidden'); });
+        document.getElementById('panel-review').classList.remove('hidden');
+
+        // Set title and badge
+        document.getElementById('review-title').textContent = approval.title;
+        const tc = {
+            sales_order: 'bg-blue-100 text-blue-700', invoice_match: 'bg-green-100 text-green-700',
+            payment_application: 'bg-teal-100 text-teal-700', collection_outreach: 'bg-amber-100 text-amber-700',
+            product_entry: 'bg-purple-100 text-purple-700',
+        };
+        const badge = document.getElementById('review-type-badge');
+        badge.className = 'text-[10px] font-medium mt-0.5 inline-block px-2 py-0.5 rounded ' + (tc[approval.recommendation_type] || 'bg-gray-100 text-gray-700');
+        badge.textContent = (approval.recommendation_type || '').replace(/_/g, ' ').toUpperCase();
+
+        // Render AI summary (left side)
+        document.getElementById('review-summary').innerHTML = marked.parse(approval.content || '');
+
+        // Render editable form (right side)
+        renderReviewForm(approval);
+    };
+
+    window.closeReview = function() {
+        document.getElementById('panel-review').classList.add('hidden');
+        switchTab(previousTab);
+        reviewingApproval = null;
+    };
+
+    function confClass(c) {
+        if (c >= 0.95) return { border: 'border-green-300', bg: 'bg-green-50', dot: 'bg-green-500', label: 'text-green-600' };
+        if (c >= 0.70) return { border: 'border-yellow-300', bg: 'bg-yellow-50', dot: 'bg-yellow-500', label: 'text-yellow-600' };
+        return { border: 'border-red-300', bg: 'bg-red-50', dot: 'bg-red-500', label: 'text-red-600' };
+    }
+
+    function renderReviewForm(approval) {
+        const form = document.getElementById('review-form');
+        let sd = null;
+        try { sd = JSON.parse(approval.structured_data); } catch(e) {}
+
+        if (!sd) {
+            form.innerHTML = `<div class="bg-gray-50 rounded-lg border border-gray-200 p-4 text-sm text-gray-500">
+                <p>No structured data available for editing.</p>
+                <p class="text-xs mt-2">The AI did not provide editable fields for this approval. You can still approve or reject based on the summary.</p>
+            </div>`;
+            return;
+        }
+
+        let html = '';
+
+        // Render top-level fields
+        if (sd.fields) {
+            html += renderFieldGroup('Details', sd.fields);
+        }
+
+        // Render sections (UC3 product entry)
+        if (sd.sections) {
+            sd.sections.forEach(section => {
+                const fields = {};
+                section.fields.forEach(f => { fields[f.key || f.label] = f; });
+                html += renderFieldGroup(section.name, fields);
+            });
+        }
+
+        // Render line items (UC1 sales orders, UC2 invoice match)
+        if (sd.line_items && sd.line_items.length > 0) {
+            html += renderLineItems(sd.line_items, approval.recommendation_type);
+        }
+
+        // Render allocations (UC2 payment application)
+        if (sd.allocations && sd.allocations.length > 0) {
+            html += renderAllocations(sd.allocations);
+        }
+
+        // Total
+        if (sd.total !== undefined) {
+            html += `<div class="bg-gray-50 rounded-lg border border-gray-200 p-3 flex items-center justify-between">
+                <span class="text-xs font-semibold text-gray-600">Order Total</span>
+                <span class="text-sm font-bold text-gray-800">$${Number(sd.total).toFixed(2)}</span>
+            </div>`;
+        }
+
+        form.innerHTML = html;
+    }
+
+    function renderFieldGroup(title, fields) {
+        let html = `<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div class="px-3 py-2 bg-gray-50 border-b border-gray-100">
+                <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">${esc(title)}</span>
+            </div>
+            <div class="p-3 space-y-2">`;
+
+        for (const [key, field] of Object.entries(fields)) {
+            const f = typeof field === 'object' ? field : { value: field, confidence: 0.5 };
+            const conf = f.confidence !== undefined ? f.confidence : 0.5;
+            const cc = confClass(conf);
+            const label = f.label || key.replace(/_/g, ' ');
+            const val = f.value !== undefined ? f.value : '';
+            const raw = f.raw_value || '';
+            const rule = f.rule_applied || '';
+
+            html += `<div class="flex items-start space-x-2">
+                <span class="w-2 h-2 rounded-full ${cc.dot} flex-shrink-0 mt-2.5"></span>
+                <div class="flex-1">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-[10px] font-medium text-gray-500 uppercase tracking-wider">${esc(label)}</label>
+                        <span class="text-[9px] ${cc.label}">${Math.round(conf * 100)}%</span>
+                        ${rule ? `<span class="text-[9px] text-gray-400">Rule: ${esc(rule)}</span>` : ''}
+                    </div>
+                    ${raw && raw !== String(val) ? `<div class="text-[10px] text-gray-400 line-through">${esc(String(raw))}</div>` : ''}
+                    <input type="text" value="${esc(String(val))}" data-field="${esc(key)}"
+                           class="w-full border ${cc.border} ${cc.bg} rounded px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-qblue/20 mt-0.5">
+                </div>
+            </div>`;
+        }
+
+        html += '</div></div>';
+        return html;
+    }
+
+    function renderLineItems(items, type) {
+        const isSalesOrder = type === 'sales_order';
+        const isInvoice = type === 'invoice_match';
+
+        let html = `<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div class="px-3 py-2 bg-gray-50 border-b border-gray-100">
+                <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Line Items</span>
+            </div>
+            <div class="overflow-x-auto"><table class="w-full text-xs">
+            <thead><tr class="bg-gray-50 text-gray-500 text-left">
+                <th class="px-2 py-1.5"></th>
+                <th class="px-2 py-1.5">Part #</th>
+                <th class="px-2 py-1.5">Description</th>`;
+
+        if (isInvoice) {
+            html += `<th class="px-2 py-1.5 text-right">Ordered</th><th class="px-2 py-1.5 text-right">Received</th><th class="px-2 py-1.5 text-right">Invoiced</th>`;
+        } else {
+            html += `<th class="px-2 py-1.5 text-right">Qty</th>`;
+        }
+        html += `<th class="px-2 py-1.5 text-right">Unit Price</th>
+            <th class="px-2 py-1.5">Status</th></tr></thead><tbody>`;
+
+        items.forEach((item, i) => {
+            const conf = item.confidence !== undefined ? item.confidence : 0.5;
+            const cc = confClass(conf);
+            html += `<tr class="border-t border-gray-100 ${cc.bg}">
+                <td class="px-2 py-1.5"><span class="w-2 h-2 rounded-full ${cc.dot} inline-block"></span></td>
+                <td class="px-2 py-1.5"><input type="text" value="${esc(item.item_id || '')}" class="w-16 border ${cc.border} rounded px-1 py-0.5 text-xs bg-transparent" data-line="${i}" data-col="item_id"></td>
+                <td class="px-2 py-1.5"><input type="text" value="${esc(item.description || '')}" class="w-full border ${cc.border} rounded px-1 py-0.5 text-xs bg-transparent" data-line="${i}" data-col="description"></td>`;
+
+            if (isInvoice) {
+                html += `<td class="px-2 py-1.5 text-right">${item.qty_ordered || ''}</td>
+                    <td class="px-2 py-1.5 text-right">${item.qty_received || ''}</td>
+                    <td class="px-2 py-1.5 text-right"><input type="number" value="${item.qty_invoiced || ''}" class="w-14 border ${cc.border} rounded px-1 py-0.5 text-xs text-right bg-transparent" data-line="${i}" data-col="qty_invoiced"></td>`;
+            } else {
+                html += `<td class="px-2 py-1.5 text-right"><input type="number" value="${item.quantity || ''}" class="w-14 border ${cc.border} rounded px-1 py-0.5 text-xs text-right bg-transparent" data-line="${i}" data-col="quantity"></td>`;
+            }
+
+            html += `<td class="px-2 py-1.5 text-right"><input type="text" value="${item.unit_price || ''}" class="w-16 border ${cc.border} rounded px-1 py-0.5 text-xs text-right bg-transparent" data-line="${i}" data-col="unit_price"></td>
+                <td class="px-2 py-1.5 text-[10px] ${cc.label} font-medium">${esc(item.status || Math.round(conf*100) + '%')}</td>
+            </tr>`;
+        });
+
+        html += '</tbody></table></div></div>';
+        return html;
+    }
+
+    function renderAllocations(allocations) {
+        let html = `<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div class="px-3 py-2 bg-gray-50 border-b border-gray-100">
+                <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Payment Allocations</span>
+            </div>
+            <div class="p-3 space-y-2">`;
+
+        allocations.forEach((a, i) => {
+            const conf = a.confidence !== undefined ? a.confidence : 0.5;
+            const cc = confClass(conf);
+            html += `<div class="flex items-center space-x-2 ${cc.bg} rounded p-2 border ${cc.border}">
+                <span class="w-2 h-2 rounded-full ${cc.dot}"></span>
+                <input type="text" value="${esc(a.invoice_id || '')}" class="w-32 border ${cc.border} rounded px-1 py-0.5 text-xs bg-transparent" data-alloc="${i}" data-col="invoice_id">
+                <span class="text-xs text-gray-500">Invoice: $${(a.invoice_amount || 0).toFixed(2)}</span>
+                <span class="text-xs text-gray-500">&rarr;</span>
+                <span class="text-xs font-medium">Applied: $<input type="text" value="${(a.applied_amount || 0).toFixed(2)}" class="w-16 border ${cc.border} rounded px-1 py-0.5 text-xs bg-transparent" data-alloc="${i}" data-col="applied_amount"></span>
+                <span class="text-[10px] ${cc.label}">${Math.round(conf*100)}%</span>
+            </div>`;
+        });
+
+        html += '</div></div>';
+        return html;
+    }
+
+    function gatherEditedData() {
+        if (!reviewingApproval) return null;
+        let sd;
+        try { sd = JSON.parse(reviewingApproval.structured_data); } catch(e) { return null; }
+
+        // Gather field edits
+        document.querySelectorAll('#review-form input[data-field]').forEach(input => {
+            const key = input.dataset.field;
+            if (sd.fields && sd.fields[key]) sd.fields[key].value = input.value;
+            if (sd.sections) {
+                sd.sections.forEach(s => {
+                    const f = s.fields.find(f => (f.key || f.label) === key);
+                    if (f) f.value = input.value;
+                });
+            }
+        });
+
+        // Gather line item edits
+        document.querySelectorAll('#review-form input[data-line]').forEach(input => {
+            const idx = parseInt(input.dataset.line);
+            const col = input.dataset.col;
+            if (sd.line_items && sd.line_items[idx]) {
+                sd.line_items[idx][col] = input.type === 'number' ? Number(input.value) : input.value;
+            }
+        });
+
+        // Gather allocation edits
+        document.querySelectorAll('#review-form input[data-alloc]').forEach(input => {
+            const idx = parseInt(input.dataset.alloc);
+            const col = input.dataset.col;
+            if (sd.allocations && sd.allocations[idx]) {
+                sd.allocations[idx][col] = col === 'applied_amount' ? Number(input.value) : input.value;
+            }
+        });
+
+        return JSON.stringify(sd);
+    }
+
+    window.reviewApprove = async function() {
+        if (!reviewingApproval) return;
+        const editedData = gatherEditedData();
+        try {
+            await fetch(`/api/approvals/${reviewingApproval.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'approved', reviewed_by: 'Demo User', structured_data: editedData }),
+            });
+            fetchApprovals();
+            closeReview();
+        } catch(e) { alert('Failed to approve'); }
+    };
+
+    window.reviewReject = async function() {
+        if (!reviewingApproval) return;
+        try {
+            await fetch(`/api/approvals/${reviewingApproval.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'rejected', reviewed_by: 'Demo User' }),
+            });
+            fetchApprovals();
+            closeReview();
+        } catch(e) { alert('Failed to reject'); }
     };
 
     // --- Model selector ---

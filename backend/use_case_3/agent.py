@@ -104,10 +104,27 @@ def get_sample_spec_sheets() -> str:
 
 
 @tool
-def create_approval(recommendation_type: str, title: str, content: str) -> str:
+def create_approval(recommendation_type: str, title: str, content: str, structured_data: str = "") -> str:
     """Submit the normalized product data for human review in the approval queue.
-    Type should be 'product_entry'. Include all key fields and any flags."""
-    return json.dumps(_create_approval(recommendation_type, title, content), indent=2)
+    Type should be 'product_entry'.
+
+    IMPORTANT: You MUST pass structured_data as a JSON string with ALL extracted fields, each with a confidence score.
+    Group fields by section. For each field include: value (normalized to Qosina conventions), raw_value (what the supplier doc said), confidence (0-1), and rule_applied (which constitutional rule was used, if any).
+
+    Format:
+    {"sections": [
+        {"name": "Basic Info", "fields": [
+            {"key": "product_name", "label": "Product Name", "value": "3-Way Stopcock, Male Luer Lock, Female Luer Lock x2", "raw_value": "3-way valve, luer type", "confidence": 0.90, "rule_applied": "Type: valve with luer = Stopcock"},
+            {"key": "category", "label": "Category", "value": "Stopcocks & Manifolds", "raw_value": "", "confidence": 0.95, "rule_applied": "Qosina taxonomy"},
+            {"key": "material", "label": "Material", "value": "Polycarbonate (PC)", "raw_value": "PC plastic", "confidence": 0.95, "rule_applied": "Full name with abbreviation"},
+            ...
+        ]},
+        {"name": "Dimensions", "fields": [...]},
+        {"name": "Connections", "fields": [...]},
+        {"name": "Compliance", "fields": [...]},
+        {"name": "Commercial", "fields": [...]}
+    ]}"""
+    return json.dumps(_create_approval(recommendation_type, title, content, structured_data=structured_data), indent=2)
 
 
 TOOLS = [get_naming_conventions, find_similar_products, validate_consistency, get_sample_spec_sheets, create_approval]

@@ -253,12 +253,21 @@ def update_approval(approval_id: int, update: ApprovalUpdate):
                 (approval_id,)
             )
         else:
-            result = conn.execute(
-                """UPDATE approval_queue
-                   SET status = ?, reviewed_by = ?, reviewed_at = ?
-                   WHERE id = ? AND status = 'pending'""",
-                (update.status, update.reviewed_by, now, approval_id)
-            )
+            # If structured_data was edited, save that too
+            if update.structured_data:
+                result = conn.execute(
+                    """UPDATE approval_queue
+                       SET status = ?, reviewed_by = ?, reviewed_at = ?, structured_data = ?
+                       WHERE id = ? AND status = 'pending'""",
+                    (update.status, update.reviewed_by, now, update.structured_data, approval_id)
+                )
+            else:
+                result = conn.execute(
+                    """UPDATE approval_queue
+                       SET status = ?, reviewed_by = ?, reviewed_at = ?
+                       WHERE id = ? AND status = 'pending'""",
+                    (update.status, update.reviewed_by, now, approval_id)
+                )
         if result.rowcount == 0:
             raise HTTPException(404, "Approval not found")
 

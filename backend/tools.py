@@ -243,15 +243,16 @@ def get_customer_order_history(customer_id: str) -> dict:
     }
 
 
-def create_approval(recommendation_type: str, title: str, content: str, source_query: str = "") -> dict:
-    """Create a new approval queue item for human review."""
+def create_approval(recommendation_type: str, title: str, content: str, source_query: str = "", structured_data: str = "") -> dict:
+    """Create a new approval queue item for human review.
+    structured_data should be a JSON string with editable fields and confidence scores."""
     now = datetime.now().isoformat()
 
     with get_db() as conn:
         cursor = conn.execute(
-            """INSERT INTO approval_queue (recommendation_type, title, content, source_query, ai_generated_at)
-               VALUES (?, ?, ?, ?, ?)""",
-            (recommendation_type, title, content, source_query, now)
+            """INSERT INTO approval_queue (recommendation_type, title, content, structured_data, source_query, ai_generated_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (recommendation_type, title, content, structured_data or None, source_query, now)
         )
         approval_id = cursor.lastrowid
 

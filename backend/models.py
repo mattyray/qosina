@@ -11,5 +11,6 @@ class ChatRequest(BaseModel):
 
 
 class ApprovalUpdate(BaseModel):
-    status: str  # "approved" or "rejected"
+    status: str  # "approved", "rejected", or "pending" (undo)
     reviewed_by: str
+    structured_data: Optional[str] = None  # Updated JSON when reviewer edits fields

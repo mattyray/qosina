@@ -93,6 +93,7 @@ def init_db():
                 recommendation_type TEXT NOT NULL,
                 title TEXT NOT NULL,
                 content TEXT NOT NULL,
+                structured_data TEXT,
                 source_query TEXT,
                 status TEXT DEFAULT 'pending',
                 ai_generated_at TEXT NOT NULL,

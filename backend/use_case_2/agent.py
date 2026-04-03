@@ -101,11 +101,24 @@ def score_collections() -> str:
 
 
 @tool
-def create_approval(recommendation_type: str, title: str, content: str) -> str:
+def create_approval(recommendation_type: str, title: str, content: str, structured_data: str = "") -> str:
     """Submit an AP recommendation for human review.
     Types: 'invoice_match', 'payment_application', 'collection_outreach'.
-    Keep content concise: key facts, variance, recommendation."""
-    return json.dumps(_create_approval(recommendation_type, title, content), indent=2)
+
+    IMPORTANT: You MUST pass structured_data as a JSON string with editable fields and confidence scores.
+
+    For invoice_match:
+    {"fields": {"invoice_id": {"value": "...", "confidence": 0.99, "label": "Invoice"}, "vendor_name": {...}, "po_number": {...}, "match_status": {...}, "recommendation": {...}},
+     "line_items": [{"item_id": "...", "description": "...", "qty_ordered": 500, "qty_received": 480, "qty_invoiced": 500, "unit_price": 3.95, "status": "discrepancy", "confidence": 0.99}],
+     "total_variance": 0.00}
+
+    For payment_application:
+    {"fields": {"payment_id": {...}, "customer_name": {...}, "payment_amount": {...}, "match_type": {...}},
+     "allocations": [{"invoice_id": "...", "invoice_amount": 1012.50, "applied_amount": 1012.50, "confidence": 0.95}]}
+
+    For collection_outreach:
+    {"fields": {"customer_id": {...}, "customer_name": {...}, "total_overdue": {...}, "days_overdue": {...}, "priority": {...}, "recommended_action": {...}}}"""
+    return json.dumps(_create_approval(recommendation_type, title, content, structured_data=structured_data), indent=2)
 
 
 TOOLS = [get_vendor_invoices, three_way_match, get_unapplied_payments, match_payment, score_collections, create_approval]
