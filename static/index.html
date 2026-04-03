@@ -427,11 +427,18 @@
                         <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-yellow-500"></span><span>Medium (70-94%)</span></span>
                         <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-red-500"></span><span>Low (&lt;70%) — needs review</span></span>
                     </div>
-                    <!-- Two-column: AI summary left, editable form right -->
+                    <!-- Two-column: doc/summary left, editable form right -->
                     <div class="grid grid-cols-2 gap-6">
                         <div>
-                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">AI Summary</h3>
+                            <div class="flex items-center space-x-1 mb-2">
+                                <button onclick="showReviewTab('summary')" id="review-tab-summary" class="text-xs font-semibold text-qblue border-b-2 border-qblue px-2 py-1">AI Summary</button>
+                                <button onclick="showReviewTab('document')" id="review-tab-document" class="text-xs font-semibold text-gray-400 border-b-2 border-transparent px-2 py-1 hover:text-gray-600">Original Document</button>
+                            </div>
                             <div id="review-summary" class="msg-md bg-white rounded-lg border border-gray-200 p-4 text-sm text-gray-700"></div>
+                            <div id="review-document" class="bg-white rounded-lg border border-gray-200 p-4 hidden">
+                                <p id="review-doc-none" class="text-sm text-gray-400">No original document available for this approval.</p>
+                                <img id="review-doc-img" class="hidden max-w-full rounded" alt="Original document">
+                            </div>
                         </div>
                         <div>
                             <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Editable Fields <span class="text-gray-400 font-normal normal-case">&mdash; fix any errors before approving</span></h3>
@@ -1104,7 +1111,7 @@
                                     <h3 class="text-xs font-semibold text-gray-800 mt-1 leading-snug">${escapeHtml(a.title)}</h3>
                                 </div>
                             </div>
-                            <svg id="${cardId}-chevron" class="w-4 h-4 text-gray-300 flex-shrink-0 mt-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            ${a.status === 'pending' ? `<span class="text-[9px] bg-qblue text-white px-2 py-1 rounded font-medium flex-shrink-0 mt-0.5">Review &amp; Edit</span>` : `<svg id="${cardId}-chevron" class="w-4 h-4 text-gray-300 flex-shrink-0 mt-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>`}
                         </div>
                     </div>
                     <div id="${cardId}-detail" class="px-3 pb-3">
@@ -1501,8 +1508,105 @@
     function esc(str) { return escapeHtml(str || ''); }
 
     // --- UC-specific chat helpers ---
+    // Shared SSE stream handler — used by both text chat and file upload
+    function handleStream(response, container, typing) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let evtType = null;
+        let aiEl = null;
+        let aiRaw = '';
+
+        function read() {
+            reader.read().then(({ done, value }) => {
+                if (done) return;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+                for (const line of lines) {
+                    if (line.startsWith('event: ')) {
+                        evtType = line.slice(7).trim();
+                    } else if (line.startsWith('data: ') && evtType) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            if (evtType === 'token') {
+                                if (typing.parentNode) typing.remove();
+                                if (!aiEl) {
+                                    const aiDiv = document.createElement('div');
+                                    aiDiv.className = 'flex justify-start slide-in';
+                                    const wrapper = document.createElement('div');
+                                    wrapper.className = 'flex items-start space-x-2 max-w-[85%]';
+                                    wrapper.innerHTML = `<div class="w-7 h-7 rounded-full bg-qblue flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-white text-xs font-bold">AI</span></div>`;
+                                    aiEl = document.createElement('div');
+                                    aiEl.className = 'msg-md bg-white rounded-2xl rounded-bl-md px-4 py-3 text-sm text-gray-800 shadow-sm border border-gray-100';
+                                    wrapper.appendChild(aiEl);
+                                    aiDiv.appendChild(wrapper);
+                                    container.appendChild(aiDiv);
+                                }
+                                aiRaw += data.content;
+                                aiEl.innerHTML = marked.parse(aiRaw);
+                                container.scrollTop = container.scrollHeight;
+                            } else if (evtType === 'tool_call') {
+                                highlightTool(data.tool, true);
+                                addToolEntry(`&rarr; ${data.tool}`, 'text-qblue font-medium');
+                            } else if (evtType === 'tool_result') {
+                                highlightTool(data.tool, false);
+                                addToolEntry(`&check; ${data.tool} done`, 'text-green-600');
+                            } else if (evtType === 'approval_created') {
+                                addToolEntry(`+ Approval: ${data.title}`, 'text-yellow-600 font-medium');
+                                fetchApprovals();
+                                fetchDashboard();
+                                // Inline approval card in chat
+                                const inlineCard = document.createElement('div');
+                                inlineCard.className = 'slide-in my-2';
+                                inlineCard.innerHTML = `
+                                    <div class="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-3 max-w-[85%] mx-auto cursor-pointer hover:shadow-md transition-shadow"
+                                         onclick="openReview(${data.id})">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-2">
+                                                <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                                                <span class="text-xs font-bold text-yellow-800">APPROVAL CREATED</span>
+                                            </div>
+                                            <span class="text-[10px] text-yellow-600 font-medium">Click to Review &amp; Edit</span>
+                                        </div>
+                                        <h4 class="text-sm font-semibold text-gray-800 mt-1">${escapeHtml(data.title || '')}</h4>
+                                        <div class="flex items-center space-x-2 mt-1">
+                                            <span class="bg-yellow-200 text-yellow-800 text-[10px] font-bold px-2 py-0.5 rounded">${(data.type || '').replace(/_/g,' ').toUpperCase()}</span>
+                                            <span class="text-[10px] text-gray-500">Pending human review</span>
+                                        </div>
+                                    </div>`;
+                                container.appendChild(inlineCard);
+                                container.scrollTop = container.scrollHeight;
+                            } else if (evtType === 'error') {
+                                if (typing.parentNode) typing.remove();
+                                const errDiv = document.createElement('div');
+                                errDiv.className = 'flex justify-start slide-in';
+                                errDiv.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-2.5 max-w-[75%] text-sm">${escapeHtml(data.message)}</div>`;
+                                container.appendChild(errDiv);
+                            } else if (evtType === 'done') {
+                                if (typing.parentNode) typing.remove();
+                                // Save conversation ID for follow-ups
+                                if (data.conversation_id) {
+                                    for (const [uc, cid] of Object.entries(ucConvIds)) {
+                                        if (container.id === uc + '-messages') {
+                                            ucConvIds[uc] = data.conversation_id;
+                                        }
+                                    }
+                                }
+                            }
+                        } catch(e) {}
+                        evtType = null;
+                    }
+                }
+                read();
+            });
+        }
+        read();
+    }
+
     function sendToUC(useCase, message, messagesContainerId) {
         const container = document.getElementById(messagesContainerId);
+        const uc = messagesContainerId.replace('-messages', '');
         // Add user message
         const userDiv = document.createElement('div');
         userDiv.className = 'flex justify-end slide-in';
@@ -1510,97 +1614,20 @@
         userDiv.innerHTML = `<div class="bg-qblue text-white rounded-2xl rounded-br-md px-4 py-2.5 max-w-[75%] text-sm shadow-sm whitespace-pre-wrap">${escapeHtml(preview)}</div>`;
         container.appendChild(userDiv);
 
-        // Add typing indicator
-        const typing = document.createElement('div');
-        typing.className = 'flex justify-start slide-in';
-        typing.innerHTML = `<div class="flex items-start space-x-2">
-            <div class="w-7 h-7 rounded-full bg-qblue flex items-center justify-center flex-shrink-0">
-                <span class="text-white text-xs font-bold">AI</span>
-            </div>
-            <div class="bg-white rounded-2xl px-4 py-3 flex space-x-1.5 shadow-sm border border-gray-100">
-                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
-                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
-                <span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
-            </div>
-        </div>`;
-        container.appendChild(typing);
-        container.scrollTop = container.scrollHeight;
-
+        const typing = addTypingTo(container);
         toolFeed.innerHTML = '';
-        let aiEl = null;
-        let aiRaw = '';
 
         fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, conversation_id: null, use_case: useCase }),
-        }).then(response => {
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            let evtType = null;
-
-            function read() {
-                reader.read().then(({ done, value }) => {
-                    if (done) return;
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() || '';
-                    for (const line of lines) {
-                        if (line.startsWith('event: ')) {
-                            evtType = line.slice(7).trim();
-                        } else if (line.startsWith('data: ') && evtType) {
-                            try {
-                                const data = JSON.parse(line.slice(6));
-                                if (evtType === 'token') {
-                                    if (typing.parentNode) typing.remove();
-                                    if (!aiEl) {
-                                        const aiDiv = document.createElement('div');
-                                        aiDiv.className = 'flex justify-start slide-in';
-                                        const wrapper = document.createElement('div');
-                                        wrapper.className = 'flex items-start space-x-2 max-w-[85%]';
-                                        wrapper.innerHTML = `<div class="w-7 h-7 rounded-full bg-qblue flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-white text-xs font-bold">AI</span></div>`;
-                                        aiEl = document.createElement('div');
-                                        aiEl.className = 'msg-md bg-white rounded-2xl rounded-bl-md px-4 py-3 text-sm text-gray-800 shadow-sm border border-gray-100';
-                                        wrapper.appendChild(aiEl);
-                                        aiDiv.appendChild(wrapper);
-                                        container.appendChild(aiDiv);
-                                    }
-                                    aiRaw += data.content;
-                                    aiEl.innerHTML = marked.parse(aiRaw);
-                                    container.scrollTop = container.scrollHeight;
-                                } else if (evtType === 'tool_call') {
-                                    highlightTool(data.tool, true);
-                                    addToolEntry(`&rarr; ${data.tool}`, 'text-qblue font-medium');
-                                } else if (evtType === 'tool_result') {
-                                    highlightTool(data.tool, false);
-                                    addToolEntry(`&check; ${data.tool} done`, 'text-green-600');
-                                } else if (evtType === 'approval_created') {
-                                    addToolEntry(`+ Approval: ${data.title}`, 'text-yellow-600 font-medium');
-                                    fetchApprovals();
-                                    fetchDashboard();
-                                } else if (evtType === 'error') {
-                                    if (typing.parentNode) typing.remove();
-                                    const errDiv = document.createElement('div');
-                                    errDiv.className = 'flex justify-start slide-in';
-                                    errDiv.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-2.5 max-w-[75%] text-sm">${escapeHtml(data.message)}</div>`;
-                                    container.appendChild(errDiv);
-                                } else if (evtType === 'done') {
-                                    if (typing.parentNode) typing.remove();
-                                }
-                            } catch(e) {}
-                            evtType = null;
-                        }
-                    }
-                    read();
-                });
-            }
-            read();
-        });
+            body: JSON.stringify({ message, conversation_id: ucConvIds[uc] || null, use_case: useCase }),
+        }).then(response => handleStream(response, container, typing));
     }
 
     // --- Unified UC input: text + file in one bar ---
     let ucFiles = { uc1: null, uc2: null, uc3: null };
+    let ucConvIds = { uc1: null, uc2: null, uc3: null };  // per-tab conversation persistence
+    let ucLastUpload = { uc1: null, uc2: null, uc3: null }; // store last uploaded file as data URL for review
     const ucMap = { uc1: 'sales_orders', uc2: 'ap_processing', uc3: 'product_data' };
 
     function attachFile(uc, file) {
@@ -1700,6 +1727,9 @@
             const typing = addTypingTo(container);
             toolFeed.innerHTML = '';
 
+            // Store file for review panel
+            storeUploadForReview(uc, file);
+
             const formData = new FormData();
             formData.append('file', file);
             formData.append('use_case', useCase);
@@ -1736,71 +1766,14 @@
     }
 
     function streamUpload(formData, container, typing) {
-        let aiEl = null;
-        let aiRaw = '';
+        fetch('/api/upload', { method: 'POST', body: formData }).then(response => handleStream(response, container, typing));
+    }
 
-        fetch('/api/upload', { method: 'POST', body: formData }).then(response => {
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            let evtType = null;
-
-            function read() {
-                reader.read().then(({ done, value }) => {
-                    if (done) return;
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() || '';
-                    for (const line of lines) {
-                        if (line.startsWith('event: ')) {
-                            evtType = line.slice(7).trim();
-                        } else if (line.startsWith('data: ') && evtType) {
-                            try {
-                                const data = JSON.parse(line.slice(6));
-                                if (evtType === 'token') {
-                                    if (typing.parentNode) typing.remove();
-                                    if (!aiEl) {
-                                        const aiDiv = document.createElement('div');
-                                        aiDiv.className = 'flex justify-start slide-in';
-                                        const wrapper = document.createElement('div');
-                                        wrapper.className = 'flex items-start space-x-2 max-w-[85%]';
-                                        wrapper.innerHTML = `<div class="w-7 h-7 rounded-full bg-qblue flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-white text-xs font-bold">AI</span></div>`;
-                                        aiEl = document.createElement('div');
-                                        aiEl.className = 'msg-md bg-white rounded-2xl rounded-bl-md px-4 py-3 text-sm text-gray-800 shadow-sm border border-gray-100';
-                                        wrapper.appendChild(aiEl);
-                                        aiDiv.appendChild(wrapper);
-                                        container.appendChild(aiDiv);
-                                    }
-                                    aiRaw += data.content;
-                                    aiEl.innerHTML = marked.parse(aiRaw);
-                                    container.scrollTop = container.scrollHeight;
-                                } else if (evtType === 'tool_call') {
-                                    highlightTool(data.tool, true);
-                                    addToolEntry(`&rarr; ${data.tool}`, 'text-qblue font-medium');
-                                } else if (evtType === 'tool_result') {
-                                    highlightTool(data.tool, false);
-                                    addToolEntry(`&check; ${data.tool} done`, 'text-green-600');
-                                } else if (evtType === 'approval_created') {
-                                    addToolEntry(`+ Approval: ${data.title}`, 'text-yellow-600 font-medium');
-                                    fetchApprovals(); fetchDashboard();
-                                } else if (evtType === 'error') {
-                                    if (typing.parentNode) typing.remove();
-                                    const errDiv = document.createElement('div');
-                                    errDiv.className = 'flex justify-start slide-in';
-                                    errDiv.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-2.5 max-w-[75%] text-sm">${escapeHtml(data.message)}</div>`;
-                                    container.appendChild(errDiv);
-                                } else if (evtType === 'done') {
-                                    if (typing.parentNode) typing.remove();
-                                }
-                            } catch(e) {}
-                            evtType = null;
-                        }
-                    }
-                    read();
-                });
-            }
-            read();
-        });
+    // Store uploaded file as data URL for review panel display
+    function storeUploadForReview(uc, file) {
+        const reader = new FileReader();
+        reader.onload = (e) => { ucLastUpload[uc] = { name: file.name, type: file.type, dataUrl: e.target.result }; };
+        reader.readAsDataURL(file);
     }
 
     // UC2 quick action buttons still use text
@@ -1867,8 +1840,41 @@
         // Render AI summary (left side)
         document.getElementById('review-summary').innerHTML = marked.parse(approval.content || '');
 
+        // Set up original document viewer
+        const docImg = document.getElementById('review-doc-img');
+        const docNone = document.getElementById('review-doc-none');
+        docImg.classList.add('hidden');
+        docNone.classList.remove('hidden');
+
+        // Check if we have an uploaded file for this tab
+        const tabForType = { sales_order: 'uc1', invoice_match: 'uc2', payment_application: 'uc2', collection_outreach: 'uc2', product_entry: 'uc3' };
+        const uc = tabForType[approval.recommendation_type] || null;
+        if (uc && ucLastUpload[uc] && ucLastUpload[uc].dataUrl) {
+            docNone.classList.add('hidden');
+            docImg.src = ucLastUpload[uc].dataUrl;
+            docImg.classList.remove('hidden');
+        }
+
+        // Default to summary tab
+        showReviewTab('summary');
+
         // Render editable form (right side)
         renderReviewForm(approval);
+    };
+
+    window.showReviewTab = function(tab) {
+        document.getElementById('review-summary').classList.toggle('hidden', tab !== 'summary');
+        document.getElementById('review-document').classList.toggle('hidden', tab !== 'document');
+        const tabSummary = document.getElementById('review-tab-summary');
+        const tabDoc = document.getElementById('review-tab-document');
+        tabSummary.classList.toggle('text-qblue', tab === 'summary');
+        tabSummary.classList.toggle('border-qblue', tab === 'summary');
+        tabSummary.classList.toggle('text-gray-400', tab !== 'summary');
+        tabSummary.classList.toggle('border-transparent', tab !== 'summary');
+        tabDoc.classList.toggle('text-qblue', tab === 'document');
+        tabDoc.classList.toggle('border-qblue', tab === 'document');
+        tabDoc.classList.toggle('text-gray-400', tab !== 'document');
+        tabDoc.classList.toggle('border-transparent', tab !== 'document');
     };
 
     window.closeReview = function() {
