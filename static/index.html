@@ -1556,11 +1556,13 @@
                                 addToolEntry(`+ Approval: ${data.title}`, 'text-yellow-600 font-medium');
                                 // Associate uploaded doc with this approval
                                 if (data.id) {
+                                    if (!window._approvalDocs) window._approvalDocs = {};
+                                    // Try to find the source doc: check by type mapping, then by active tab
                                     const tabForType = { sales_order: 'uc1', invoice_match: 'uc2', payment_application: 'uc2', collection_outreach: 'uc2', product_entry: 'uc3' };
                                     const ucTab = tabForType[data.type] || null;
-                                    if (ucTab && ucLastUpload[ucTab]) {
-                                        if (!window._approvalDocs) window._approvalDocs = {};
-                                        window._approvalDocs[data.id] = ucLastUpload[ucTab];
+                                    const doc = (ucTab && ucLastUpload[ucTab]) || ucLastUpload.uc1 || ucLastUpload.uc2 || ucLastUpload.uc3;
+                                    if (doc && doc.dataUrl) {
+                                        window._approvalDocs[data.id] = doc;
                                     }
                                 }
                                 fetchApprovals();
@@ -1643,6 +1645,10 @@
         ucFiles[uc] = file;
         document.getElementById(uc + '-file-name').textContent = file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
         document.getElementById(uc + '-file-chip').classList.remove('hidden');
+        // Pre-read data URL for review panel display
+        const reader = new FileReader();
+        reader.onload = (e) => { ucLastUpload[uc] = { name: file.name, type: file.type, dataUrl: e.target.result }; };
+        reader.readAsDataURL(file);
     }
 
     window.ucFileSelect = function(input, uc) {
