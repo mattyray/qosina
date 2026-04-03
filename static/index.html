@@ -437,8 +437,14 @@
                             <div id="review-summary" class="msg-md bg-white rounded-lg border border-gray-200 p-4 text-sm text-gray-700"></div>
                             <div id="review-document" class="bg-white rounded-lg border border-gray-200 p-4 hidden">
                                 <p id="review-doc-none" class="text-sm text-gray-400">No original document available for this approval.</p>
-                                <img id="review-doc-img" class="hidden max-w-full rounded" alt="Original document">
-                                <iframe id="review-doc-pdf" class="hidden w-full rounded" style="height:600px" frameborder="0"></iframe>
+                                <div id="review-doc-expand-btn" class="hidden mb-2">
+                                    <button onclick="expandDocument()" class="text-[10px] text-qblue hover:text-qblue-dark font-medium flex items-center space-x-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                        <span>Expand</span>
+                                    </button>
+                                </div>
+                                <img id="review-doc-img" class="hidden max-w-full rounded cursor-pointer" alt="Original document" onclick="expandDocument()">
+                                <iframe id="review-doc-pdf" class="hidden w-full rounded" style="height:500px" frameborder="0"></iframe>
                             </div>
                         </div>
                         <div>
@@ -725,6 +731,16 @@
     </div>
 
 </main>
+
+<!-- Fullscreen document viewer modal -->
+<div id="doc-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-8" onclick="closeDocModal()">
+    <div class="relative bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-full overflow-auto" onclick="event.stopPropagation()">
+        <button onclick="closeDocModal()" class="absolute top-3 right-3 bg-gray-100 hover:bg-gray-200 rounded-full p-2 z-10 transition-colors">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <div id="doc-modal-content" class="p-6"></div>
+    </div>
+</div>
 
 <script>
 (function() {
@@ -1860,14 +1876,17 @@
         const docImg = document.getElementById('review-doc-img');
         const docPdf = document.getElementById('review-doc-pdf');
         const docNone = document.getElementById('review-doc-none');
+        const docExpandBtn = document.getElementById('review-doc-expand-btn');
         docImg.classList.add('hidden');
         docPdf.classList.add('hidden');
         docNone.classList.remove('hidden');
+        docExpandBtn.classList.add('hidden');
 
         // Check if we have an uploaded file associated with this approval
         const approvalDoc = (window._approvalDocs || {})[approval.id];
         if (approvalDoc && approvalDoc.dataUrl) {
             docNone.classList.add('hidden');
+            docExpandBtn.classList.remove('hidden');
             if (approvalDoc.type === 'application/pdf' || approvalDoc.name.toLowerCase().endsWith('.pdf')) {
                 docPdf.src = approvalDoc.dataUrl;
                 docPdf.classList.remove('hidden');
@@ -1898,6 +1917,34 @@
         tabDoc.classList.toggle('text-gray-400', tab !== 'document');
         tabDoc.classList.toggle('border-transparent', tab !== 'document');
     };
+
+    window.expandDocument = function() {
+        const approval = reviewingApproval;
+        if (!approval) return;
+        const approvalDoc = (window._approvalDocs || {})[approval.id];
+        if (!approvalDoc || !approvalDoc.dataUrl) return;
+
+        const modal = document.getElementById('doc-modal');
+        const content = document.getElementById('doc-modal-content');
+        const isPdf = approvalDoc.type === 'application/pdf' || approvalDoc.name.toLowerCase().endsWith('.pdf');
+
+        if (isPdf) {
+            content.innerHTML = `<iframe src="${approvalDoc.dataUrl}" class="w-full rounded" style="height:85vh" frameborder="0"></iframe>`;
+        } else {
+            content.innerHTML = `<img src="${approvalDoc.dataUrl}" class="max-w-full rounded" alt="Original document">`;
+        }
+        modal.classList.remove('hidden');
+    };
+
+    window.closeDocModal = function() {
+        document.getElementById('doc-modal').classList.add('hidden');
+        document.getElementById('doc-modal-content').innerHTML = '';
+    };
+
+    // ESC key closes modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDocModal();
+    });
 
     window.closeReview = function() {
         document.getElementById('panel-review').classList.add('hidden');
