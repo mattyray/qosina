@@ -1574,29 +1574,57 @@
     // Wire up paste (Cmd+V image) and drop on the input fields too
     ['uc1', 'uc2', 'uc3'].forEach(uc => {
         const input = document.getElementById(uc + '-input');
+        const panel = document.getElementById('panel-' + uc);
         if (!input) return;
 
-        // Paste image from clipboard
+        // Paste: handle files AND images from clipboard (Cmd+V)
         input.addEventListener('paste', (e) => {
-            const items = (e.clipboardData || {}).items || [];
+            const cd = e.clipboardData || {};
+
+            // Check for pasted files first (Cmd+C a file in Finder, Cmd+V here)
+            if (cd.files && cd.files.length > 0) {
+                e.preventDefault();
+                attachFile(uc, cd.files[0]);
+                return;
+            }
+
+            // Check for images in clipboard items (e.g., screenshots)
+            const items = cd.items || [];
             for (const item of items) {
-                if (item.type.startsWith('image/')) {
+                if (item.kind === 'file') {
                     e.preventDefault();
                     const file = item.getAsFile();
-                    if (file) attachFile(uc, new File([file], 'pasted-image.png', { type: file.type }));
+                    if (file) {
+                        const name = file.name || (file.type.startsWith('image/') ? 'pasted-image.png' : 'pasted-file');
+                        attachFile(uc, new File([file], name, { type: file.type }));
+                    }
                     return;
                 }
             }
-            // If not an image, let normal text paste happen
+            // Otherwise let normal text paste happen
         });
 
-        // Prevent drop on input from inserting filename as text
-        input.addEventListener('dragover', (e) => e.preventDefault());
+        // Drop on input — attach file, don't insert filename
+        input.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); });
+        input.addEventListener('dragenter', (e) => { e.preventDefault(); e.stopPropagation(); });
         input.addEventListener('drop', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (e.dataTransfer.files[0]) attachFile(uc, e.dataTransfer.files[0]);
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                attachFile(uc, e.dataTransfer.files[0]);
+            }
         });
+
+        // Drop anywhere on the panel also works
+        if (panel) {
+            panel.addEventListener('dragover', (e) => e.preventDefault());
+            panel.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    attachFile(uc, e.dataTransfer.files[0]);
+                }
+            });
+        }
     });
 
     window.clearUCFile = function(uc) {
