@@ -91,7 +91,7 @@ def generate_po_acme():
     pdf.cell(0, 5, "Please include Certificate of Compliance with shipment.", ln=True)
     pdf.cell(0, 5, "All parts must comply with ISO 80369-7.", ln=True)
 
-    path = os.path.join(OUTPUT_DIR, "po_acme_medical.pdf")
+    path = os.path.join(OUTPUT_DIR, "uc1_sales_orders", "po_acme_medical.pdf")
     pdf.output(path)
     print(f"Generated: {path}")
 
@@ -133,7 +133,7 @@ def generate_po_bioflow():
     pdf.cell(0, 6, "Shipping: Standard Ground", ln=True)
     pdf.cell(0, 6, "Special Instructions: None", ln=True)
 
-    path = os.path.join(OUTPUT_DIR, "po_bioflow_systems.pdf")
+    path = os.path.join(OUTPUT_DIR, "uc1_sales_orders", "po_bioflow_systems.pdf")
     pdf.output(path)
     print(f"Generated: {path}")
 
@@ -189,7 +189,7 @@ def generate_spec_sheet_stopcock():
         pdf.cell(60, 6, label, border=1)
         pdf.cell(120, 6, value, border=1, ln=True)
 
-    path = os.path.join(OUTPUT_DIR, "spec_sheet_stopcock.pdf")
+    path = os.path.join(OUTPUT_DIR, "uc3_product_data", "spec_sheet_stopcock.pdf")
     pdf.output(path)
     print(f"Generated: {path}")
 
@@ -243,7 +243,7 @@ def generate_spec_sheet_filter():
         pdf.cell(70, 6, label, border=1)
         pdf.cell(110, 6, value, border=1, ln=True)
 
-    path = os.path.join(OUTPUT_DIR, "spec_sheet_filter_euroflex.pdf")
+    path = os.path.join(OUTPUT_DIR, "uc3_product_data", "spec_sheet_filter_euroflex.pdf")
     pdf.output(path)
     print(f"Generated: {path}")
 
@@ -320,7 +320,7 @@ def generate_handwritten_po():
     draw.line(points, fill=ink, width=2)
     wobbly_text(draw, x_pos + 10, y + 102, "- D. Park", font_small)
 
-    path = os.path.join(OUTPUT_DIR, "po_handwritten_summit_surgical.png")
+    path = os.path.join(OUTPUT_DIR, "uc1_sales_orders", "po_handwritten_summit_surgical.png")
     img.save(path)
     print(f"Generated: {path}")
 
@@ -466,7 +466,7 @@ def generate_vendor_invoice_perfect():
     pdf.set_font("Helvetica", "", 9)
     pdf.cell(0, 5, "Please remit payment to: Precision Plastics Corp, Account #4412-8890, Routing #053100300", ln=True)
 
-    path = os.path.join(OUTPUT_DIR, "vendor_invoice_precision_plastics.pdf")
+    path = os.path.join(OUTPUT_DIR, "uc2_ap_processing", "vendor_invoice_precision_plastics.pdf")
     pdf.output(path)
     print(f"Generated: {path}")
 
@@ -529,7 +529,7 @@ def generate_vendor_invoice_discrepancy():
     pdf.set_font("Helvetica", "I", 9)
     pdf.cell(0, 5, "Note: Shipped 500 units per PO-2026-005. Please verify receipt and remit.", ln=True)
 
-    path = os.path.join(OUTPUT_DIR, "vendor_invoice_techvalve_discrepancy.pdf")
+    path = os.path.join(OUTPUT_DIR, "uc2_ap_processing", "vendor_invoice_techvalve_discrepancy.pdf")
     pdf.output(path)
     print(f"Generated: {path}")
 
@@ -592,7 +592,7 @@ def generate_vendor_invoice_penny():
     pdf.cell(0, 5, "Wire transfer to: SinoMed Components Ltd, HSBC Shanghai, SWIFT: HSBCSGSG", ln=True)
     pdf.cell(0, 5, "Account: 400-123456-001  |  Reference: VINV-2026-002", ln=True)
 
-    path = os.path.join(OUTPUT_DIR, "vendor_invoice_sinomed_penny.pdf")
+    path = os.path.join(OUTPUT_DIR, "uc2_ap_processing", "vendor_invoice_sinomed_penny.pdf")
     pdf.output(path)
     print(f"Generated: {path}")
 
@@ -659,7 +659,7 @@ def generate_payment_remittance():
     pdf.cell(0, 5, "Note: Deducted $5.00 from CINV-2026-007 for damaged goods on order ORD-2025-0106.", ln=True)
     pdf.cell(0, 5, "Please apply payment and adjust balance accordingly.", ln=True)
 
-    path = os.path.join(OUTPUT_DIR, "payment_remittance_medline.pdf")
+    path = os.path.join(OUTPUT_DIR, "uc2_ap_processing", "payment_remittance_medline.pdf")
     pdf.output(path)
     print(f"Generated: {path}")
 
