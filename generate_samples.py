@@ -664,15 +664,512 @@ def generate_payment_remittance():
     print(f"Generated: {path}")
 
 
+    # --- NEW UC1: Email body PO (plain text, no formatting) ---
+def generate_po_email_body():
+    """PO as a plain email — no PDF structure, informal."""
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Courier", "", 11)
+
+    lines = [
+        "From: jwalsh@pacificcoastmed.com",
+        "To: orders@qosina.com",
+        "Subject: New Order - Pacific Coast Medical Supplies",
+        "Date: April 1, 2026",
+        "",
+        "Hi Qosina team,",
+        "",
+        "We'd like to order the following. We're a new customer,",
+        "Pacific Coast Medical Supplies in San Diego.",
+        "",
+        "  - 50 needleless injection sites (swabbable, luer",
+        "    lock both ends) at $6.75 each",
+        "  - 100 extension lines, 6 inch, female to male luer",
+        "    lock, at $2.10 each",
+        "  - 25 Y-connectors with spin lock at $4.50 each",
+        "  - 500 of the clear female luer lock connectors",
+        "    with tubing port, part 11096, at $0.45",
+        "",
+        "Ship to:",
+        "  Pacific Coast Medical Supplies",
+        "  8800 Miramar Road Suite 200",
+        "  San Diego, CA 92126",
+        "",
+        "Net 30 terms if possible. Need delivery by end of",
+        "April.",
+        "",
+        "Thanks,",
+        "Jennifer Walsh",
+        "Purchasing Director",
+        "(858) 555-0199",
+    ]
+
+    for line in lines:
+        pdf.cell(0, 5.5, line, ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "uc1_sales_orders", "po_email_pacific_coast.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
+def generate_po_wrong_parts():
+    """PO with outdated/wrong part numbers — tests error handling."""
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "PURCHASE ORDER", ln=True, align="C")
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 6, "Precision Diagnostics Inc", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 5, "Robert Taylor | rtaylor@precisiondiag.com", ln=True)
+    pdf.cell(0, 5, "PO Number: PD-2026-0055", ln=True)
+    pdf.cell(0, 5, "Date: April 2, 2026  |  Terms: Net 30", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(25, 7, "Part #", border=1, fill=True, align="C")
+    pdf.cell(80, 7, "Description", border=1, fill=True)
+    pdf.cell(20, 7, "Qty", border=1, fill=True, align="C")
+    pdf.cell(25, 7, "Price", border=1, fill=True, align="R")
+    pdf.cell(30, 7, "Total", border=1, fill=True, align="R", ln=True)
+
+    items = [
+        ("28213", "Hydrophilic Filter, Luer Lock", "150", "$3.50", "$525.00"),
+        ("99999", "Three-Way Stopcock (DISCONTINUED)", "100", "$5.20", "$520.00"),
+        ("33061", "Extension Line 6 inch", "300", "$2.10", "$630.00"),
+        ("XXXXZ", "Barbed Y-Connector 1/4 inch", "50", "$4.25", "$212.50"),
+    ]
+    pdf.set_font("Helvetica", "", 10)
+    for item in items:
+        pdf.cell(25, 7, item[0], border=1, align="C")
+        pdf.cell(80, 7, item[1], border=1)
+        pdf.cell(20, 7, item[2], border=1, align="C")
+        pdf.cell(25, 7, item[3], border=1, align="R")
+        pdf.cell(30, 7, item[4], border=1, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(125, 8, "", border=0)
+    pdf.cell(25, 8, "TOTAL:", border=1, align="R")
+    pdf.cell(30, 8, "$1,887.50", border=1, align="R", ln=True)
+
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, "Ship to: 1500 Harbor Blvd, Suite 100, Costa Mesa, CA 92626", ln=True)
+    pdf.cell(0, 5, "Delivery by: April 18, 2026", ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "uc1_sales_orders", "po_wrong_parts_precision_diag.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
+# --- NEW UC2: Vendor invoice with price discrepancy ---
+def generate_vendor_invoice_price_mismatch():
+    """Vendor invoice where unit price differs from PO price."""
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "Allied Silicone Products", ln=True)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, "9400 Silicon Drive, Fremont, CA 94538", ln=True)
+    pdf.cell(0, 5, "billing@alliedsilicone.com  |  (510) 555-0177", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 8, "INVOICE", ln=True)
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(47, 7, "Invoice #", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "Date", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "PO Reference", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "Terms", border=1, fill=True, align="C", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(47, 7, "VINV-2026-004", border=1, align="C")
+    pdf.cell(47, 7, "April 10, 2026", border=1, align="C")
+    pdf.cell(47, 7, "PO-2026-004", border=1, align="C")
+    pdf.cell(47, 7, "Net 45", border=1, align="C", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 6, "Bill To: Qosina Corp, 150-Q Executive Drive, Ronkonkoma, NY 11779", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(25, 7, "Part #", border=1, fill=True, align="C")
+    pdf.cell(80, 7, "Description", border=1, fill=True)
+    pdf.cell(20, 7, "Qty", border=1, fill=True, align="C")
+    pdf.cell(25, 7, "Unit Price", border=1, fill=True, align="R")
+    pdf.cell(30, 7, "Total", border=1, fill=True, align="R", ln=True)
+
+    # PO says $65.00/coil but invoice says $67.50 — price increase
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(25, 7, "T1006", border=1, align="C")
+    pdf.cell(80, 7, "Silicone Tubing, 50A, 1/4 ID x 3/8 OD", border=1)
+    pdf.cell(20, 7, "100", border=1, align="C")
+    pdf.cell(25, 7, "$67.50", border=1, align="R")
+    pdf.cell(30, 7, "$6,750.00", border=1, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(125, 8, "", border=0)
+    pdf.cell(25, 8, "TOTAL:", border=1, align="R")
+    pdf.cell(30, 8, "$6,750.00", border=1, align="R", ln=True)
+
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "I", 9)
+    pdf.cell(0, 5, "Note: Unit price reflects Q2 2026 price adjustment (+3.8%). See attached price update notice.", ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "uc2_ap_processing", "vendor_invoice_allied_price_mismatch.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
+def generate_partial_payment_no_remittance():
+    """A bank statement line showing a payment with no remittance advice."""
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 10, "FIRST NATIONAL BANK", ln=True, align="C")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, "Commercial Account Transaction Detail", ln=True, align="C")
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(0, 6, "Account: Qosina Corp - Operating Account #4412-00-8890", ln=True)
+    pdf.cell(0, 6, "Statement Date: April 3, 2026", ln=True)
+    pdf.ln(4)
+
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(30, 7, "Date", border=1, fill=True, align="C")
+    pdf.cell(35, 7, "Type", border=1, fill=True, align="C")
+    pdf.cell(60, 7, "Description", border=1, fill=True)
+    pdf.cell(30, 7, "Amount", border=1, fill=True, align="R")
+    pdf.cell(30, 7, "Balance", border=1, fill=True, align="R", ln=True)
+
+    # A few transactions for context, then the mystery payment
+    txns = [
+        ("04/01", "WIRE OUT", "Precision Plastics Corp - PO", "-$5,700.00", "$142,350.00"),
+        ("04/01", "ACH IN", "Atlantic Bioprocess - payment", "+$650.00", "$143,000.00"),
+        ("04/02", "CHECK IN", "Unknown - Check #4488", "+$2,800.00", "$145,800.00"),
+        ("04/03", "WIRE OUT", "Allied Silicone - PO-2026-004", "-$6,500.00", "$139,300.00"),
+    ]
+    pdf.set_font("Helvetica", "", 10)
+    for txn in txns:
+        pdf.cell(30, 7, txn[0], border=1, align="C")
+        pdf.cell(35, 7, txn[1], border=1, align="C")
+        pdf.cell(60, 7, txn[2], border=1)
+        pdf.cell(30, 7, txn[3], border=1, align="R")
+        pdf.cell(30, 7, txn[4], border=1, align="R", ln=True)
+
+    pdf.ln(6)
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(0, 6, "FLAGGED ITEM - Requires Cash Application:", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 5, "04/02  CHECK IN  $2,800.00 - Check #4488 - No remittance advice on file.", ln=True)
+    pdf.cell(0, 5, "Possible matches: CUST-001 (Acme Medical, open invoice $2,137.50)", ln=True)
+    pdf.cell(0, 5, "                  CUST-005 (Atlantic Bioprocess, open invoice $650.00)", ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "uc2_ap_processing", "bank_statement_mystery_payment.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
+def generate_vendor_invoice_unknown_po():
+    """Vendor invoice referencing a PO that doesn't exist in the system."""
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "MedSupply International", ln=True)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, "22 Commerce Way, Dublin, Ireland  |  accounts@medsupplyintl.ie", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 8, "INVOICE", ln=True)
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(47, 7, "Invoice #", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "Date", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "PO Reference", border=1, fill=True, align="C")
+    pdf.cell(47, 7, "Terms", border=1, fill=True, align="C", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(47, 7, "MSI-INV-8842", border=1, align="C")
+    pdf.cell(47, 7, "April 5, 2026", border=1, align="C")
+    pdf.cell(47, 7, "PO-2025-999", border=1, align="C")
+    pdf.cell(47, 7, "Net 30", border=1, align="C", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 6, "Bill To: Qosina Corp, Ronkonkoma, NY", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(80, 7, "Description", border=1, fill=True)
+    pdf.cell(20, 7, "Qty", border=1, fill=True, align="C")
+    pdf.cell(25, 7, "Unit", border=1, fill=True, align="R")
+    pdf.cell(30, 7, "Total", border=1, fill=True, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(80, 7, "Sterile IV Extension Set, 48 inch", border=1)
+    pdf.cell(20, 7, "200", border=1, align="C")
+    pdf.cell(25, 7, "$12.50", border=1, align="R")
+    pdf.cell(30, 7, "$2,500.00", border=1, align="R", ln=True)
+
+    pdf.cell(80, 7, "Needlefree Connector, 3-Way", border=1)
+    pdf.cell(20, 7, "500", border=1, align="C")
+    pdf.cell(25, 7, "$4.80", border=1, align="R")
+    pdf.cell(30, 7, "$2,400.00", border=1, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(100, 8, "", border=0)
+    pdf.cell(25, 8, "TOTAL:", border=1, align="R")
+    pdf.cell(30, 8, "$4,900.00", border=1, align="R", ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "uc2_ap_processing", "vendor_invoice_unknown_po.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
+# --- NEW UC3: Tubing spec with imperial measurements ---
+def generate_spec_sheet_tubing():
+    """Tubing spec sheet with imperial measurements — tests unit conversion."""
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 8, "PRODUCT DATA SHEET", ln=True, align="C")
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.cell(0, 7, "Allied Silicone Products", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 5, "Catalog #: ASP-T5050", ln=True)
+    pdf.cell(0, 5, "Platinum-Cured Silicone Tubing, 50A Durometer", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(70, 7, "Parameter", border=1, fill=True)
+    pdf.cell(110, 7, "Value", border=1, fill=True, ln=True)
+
+    specs = [
+        ("Material", "Medical-grade silicone rubber"),
+        ("Durometer", "50A Shore"),
+        ("Inner Diameter", "3/16 inch"),
+        ("Outer Diameter", "5/16 inch"),
+        ("Wall Thickness", "1/16 inch"),
+        ("Tensile Strength", "1,200 psi"),
+        ("Elongation", "400%"),
+        ("Color", "Translucent"),
+        ("Biocompatibility", "USP Class VI, ISO 10993"),
+        ("Sterilization", "Autoclave, Gamma, EtO"),
+        ("Temperature Range", "-60C to +200C"),
+        ("Coil Length", "50 feet"),
+        ("Packaging", "50 ft coils, individually bagged"),
+        ("Country of Origin", "United States"),
+        ("Lead Time", "14-21 days"),
+        ("FDA Status", "FDA compliant, DMF on file"),
+        ("Certifications", "USP Class VI, ISO 10993, FDA"),
+        ("Tariff Code", "3917.40"),
+        ("Units per Case", "10 coils"),
+        ("Unit Price", "$48.00/coil"),
+    ]
+    pdf.set_font("Helvetica", "", 10)
+    for label, value in specs:
+        pdf.cell(70, 6, label, border=1)
+        pdf.cell(110, 6, value, border=1, ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "uc3_product_data", "spec_sheet_tubing_allied.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
+def generate_certificate_of_analysis():
+    """Certificate of Analysis — different doc type with quality test results."""
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "CERTIFICATE OF ANALYSIS", ln=True, align="C")
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 6, "Precision Plastics Corp", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 5, "ISO 13485:2016 Certified  |  FDA Registered Facility", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(45, 7, "Product", border=1, fill=True)
+    pdf.cell(140, 7, "1-Way Stopcock, Female Luer Lock, Male Luer Lock", border=1, ln=True)
+    pdf.cell(45, 7, "Part Number", border=1, fill=True)
+    pdf.cell(140, 7, "SP-11195-A (Qosina equivalent: #11195)", border=1, ln=True)
+    pdf.cell(45, 7, "Lot Number", border=1, fill=True)
+    pdf.cell(140, 7, "LOT-2026-0501", border=1, ln=True)
+    pdf.cell(45, 7, "Mfg Date", border=1, fill=True)
+    pdf.cell(140, 7, "March 15, 2026", border=1, ln=True)
+    pdf.cell(45, 7, "Expiry Date", border=1, fill=True)
+    pdf.cell(140, 7, "March 15, 2031 (60 months)", border=1, ln=True)
+    pdf.cell(45, 7, "Quantity", border=1, fill=True)
+    pdf.cell(140, 7, "10,000 units", border=1, ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(0, 7, "TEST RESULTS", ln=True)
+    pdf.ln(2)
+
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(60, 7, "Test", border=1, fill=True)
+    pdf.cell(40, 7, "Specification", border=1, fill=True, align="C")
+    pdf.cell(40, 7, "Result", border=1, fill=True, align="C")
+    pdf.cell(30, 7, "Status", border=1, fill=True, align="C", ln=True)
+
+    tests = [
+        ("Visual Inspection", "No defects", "No defects", "PASS"),
+        ("Thru-Hole Diameter", "2.69mm +/- 0.05", "2.70mm", "PASS"),
+        ("Burst Pressure", "> 29 psi", "42 psi", "PASS"),
+        ("Handle Torque", "> 3 in-oz", "4.2 in-oz", "PASS"),
+        ("Biocompatibility", "ISO 10993-1", "Compliant", "PASS"),
+        ("Particulate Matter", "< 50 particles/mL", "12 particles/mL", "PASS"),
+        ("Endotoxin", "< 20 EU/device", "< 0.5 EU/device", "PASS"),
+        ("Sterility (pre-irrad)", "SAL 10^-6", "SAL 10^-6", "PASS"),
+    ]
+    pdf.set_font("Helvetica", "", 10)
+    for test in tests:
+        pdf.cell(60, 6, test[0], border=1)
+        pdf.cell(40, 6, test[1], border=1, align="C")
+        pdf.cell(40, 6, test[2], border=1, align="C")
+        pdf.cell(30, 6, test[3], border=1, align="C", ln=True)
+
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(0, 6, "MATERIALS:", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 5, "Body: Polycarbonate (PC)  |  Handle: HDPE  |  Seal: Silicone", ln=True)
+    pdf.cell(0, 5, "Connections: Female Luer Lock inlet, Male Luer Lock outlet", ln=True)
+    pdf.cell(0, 5, "Compliance: ISO 80369-7", ln=True)
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "I", 9)
+    pdf.cell(0, 5, "This certifies that the above lot has been manufactured and tested in accordance with", ln=True)
+    pdf.cell(0, 5, "applicable specifications and is released for distribution.", ln=True)
+    pdf.ln(4)
+    pdf.cell(0, 5, "QA Manager: Dr. Li Wei  |  Date: March 20, 2026", ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "uc3_product_data", "certificate_of_analysis_stopcock.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
+def generate_catalog_page():
+    """Multi-product catalog page — multiple products on one page."""
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "TechValve International - Product Catalog 2026", ln=True, align="C")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, "Medical Grade Flow Control Components", ln=True, align="C")
+    pdf.ln(6)
+
+    products = [
+        {
+            "name": "TV-CHK-100 High-Flow Check Valve",
+            "specs": [
+                ("Type", "One-way check valve"),
+                ("Connection", "Barbed, fits 1/4 inch ID tubing"),
+                ("Material", "Acrylic body, silicone disc"),
+                ("Cracking Pressure", "0.075 psi"),
+                ("Max Pressure", "25 psi"),
+                ("Sterilization", "Gamma, EtO, Autoclave"),
+                ("Price", "$3.80/unit  |  MOQ: 100"),
+            ],
+        },
+        {
+            "name": "TV-CHK-200 Low-Pressure Check Valve",
+            "specs": [
+                ("Type", "One-way check valve"),
+                ("Connection", "Female Luer Lock inlet, Male Luer Lock outlet"),
+                ("Material", "PC body, silicone disc"),
+                ("Cracking Pressure", "0.5 psi"),
+                ("Max Pressure", "50 psi"),
+                ("Compliance", "ISO 80369-7"),
+                ("Sterilization", "Gamma, EtO"),
+                ("Price", "$3.40/unit  |  MOQ: 100"),
+            ],
+        },
+        {
+            "name": "TV-FLO-300 Precision Flow Regulator",
+            "specs": [
+                ("Type", "Variable flow regulator"),
+                ("Connection", "Female Luer Lock inlet, Male Luer Lock outlet"),
+                ("Material", "PC, HDPE handle"),
+                ("Flow Range", "0-150 mL/min"),
+                ("Max Pressure", "30 psi"),
+                ("Compliance", "ISO 80369-7"),
+                ("Price", "$5.50/unit  |  MOQ: 50"),
+            ],
+        },
+    ]
+
+    for prod in products:
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.set_fill_color(0, 93, 170)
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(0, 7, "  " + prod["name"], border=0, fill=True, ln=True)
+        pdf.set_text_color(0, 0, 0)
+
+        pdf.set_font("Helvetica", "", 9)
+        for label, value in prod["specs"]:
+            pdf.cell(40, 5, "  " + label + ":", border=0)
+            pdf.cell(0, 5, value, border=0, ln=True)
+        pdf.ln(4)
+
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "", 8)
+    pdf.cell(0, 4, "All products manufactured in ISO Class 8 clean room  |  ISO 13485 certified  |  Country of origin: Singapore", ln=True)
+    pdf.cell(0, 4, "Contact: sales@techvalveintl.com  |  +65 6555 0142", ln=True)
+
+    path = os.path.join(OUTPUT_DIR, "uc3_product_data", "catalog_page_techvalve.pdf")
+    pdf.output(path)
+    print(f"Generated: {path}")
+
+
 if __name__ == "__main__":
+    # Ensure subdirs exist
+    for d in ["uc1_sales_orders", "uc2_ap_processing", "uc3_product_data"]:
+        os.makedirs(os.path.join(OUTPUT_DIR, d), exist_ok=True)
+
+    # UC1
     generate_po_acme()
     generate_po_bioflow()
-    generate_spec_sheet_stopcock()
-    generate_spec_sheet_filter()
     generate_handwritten_po()
     generate_handwritten_po_clean()
+    generate_po_email_body()
+    generate_po_wrong_parts()
+    # UC2
     generate_vendor_invoice_perfect()
     generate_vendor_invoice_discrepancy()
     generate_vendor_invoice_penny()
     generate_payment_remittance()
+    generate_vendor_invoice_price_mismatch()
+    generate_partial_payment_no_remittance()
+    generate_vendor_invoice_unknown_po()
+    # UC3
+    generate_spec_sheet_stopcock()
+    generate_spec_sheet_filter()
+    generate_spec_sheet_tubing()
+    generate_certificate_of_analysis()
+    generate_catalog_page()
     print(f"\nAll samples generated in {OUTPUT_DIR}/")
