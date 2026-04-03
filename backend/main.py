@@ -50,6 +50,11 @@ def get_agent(use_case: str):
     return _agents[use_case]
 
 
+def clear_agent_cache():
+    """Clear all cached agents so they get recreated with the new model."""
+    _agents.clear()
+
+
 # Initialize database on startup
 @app.on_event("startup")
 def startup():
@@ -290,6 +295,36 @@ def get_stats():
         "inventory_lots": inventory_lots,
         "pending_approvals": pending_approvals,
         "total_customers": total_customers,
+    }
+
+
+@app.get("/api/model")
+def get_model_info():
+    """Get current model and available models."""
+    from backend.shared.llm_provider import get_active_model_id, AVAILABLE_MODELS
+    import os
+    use_openrouter = os.getenv("USE_OPENROUTER", "true").lower() == "true"
+    return {
+        "active_model": get_active_model_id(),
+        "active_model_name": AVAILABLE_MODELS.get(get_active_model_id(), get_active_model_id()),
+        "available_models": AVAILABLE_MODELS,
+        "use_openrouter": use_openrouter,
+    }
+
+
+@app.put("/api/model")
+def switch_model(body: dict):
+    """Switch the active LLM model at runtime."""
+    from backend.shared.llm_provider import set_active_model, AVAILABLE_MODELS
+    model_id = body.get("model_id", "")
+    if model_id not in AVAILABLE_MODELS:
+        raise HTTPException(400, f"Unknown model. Available: {list(AVAILABLE_MODELS.keys())}")
+    set_active_model(model_id)
+    clear_agent_cache()
+    return {
+        "active_model": model_id,
+        "active_model_name": AVAILABLE_MODELS[model_id],
+        "message": f"Switched to {AVAILABLE_MODELS[model_id]}. All agents will use the new model.",
     }
 
 

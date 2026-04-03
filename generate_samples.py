@@ -325,6 +325,78 @@ def generate_handwritten_po():
     print(f"Generated: {path}")
 
 
+def generate_handwritten_po_clean():
+    """Generate a cleaner handwritten PO — readable enough for Claude to match products."""
+    from PIL import Image, ImageDraw, ImageFont
+    import random
+
+    width, height = 850, 650
+    img = Image.new("RGB", (width, height), "#f8f5ee")
+    draw = ImageDraw.Draw(img)
+
+    try:
+        font_large = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18)
+        font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 15)
+    except (OSError, IOError):
+        font_large = ImageFont.load_default()
+        font = ImageFont.load_default()
+        font_small = ImageFont.load_default()
+
+    ink = "#1a1a3a"
+
+    def neat_text(draw, x, y, text, f, color=ink):
+        """Draw text with very slight offset — neat handwriting."""
+        for char in text:
+            oy = random.randint(-1, 1)
+            draw.text((x, y + oy), char, fill=color, font=f)
+            bbox = draw.textbbox((x, y), char, font=f)
+            x += bbox[2] - bbox[0]
+
+    # Ruled lines
+    for y_line in range(75, height, 34):
+        draw.line([(50, y_line), (width - 50, y_line)], fill="#d0c8b8", width=1)
+
+    neat_text(draw, 60, 25, "PURCHASE ORDER", font_large, ink)
+    draw.line([(60, 55), (280, 55)], fill=ink, width=2)
+    neat_text(draw, 550, 28, "3/29/2026", font)
+
+    neat_text(draw, 60, 80, "Summit Surgical Supply", font)
+    neat_text(draw, 60, 110, "David Park - Purchasing Dept", font_small)
+    neat_text(draw, 60, 135, "PO# SS-2026-088", font)
+
+    neat_text(draw, 60, 180, "Please ship the following:", font)
+
+    items = [
+        "50x  Tuohy Borst Adapter  #80330   @ $8.50 ea",
+        "75x  Flow Control Switch (blue)  #97337  @ $5.90",
+        "200x  Roller Clamps  #14054   @ $0.95 ea",
+        "100x  Slide Clamps (white)  #11498  @ $0.35",
+    ]
+    y = 220
+    for item in items:
+        neat_text(draw, 80, y, item, font)
+        y += 38
+
+    neat_text(draw, 60, y + 25, "Ship to: 445 Medical Center Dr", font_small)
+    neat_text(draw, 60, y + 48, "         Charleston, SC 29403", font_small)
+    neat_text(draw, 60, y + 80, "RUSH - Need by April 25", font, "#8b0000")
+    neat_text(draw, 60, y + 110, "Terms: Net 30", font_small)
+
+    # Signature
+    points = [(60, y + 145)]
+    xp = 60
+    for _ in range(30):
+        xp += random.randint(3, 7)
+        points.append((xp, y + 145 + random.randint(-5, 5)))
+    draw.line(points, fill=ink, width=2)
+    neat_text(draw, xp + 10, y + 137, "- D. Park", font_small)
+
+    path = os.path.join(OUTPUT_DIR, "uc1_sales_orders", "po_handwritten_clean.png")
+    img.save(path)
+    print(f"Generated: {path}")
+
+
 def generate_vendor_invoice_perfect():
     """Vendor invoice that matches PO-2026-001 perfectly. Should auto-approve."""
     pdf = FPDF()
@@ -598,6 +670,7 @@ if __name__ == "__main__":
     generate_spec_sheet_stopcock()
     generate_spec_sheet_filter()
     generate_handwritten_po()
+    generate_handwritten_po_clean()
     generate_vendor_invoice_perfect()
     generate_vendor_invoice_discrepancy()
     generate_vendor_invoice_penny()

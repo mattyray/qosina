@@ -88,14 +88,35 @@
     <!-- Architecture Banner -->
     <div class="bg-qblue-dark/50 border-t border-white/10 px-6 py-1.5 flex items-center justify-between text-xs text-blue-200">
         <div class="flex items-center space-x-4">
-            <span class="flex items-center space-x-1">
-                <span class="text-green-400">&#9679;</span>
-                <span>Primary: Claude Sonnet 4 (via OpenRouter)</span>
-            </span>
-            <span class="text-white/30">|</span>
-            <span class="flex items-center space-x-1">
-                <span class="text-blue-300">Fallbacks: GPT-4o &rarr; Gemini</span>
-            </span>
+            <div class="relative">
+                <button onclick="toggleModelDropdown()" class="flex items-center space-x-1.5 bg-white/10 hover:bg-white/20 rounded-full px-3 py-0.5 transition-colors cursor-pointer">
+                    <span class="text-green-400">&#9679;</span>
+                    <span id="active-model-label">Claude Sonnet 4</span>
+                    <span class="text-white/50">(via OpenRouter)</span>
+                    <svg class="w-3 h-3 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div id="model-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50 min-w-[220px]">
+                    <div class="px-3 py-1 text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Switch Model</div>
+                    <button onclick="switchModel('anthropic/claude-sonnet-4')" class="model-option w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center space-x-2" data-model="anthropic/claude-sonnet-4">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        <span>Claude Sonnet 4</span>
+                        <span class="text-[10px] text-gray-400 ml-auto">Anthropic</span>
+                    </button>
+                    <button onclick="switchModel('openai/gpt-4o')" class="model-option w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-green-50 flex items-center space-x-2" data-model="openai/gpt-4o">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        <span>GPT-4o</span>
+                        <span class="text-[10px] text-gray-400 ml-auto">OpenAI</span>
+                    </button>
+                    <button onclick="switchModel('google/gemini-2.5-flash-preview')" class="model-option w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-yellow-50 flex items-center space-x-2" data-model="google/gemini-2.5-flash-preview">
+                        <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                        <span>Gemini 2.5 Flash</span>
+                        <span class="text-[10px] text-gray-400 ml-auto">Google</span>
+                    </button>
+                    <div class="border-t border-gray-100 mt-1 px-3 py-1.5 text-[9px] text-gray-400">
+                        Same agent, tools, and approval queue &mdash; only the LLM changes
+                    </div>
+                </div>
+            </div>
             <span class="text-white/30">|</span>
             <span class="flex items-center space-x-1">
                 <span class="text-green-400">&#9679;</span>
@@ -1735,9 +1756,57 @@
         document.getElementById('uc3-input').value = sampleSpecs[key] || '';
     };
 
+    // --- Model selector ---
+    window.toggleModelDropdown = function() {
+        document.getElementById('model-dropdown').classList.toggle('hidden');
+    };
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        const dd = document.getElementById('model-dropdown');
+        if (dd && !dd.classList.contains('hidden') && !e.target.closest('#model-dropdown') && !e.target.closest('[onclick*="toggleModelDropdown"]')) {
+            dd.classList.add('hidden');
+        }
+    });
+
+    window.switchModel = async function(modelId) {
+        document.getElementById('model-dropdown').classList.add('hidden');
+        try {
+            const res = await fetch('/api/model', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model_id: modelId }),
+            });
+            const data = await res.json();
+            document.getElementById('active-model-label').textContent = data.active_model_name;
+            // Flash the label to confirm
+            const label = document.getElementById('active-model-label');
+            label.classList.add('text-green-300');
+            setTimeout(() => label.classList.remove('text-green-300'), 1500);
+        } catch (err) {
+            alert('Failed to switch model');
+        }
+    };
+
+    // Load current model on startup
+    async function fetchModel() {
+        try {
+            const res = await fetch('/api/model');
+            const data = await res.json();
+            document.getElementById('active-model-label').textContent = data.active_model_name;
+            // Highlight active model in dropdown
+            document.querySelectorAll('.model-option').forEach(el => {
+                const isActive = el.dataset.model === data.active_model;
+                el.classList.toggle('bg-blue-50', isActive);
+                el.classList.toggle('font-semibold', isActive);
+            });
+        } catch (err) {}
+    }
+
     fetchStats();
     fetchApprovals();
     fetchDashboard();
+    fetchModel();
     setInterval(fetchStats, 10000);
     setInterval(fetchApprovals, 5000);
     setInterval(fetchDashboard, 10000);
