@@ -10,7 +10,7 @@ _active_model = None
 AVAILABLE_MODELS = {
     "anthropic/claude-sonnet-4": "Claude Sonnet 4",
     "openai/gpt-4o": "GPT-4o",
-    "google/gemini-2.5-flash-preview": "Gemini 2.5 Flash",
+    "google/gemini-2.5-flash": "Gemini 2.5 Flash",
 }
 
 
