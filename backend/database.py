@@ -19,7 +19,7 @@ def get_db():
     conn = get_connection()
     try:
         yield conn
-        
+
         conn.commit()
     except Exception:
         conn.rollback()
@@ -222,3 +222,5 @@ def init_db():
                 example_incorrect TEXT
             );
         """)
+
+
