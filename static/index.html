@@ -457,180 +457,705 @@
         </div>
 
         <!-- Architecture Panel -->
-        <div id="panel-arch" class="flex-1 overflow-y-auto p-6 hidden">
-            <div class="max-w-4xl mx-auto space-y-6">
-                <div class="text-center mb-6">
-                    <h2 class="text-lg font-bold text-gray-800">Implementation Architecture</h2>
-                    <p class="text-sm text-gray-500 mt-1">Three approaches evaluated per use case. Demo built in Custom Python; diagrams show n8n and Power Platform alternatives.</p>
-                </div>
+        <div id="panel-arch" class="flex-1 overflow-y-auto hidden">
+            <div class="flex">
+                <!-- Sticky Table of Contents -->
+                <aside class="w-48 flex-shrink-0 sticky top-0 self-start p-4 border-r border-gray-200 bg-gray-50/50 hidden md:block" style="height: calc(100vh - 200px); overflow-y: auto;">
+                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Contents</div>
+                    <nav class="space-y-1 text-xs">
+                        <a href="#arch-stack" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">1. Stack at a Glance</a>
+                        <a href="#arch-hitl" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">2. HITL Pattern</a>
+                        <a href="#arch-tools" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">3. The 21 Tools</a>
+                        <a href="#arch-approvals" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">4. Five Approval Types</a>
+                        <a href="#arch-ap" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">5. AP Processing Primer</a>
+                        <a href="#arch-uc" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">6. Per-UC Architecture</a>
+                        <a href="#arch-openrouter" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">7. OpenRouter Story</a>
+                        <a href="#arch-production" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">8. Production Path</a>
+                        <a href="#arch-observability" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">9. Observability &amp; Audit</a>
+                        <a href="#arch-gaps" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">10. Honest Gaps</a>
+                    </nav>
+                </aside>
 
-                <!-- Shared Foundation -->
-                <div class="bg-white rounded-xl border border-gray-200 p-5">
-                    <h3 class="text-sm font-bold text-gray-800 mb-3">Shared Foundation (All Use Cases)</h3>
-                    <div class="grid grid-cols-4 gap-3 text-xs">
-                        <div class="bg-blue-50 rounded-lg p-3 text-center">
-                            <div class="font-bold text-qblue">LLM Provider</div>
-                            <div class="text-gray-500 mt-1">OpenRouter</div>
-                            <div class="text-[10px] text-gray-400 mt-0.5">Claude &rarr; GPT-4o &rarr; Gemini</div>
-                        </div>
-                        <div class="bg-green-50 rounded-lg p-3 text-center">
-                            <div class="font-bold text-green-700">Agent Framework</div>
-                            <div class="text-gray-500 mt-1">LangGraph ReAct</div>
-                            <div class="text-[10px] text-gray-400 mt-0.5">Reason &rarr; Act &rarr; Observe</div>
-                        </div>
-                        <div class="bg-yellow-50 rounded-lg p-3 text-center">
-                            <div class="font-bold text-yellow-700">Approval Queue</div>
-                            <div class="text-gray-500 mt-1">Human-in-the-Loop</div>
-                            <div class="text-[10px] text-gray-400 mt-0.5">Agent cannot write to SoR</div>
-                        </div>
-                        <div class="bg-purple-50 rounded-lg p-3 text-center">
-                            <div class="font-bold text-purple-700">Data Layer</div>
-                            <div class="text-gray-500 mt-1">SQLite &rarr; D365 OData</div>
-                            <div class="text-[10px] text-gray-400 mt-0.5">Config change, not rewrite</div>
-                        </div>
+                <!-- Content -->
+                <div class="flex-1 p-6 space-y-8 max-w-4xl">
+                    <div class="text-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-800">Architecture &amp; Design Reference</h2>
+                        <p class="text-xs text-gray-500 mt-1">Everything about how this demo is built and what production would look like</p>
                     </div>
-                </div>
 
-                <!-- UC1 Architecture -->
-                <div class="bg-white rounded-xl border border-blue-200 p-5">
-                    <div class="flex items-center space-x-2 mb-3">
-                        <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">UC1</span>
-                        <h3 class="text-sm font-bold text-gray-800">Sales Order Entry</h3>
-                        <span class="text-xs text-green-600 font-medium ml-auto">Recommendation: Hybrid (n8n + Custom Python)</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3 text-xs">
-                        <div class="border border-green-300 bg-green-50 rounded-lg p-3">
-                            <div class="font-bold text-green-700 mb-1">n8n (Email Trigger)</div>
-                            <div class="text-gray-600 space-y-0.5">
-                                <div>&bull; Watch inbox for PO emails</div>
-                                <div>&bull; Extract attachments</div>
-                                <div>&bull; Route to AI webhook</div>
-                                <div>&bull; Visual flow, easy to modify</div>
+                    <!-- 1. Stack at a Glance -->
+                    <section id="arch-stack" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">1</span>
+                            Stack at a Glance
+                        </h3>
+                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                            <p class="text-xs text-gray-600 mb-4">If you read nothing else, read this. This is what the demo actually is.</p>
+                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                <div class="bg-blue-50 rounded-lg p-3">
+                                    <div class="font-bold text-qblue text-[11px]">Backend</div>
+                                    <div class="text-gray-700 mt-1">FastAPI (Python 3.12)</div>
+                                    <div class="text-[10px] text-gray-500">Async SSE streaming</div>
+                                </div>
+                                <div class="bg-green-50 rounded-lg p-3">
+                                    <div class="font-bold text-green-700 text-[11px]">Agent Framework</div>
+                                    <div class="text-gray-700 mt-1">LangGraph ReAct</div>
+                                    <div class="text-[10px] text-gray-500">create_react_agent</div>
+                                </div>
+                                <div class="bg-purple-50 rounded-lg p-3">
+                                    <div class="font-bold text-purple-700 text-[11px]">LLM Provider</div>
+                                    <div class="text-gray-700 mt-1">OpenRouter</div>
+                                    <div class="text-[10px] text-gray-500">Claude / GPT-4o / Gemini, switch live</div>
+                                </div>
+                                <div class="bg-yellow-50 rounded-lg p-3">
+                                    <div class="font-bold text-yellow-700 text-[11px]">Document AI</div>
+                                    <div class="text-gray-700 mt-1">Claude Vision (no OCR)</div>
+                                    <div class="text-[10px] text-gray-500">PyMuPDF renders PDFs to PNG</div>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <div class="font-bold text-gray-700 text-[11px]">Database</div>
+                                    <div class="text-gray-700 mt-1">SQLite, 17 tables</div>
+                                    <div class="text-[10px] text-gray-500">OData-shaped JSON, mocks D365</div>
+                                </div>
+                                <div class="bg-pink-50 rounded-lg p-3">
+                                    <div class="font-bold text-pink-700 text-[11px]">Frontend</div>
+                                    <div class="text-gray-700 mt-1">Single HTML + Tailwind CDN</div>
+                                    <div class="text-[10px] text-gray-500">Vanilla JS, no build step</div>
+                                </div>
+                                <div class="bg-indigo-50 rounded-lg p-3">
+                                    <div class="font-bold text-indigo-700 text-[11px]">Streaming</div>
+                                    <div class="text-gray-700 mt-1">Server-Sent Events</div>
+                                    <div class="text-[10px] text-gray-500">sse-starlette, native EventSource</div>
+                                </div>
+                                <div class="bg-teal-50 rounded-lg p-3">
+                                    <div class="font-bold text-teal-700 text-[11px]">Deployment</div>
+                                    <div class="text-gray-700 mt-1">Docker &rarr; Railway</div>
+                                    <div class="text-[10px] text-gray-500">Auto-deploy from GitHub main</div>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-[11px] text-gray-500 italic">
+                                Same agent code regardless of model. Same approval queue regardless of use case. The architecture is the same end-to-end &mdash; only the tools and prompts differ per agent.
                             </div>
                         </div>
-                        <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
-                            <div class="font-bold text-qblue mb-1">Custom Python (AI Engine)</div>
-                            <div class="text-gray-600 space-y-0.5">
-                                <div>&bull; Claude parses documents</div>
-                                <div>&bull; Fuzzy match vs 5K+ catalog</div>
-                                <div>&bull; Confidence scoring</div>
-                                <div>&bull; Full test coverage</div>
-                            </div>
-                            <div class="text-[10px] text-qblue font-medium mt-1">* Built in this demo</div>
-                        </div>
-                        <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
-                            <div class="font-bold text-gray-600 mb-1">Power Platform</div>
-                            <div class="text-gray-500 space-y-0.5">
-                                <div>&bull; AI Builder for OCR</div>
-                                <div>&bull; Power Automate approvals</div>
-                                <div>&bull; Limited fuzzy matching</div>
-                                <div class="text-orange-500">&bull; Can't use Claude natively</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    </section>
 
-                <!-- UC2 Architecture -->
-                <div class="bg-white rounded-xl border border-green-200 p-5">
-                    <div class="flex items-center space-x-2 mb-3">
-                        <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded">UC2</span>
-                        <h3 class="text-sm font-bold text-gray-800">AP Processing</h3>
-                        <span class="text-xs text-green-600 font-medium ml-auto">Recommendation: Power Platform + Custom Python</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3 text-xs">
-                        <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
-                            <div class="font-bold text-gray-600 mb-1">n8n</div>
-                            <div class="text-gray-500 space-y-0.5">
-                                <div>&bull; Could work, but no advantage</div>
-                                <div>&bull; D365 F&O needs HTTP node</div>
-                                <div>&bull; Another system to maintain</div>
-                                <div class="text-orange-500">&bull; No native D365 F&O node</div>
+                    <!-- 2. HITL Pattern -->
+                    <section id="arch-hitl" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">2</span>
+                            Human-in-the-Loop Pattern
+                        </h3>
+                        <div class="bg-white rounded-xl border border-yellow-300 p-5">
+                            <p class="text-xs text-gray-700 mb-3"><strong>The most important architectural decision in this demo.</strong> The agent has no write tools to the system of record. Even a perfect three-way match creates an approval card that a human must click.</p>
+                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                <div class="bg-green-50 rounded-lg p-3 border border-green-200">
+                                    <div class="font-bold text-green-700 mb-1">What the agent CAN do</div>
+                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-4">
+                                        <li>Read products, customers, inventory, orders</li>
+                                        <li>Query vendor invoices, POs, receipts, payments</li>
+                                        <li>Run three-way matches and pricing validation</li>
+                                        <li>Score collections priority</li>
+                                        <li>Apply naming conventions to spec sheets</li>
+                                        <li>Create approval recommendations</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-red-50 rounded-lg p-3 border border-red-200">
+                                    <div class="font-bold text-red-700 mb-1">What the agent CANNOT do</div>
+                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-4">
+                                        <li>Create or modify products</li>
+                                        <li>Update inventory or customer records</li>
+                                        <li>Post sales orders to D365</li>
+                                        <li>Apply payments or pay invoices</li>
+                                        <li>Modify pricing or contracts</li>
+                                        <li>Take ANY action without human approval</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="mt-3 bg-yellow-50 border border-yellow-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong>Why it's enforced this way:</strong> Medical device supply chain. Every part Qosina ships ends up in a device that goes in a human body. Every approval needs a human signature for FDA traceability and regulatory audit. The architecture makes this impossible to bypass &mdash; the agent literally has no tools to modify the system of record. It's not policy, it's code.
                             </div>
                         </div>
-                        <div class="border border-green-300 bg-green-50 rounded-lg p-3">
-                            <div class="font-bold text-green-700 mb-1">Power Platform (Core)</div>
-                            <div class="text-gray-600 space-y-0.5">
-                                <div>&bull; Native D365 F&O connectors</div>
-                                <div>&bull; AI Builder invoice parsing</div>
-                                <div>&bull; Teams approval cards</div>
-                                <div>&bull; Finance team owns it</div>
-                            </div>
-                            <div class="text-[10px] text-green-600 font-medium mt-1">* Best fit for matching</div>
-                        </div>
-                        <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
-                            <div class="font-bold text-qblue mb-1">Custom Python (Intelligence)</div>
-                            <div class="text-gray-600 space-y-0.5">
-                                <div>&bull; Collections risk scoring</div>
-                                <div>&bull; Payment pattern analysis</div>
-                                <div>&bull; Claude reasoning engine</div>
-                                <div>&bull; Trend detection</div>
-                            </div>
-                            <div class="text-[10px] text-qblue font-medium mt-1">* Built in this demo</div>
-                        </div>
-                    </div>
-                </div>
+                    </section>
 
-                <!-- UC3 Architecture -->
-                <div class="bg-white rounded-xl border border-purple-200 p-5">
-                    <div class="flex items-center space-x-2 mb-3">
-                        <span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded">UC3</span>
-                        <h3 class="text-sm font-bold text-gray-800">Product Data Entry</h3>
-                        <span class="text-xs text-green-600 font-medium ml-auto">Recommendation: Full Custom Python</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3 text-xs">
-                        <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
-                            <div class="font-bold text-gray-600 mb-1">n8n</div>
-                            <div class="text-gray-500 space-y-0.5">
-                                <div>&bull; AI Agent node available</div>
-                                <div>&bull; Can call Claude</div>
-                                <div class="text-orange-500">&bull; Constitutional framework too complex</div>
-                                <div class="text-orange-500">&bull; Hard to test/validate rules</div>
+                    <!-- 3. The 21 Tools -->
+                    <section id="arch-tools" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">3</span>
+                            The Tools &mdash; 20 Read-Only + 1 Write
+                        </h3>
+                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                            <p class="text-xs text-gray-600 mb-3">Across 4 agents (general + 3 use cases), 20 read-only tools query the database. Exactly ONE write tool (<code class="bg-gray-100 px-1 rounded">create_approval</code>) is shared by all 4 agents. That's the only way anything gets written to the approval queue.</p>
+                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                <div class="border border-gray-200 rounded-lg p-3">
+                                    <div class="font-bold text-gray-700 mb-1">General Agent (6 read-only)</div>
+                                    <ul class="text-gray-600 space-y-0.5 ml-2">
+                                        <li>&bull; <code class="text-[10px]">search_products</code></li>
+                                        <li>&bull; <code class="text-[10px]">check_inventory</code></li>
+                                        <li>&bull; <code class="text-[10px]">find_compatible_parts</code></li>
+                                        <li>&bull; <code class="text-[10px]">check_expiring_inventory</code></li>
+                                        <li>&bull; <code class="text-[10px]">check_low_stock</code></li>
+                                        <li>&bull; <code class="text-[10px]">get_customer_order_history</code></li>
+                                    </ul>
+                                </div>
+                                <div class="border border-blue-200 rounded-lg p-3 bg-blue-50/30">
+                                    <div class="font-bold text-qblue mb-1">UC1 Sales Order Agent (5 read-only)</div>
+                                    <ul class="text-gray-600 space-y-0.5 ml-2">
+                                        <li>&bull; <code class="text-[10px]">match_customer</code></li>
+                                        <li>&bull; <code class="text-[10px]">match_products</code></li>
+                                        <li>&bull; <code class="text-[10px]">validate_pricing</code></li>
+                                        <li>&bull; <code class="text-[10px]">check_inventory</code></li>
+                                        <li>&bull; <code class="text-[10px]">get_sample_pos</code></li>
+                                    </ul>
+                                </div>
+                                <div class="border border-green-200 rounded-lg p-3 bg-green-50/30">
+                                    <div class="font-bold text-green-700 mb-1">UC2 AP Agent (5 read-only)</div>
+                                    <ul class="text-gray-600 space-y-0.5 ml-2">
+                                        <li>&bull; <code class="text-[10px]">get_vendor_invoices</code></li>
+                                        <li>&bull; <code class="text-[10px]">three_way_match</code></li>
+                                        <li>&bull; <code class="text-[10px]">get_unapplied_payments</code></li>
+                                        <li>&bull; <code class="text-[10px]">match_payment</code></li>
+                                        <li>&bull; <code class="text-[10px]">score_collections</code></li>
+                                    </ul>
+                                </div>
+                                <div class="border border-purple-200 rounded-lg p-3 bg-purple-50/30">
+                                    <div class="font-bold text-purple-700 mb-1">UC3 Product Data Agent (4 read-only)</div>
+                                    <ul class="text-gray-600 space-y-0.5 ml-2">
+                                        <li>&bull; <code class="text-[10px]">get_naming_conventions</code></li>
+                                        <li>&bull; <code class="text-[10px]">find_similar_products</code></li>
+                                        <li>&bull; <code class="text-[10px]">validate_consistency</code></li>
+                                        <li>&bull; <code class="text-[10px]">get_sample_spec_sheets</code></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="mt-3 bg-yellow-50 border-2 border-yellow-300 rounded-lg p-3">
+                                <div class="font-bold text-yellow-800 text-[11px] mb-1">+ 1 Write Tool: <code>create_approval</code></div>
+                                <div class="text-[11px] text-gray-700">Shared across all 4 agents. The only way data gets written. Creates a row in <code class="bg-white px-1 rounded text-[10px]">approval_queue</code> with structured field data, confidence scores, and the source document reference. No bypass possible.</div>
+                            </div>
+                            <div class="mt-3 text-[11px] text-gray-500 italic">
+                                Tools are pure Python functions in <code>tools.py</code> with no LangGraph dependency. The agent.py file wraps them with <code>@tool</code> decorators. Business logic is testable in isolation &mdash; 42 unit tests run against the pure functions, no LLM mocking required.
                             </div>
                         </div>
-                        <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
-                            <div class="font-bold text-gray-600 mb-1">Power Platform</div>
-                            <div class="text-gray-500 space-y-0.5">
-                                <div>&bull; AI Builder for basic OCR</div>
-                                <div class="text-orange-500">&bull; No constitutional AI</div>
-                                <div class="text-orange-500">&bull; Can't enforce naming rules</div>
-                                <div class="text-orange-500">&bull; Not Claude-native</div>
-                            </div>
-                        </div>
-                        <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
-                            <div class="font-bold text-qblue mb-1">Custom Python (Full)</div>
-                            <div class="text-gray-600 space-y-0.5">
-                                <div>&bull; Constitutional framework in prompt</div>
-                                <div>&bull; Validation in code (belt + suspenders)</div>
-                                <div>&bull; Consistency check vs 8K SKUs</div>
-                                <div>&bull; Full Claude reasoning</div>
-                            </div>
-                            <div class="text-[10px] text-qblue font-medium mt-1">* Built in this demo</div>
-                        </div>
-                    </div>
-                </div>
+                    </section>
 
-                <!-- D365 Integration Pattern -->
-                <div class="bg-white rounded-xl border border-gray-200 p-5">
-                    <h3 class="text-sm font-bold text-gray-800 mb-3">Production Integration: SQLite &rarr; D365 F&O</h3>
-                    <div class="flex items-center justify-center space-x-3 text-xs">
-                        <div class="bg-gray-100 rounded-lg px-4 py-3 text-center">
-                            <div class="font-bold text-gray-600">Demo (Today)</div>
-                            <div class="font-mono text-[10px] text-gray-500 mt-1">SQLite query</div>
-                            <div class="font-mono text-[10px] text-gray-500">OData-formatted JSON</div>
+                    <!-- 4. Five Approval Types -->
+                    <section id="arch-approvals" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">4</span>
+                            The Five Approval Types
+                        </h3>
+                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                            <p class="text-xs text-gray-600 mb-3">The agent produces 5 distinct approval types across the three use cases. Each one renders differently in the review panel and routes to a different downstream action.</p>
+                            <table class="w-full text-xs">
+                                <thead>
+                                    <tr class="border-b border-gray-200 text-left text-gray-500">
+                                        <th class="pb-2">Type</th>
+                                        <th class="pb-2">Use Case</th>
+                                        <th class="pb-2">What it answers</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-700">
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2"><span class="bg-blue-100 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded">SALES ORDER</span></td>
+                                        <td>UC1</td>
+                                        <td>Should we accept this PO and create a sales order?</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2"><span class="bg-green-100 text-green-700 text-[9px] font-bold px-2 py-0.5 rounded">INVOICE MATCH</span></td>
+                                        <td>UC2</td>
+                                        <td>Should we pay this vendor invoice?</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2"><span class="bg-teal-100 text-teal-700 text-[9px] font-bold px-2 py-0.5 rounded">PAYMENT APPLICATION</span></td>
+                                        <td>UC2</td>
+                                        <td>Which invoice does this customer payment pay off?</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2"><span class="bg-amber-100 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded">COLLECTION OUTREACH</span></td>
+                                        <td>UC2</td>
+                                        <td>Which overdue customer should we chase first?</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2"><span class="bg-purple-100 text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded">PRODUCT ENTRY</span></td>
+                                        <td>UC3</td>
+                                        <td>Should we add this supplier product to our catalog?</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="mt-4 grid grid-cols-3 gap-2 text-[11px]">
+                                <div class="bg-blue-50 rounded p-2">
+                                    <div class="font-bold text-qblue">UC1: 1 type</div>
+                                    <div class="text-gray-600 mt-0.5">One approval per PO, even if 50 line items. An order is one business object.</div>
+                                </div>
+                                <div class="bg-green-50 rounded p-2">
+                                    <div class="font-bold text-green-700">UC2: 3 types</div>
+                                    <div class="text-gray-600 mt-0.5">AP is three distinct sub-jobs glued together: pay bills, apply payments, chase overdue.</div>
+                                </div>
+                                <div class="bg-purple-50 rounded p-2">
+                                    <div class="font-bold text-purple-700">UC3: 1 type</div>
+                                    <div class="text-gray-600 mt-0.5">One approval per supplier doc. Catalog page with 3 products = 1 approval with sections.</div>
+                                </div>
+                            </div>
+                            <div class="mt-4 bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong class="text-gray-800">If they ask "could you add more types?":</strong> Yes &mdash; adding a new type is a 4-line change. Add the type string to the agent's prompt, the frontend's tab type map, the badge color map, and (optionally) a new section renderer for the form. No schema migration. The <code class="bg-white px-1 rounded">approval_queue.recommendation_type</code> is an open string field.
+                            </div>
                         </div>
-                        <div class="text-2xl text-gray-300">&rarr;</div>
-                        <div class="bg-qblue/10 rounded-lg px-4 py-3 text-center border border-qblue/30">
-                            <div class="font-bold text-qblue">Production</div>
-                            <div class="font-mono text-[10px] text-gray-500 mt-1">HTTP GET to D365 OData</div>
-                            <div class="font-mono text-[10px] text-gray-500">Same JSON format</div>
+                    </section>
+
+                    <!-- 5. AP Processing Primer -->
+                    <section id="arch-ap" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">5</span>
+                            AP Processing Primer
+                        </h3>
+                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                            <p class="text-xs text-gray-600 mb-3">AP = Accounts Payable. The financial plumbing of "money in, money out." Three sub-jobs.</p>
+
+                            <table class="w-full text-xs mb-4">
+                                <thead>
+                                    <tr class="border-b border-gray-200 text-left text-gray-500">
+                                        <th class="pb-2">Direction</th>
+                                        <th class="pb-2">Sub-job</th>
+                                        <th class="pb-2">Approval type</th>
+                                        <th class="pb-2">The question</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-700">
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2 font-semibold text-red-600">Money OUT</td>
+                                        <td>Three-way match</td>
+                                        <td><code class="text-[10px]">invoice_match</code></td>
+                                        <td>"Should we pay this bill?"</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2 font-semibold text-green-600">Money IN</td>
+                                        <td>Cash application</td>
+                                        <td><code class="text-[10px]">payment_application</code></td>
+                                        <td>"Which invoice does this payment pay off?"</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 font-semibold text-amber-600">Money LATE</td>
+                                        <td>Collections</td>
+                                        <td><code class="text-[10px]">collection_outreach</code></td>
+                                        <td>"Who should we chase first?"</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="space-y-3">
+                                <details class="bg-red-50 border border-red-200 rounded p-3" open>
+                                    <summary class="font-bold text-red-700 text-xs cursor-pointer">Sub-job 1: Three-way matching (Money OUT)</summary>
+                                    <div class="mt-2 text-[11px] text-gray-700">
+                                        <p class="mb-2"><strong>What it is:</strong> Three docs need to agree before paying a vendor invoice:</p>
+                                        <ol class="list-decimal ml-5 space-y-1 mb-3">
+                                            <li><strong>PO</strong> &mdash; Qosina says: "We want 500 stopcocks at $3.95"</li>
+                                            <li><strong>Receipt</strong> &mdash; Warehouse says: "We received 480 stopcocks"</li>
+                                            <li><strong>Invoice</strong> &mdash; Vendor says: "Pay us for 500 stopcocks at $3.95 = $1,975"</li>
+                                        </ol>
+                                        <p class="mb-2"><strong>Why it matters:</strong> Without it, you pay for parts that never arrived, get charged the wrong price, or pay duplicate invoices. #1 way money leaks out of a company.</p>
+                                        <p class="mb-2"><strong>What the agent does:</strong> Calls <code class="bg-white px-1 rounded">three_way_match(invoice_id)</code>, compares line-by-line, creates an <code class="bg-white px-1 rounded">invoice_match</code> approval that falls into:</p>
+                                        <ul class="list-disc ml-5 space-y-0.5">
+                                            <li><strong>Perfect match</strong> &rarr; recommend fast-track</li>
+                                            <li><strong>Penny variance &lt;$0.05</strong> &rarr; fast-track with write-off note</li>
+                                            <li><strong>Quantity discrepancy</strong> &rarr; HOLD, investigate (TechValve case: billed 500, got 480)</li>
+                                            <li><strong>Price discrepancy</strong> &rarr; HOLD, investigate (Allied case: $65 PO, $67.50 invoice)</li>
+                                            <li><strong>Orphan invoice</strong> &rarr; HOLD, do not pay (MedSupply case: PO doesn't exist)</li>
+                                        </ul>
+                                    </div>
+                                </details>
+
+                                <details class="bg-green-50 border border-green-200 rounded p-3">
+                                    <summary class="font-bold text-green-700 text-xs cursor-pointer">Sub-job 2: Cash application (Money IN)</summary>
+                                    <div class="mt-2 text-[11px] text-gray-700">
+                                        <p class="mb-2"><strong>What it is:</strong> Customer sends Qosina a payment. Finance has to figure out which open invoice it pays off. Sounds simple but:</p>
+                                        <ul class="list-disc ml-5 space-y-0.5 mb-3">
+                                            <li>Check arrives with no remittance advice ("$2,800 from someone, figure it out")</li>
+                                            <li>One big payment supposed to cover three invoices</li>
+                                            <li>Customer pays the wrong amount (deductions for damages, freight, early-payment discounts)</li>
+                                            <li>Wire transfer from a payment processor with no clear customer ID</li>
+                                        </ul>
+                                        <p class="mb-2"><strong>Why it matters:</strong> Until cash is applied, the customer's account still shows them as overdue even though they paid. You'll call them asking for money they already sent. AR numbers are wrong. Auditors are angry.</p>
+                                        <p class="mb-2"><strong>What the agent does:</strong> Calls <code class="bg-white px-1 rounded">match_payment(payment_id)</code>, proposes allocation, creates a <code class="bg-white px-1 rounded">payment_application</code> approval:</p>
+                                        <ul class="list-disc ml-5 space-y-0.5">
+                                            <li><strong>Exact match</strong> &rarr; one open invoice equals the payment amount, apply it</li>
+                                            <li><strong>Partial pay with deduction</strong> &rarr; "MedLine paid $332.50 instead of $337.50, deducted $5 for damages"</li>
+                                            <li><strong>Multi-invoice</strong> &rarr; "$1,345 covers CINV-006 + CINV-007"</li>
+                                            <li><strong>Mystery payment</strong> &rarr; "$2,800 check from Unknown, two candidates, recommend phone call"</li>
+                                        </ul>
+                                    </div>
+                                </details>
+
+                                <details class="bg-amber-50 border border-amber-200 rounded p-3">
+                                    <summary class="font-bold text-amber-700 text-xs cursor-pointer">Sub-job 3: Collections prioritization (Money LATE)</summary>
+                                    <div class="mt-2 text-[11px] text-gray-700">
+                                        <p class="mb-2"><strong>What it is:</strong> Some customers don't pay on time. AP team has 200 overdue accounts and can't call them all today. Which to call first?</p>
+                                        <p class="mb-2"><strong>Why naive sorting is bad:</strong> Alphabetical = random. "Biggest amount first" ignores that a $50K customer who always pays late is less urgent than a $5K customer who's gone silent for 90 days.</p>
+                                        <p class="mb-2"><strong>What good prioritization considers:</strong></p>
+                                        <ul class="list-disc ml-5 space-y-0.5 mb-3">
+                                            <li>Amount owed</li>
+                                            <li>Days overdue (risk shoots up after 90)</li>
+                                            <li>Payment history (always-late but always-pays vs new risk)</li>
+                                            <li>Account size (strategic value)</li>
+                                            <li>Last contact (already called yesterday?)</li>
+                                        </ul>
+                                        <p class="mb-2"><strong>Why it matters:</strong> DSO (Days Sales Outstanding) is one of the top metrics finance is measured on. Cutting DSO from 65 to 50 days = tens of thousands in cash flow improvement.</p>
+                                        <p class="mb-2"><strong>What the agent does:</strong> Calls <code class="bg-white px-1 rounded">score_collections()</code>, ranks all overdue accounts, creates a <code class="bg-white px-1 rounded">collection_outreach</code> approval per customer:</p>
+                                        <ul class="list-disc ml-5 space-y-0.5">
+                                            <li><strong>High</strong> &rarr; "Acme, $12K overdue 75 days, late payer history, recommend phone call today"</li>
+                                            <li><strong>Medium</strong> &rarr; "BioFlow, $3K overdue 45 days, normally pays on time, recommend reminder email"</li>
+                                            <li><strong>Low</strong> &rarr; "Precision, $800 overdue 15 days, excellent history, monitor only"</li>
+                                        </ul>
+                                    </div>
+                                </details>
+                            </div>
+
+                            <div class="mt-4 bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong class="text-gray-800">One-sentence summary if Tom asks:</strong> "It handles the three sub-jobs of accounts payable &mdash; deciding whether vendor invoices should be paid, deciding which customer payments apply to which invoices, and prioritizing which overdue accounts to chase first. Each one produces a recommendation that goes to a human in an approval queue. The AI doesn't post anything to the books &mdash; humans always click."
+                            </div>
                         </div>
-                        <div class="text-2xl text-gray-300">&rarr;</div>
-                        <div class="bg-green-50 rounded-lg px-4 py-3 text-center border border-green-200">
-                            <div class="font-bold text-green-700">What Changes</div>
-                            <div class="font-mono text-[10px] text-gray-500 mt-1">URL + Azure AD OAuth</div>
-                            <div class="font-mono text-[10px] text-green-600 font-medium">Architecture stays identical</div>
+                    </section>
+
+                    <!-- 6. Per-UC Architecture (the comparison cards) -->
+                    <section id="arch-uc" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">6</span>
+                            Per-UC Architecture: Three Approaches Compared
+                        </h3>
+                        <p class="text-xs text-gray-600 mb-3">For each use case I evaluated n8n, Power Platform, and Custom Python. Different recommendation per UC &mdash; not "my stack for everything."</p>
+
+                        <!-- UC1 -->
+                        <div class="bg-white rounded-xl border border-blue-200 p-4 mb-3">
+                            <div class="flex items-center space-x-2 mb-3">
+                                <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">UC1</span>
+                                <h4 class="text-xs font-bold text-gray-800">Sales Order Entry</h4>
+                                <span class="text-[11px] text-green-600 font-medium ml-auto">Recommendation: Hybrid (n8n + Custom Python)</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 text-[11px]">
+                                <div class="border border-green-300 bg-green-50 rounded-lg p-3">
+                                    <div class="font-bold text-green-700 mb-1">n8n (Trigger Side)</div>
+                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-3">
+                                        <li>Watch inbox for PO emails</li>
+                                        <li>Extract attachments</li>
+                                        <li>Route to Python webhook</li>
+                                        <li>Visual flow, business analyst maintainable</li>
+                                    </ul>
+                                </div>
+                                <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
+                                    <div class="font-bold text-qblue mb-1">Custom Python (AI Engine)</div>
+                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-3">
+                                        <li>Claude vision parses any format</li>
+                                        <li>Fuzzy match vs 5K SKUs</li>
+                                        <li>Confidence scoring</li>
+                                        <li>Full pytest coverage</li>
+                                    </ul>
+                                    <div class="text-[10px] text-qblue font-medium mt-1">* Built in this demo</div>
+                                </div>
+                                <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
+                                    <div class="font-bold text-gray-600 mb-1">Power Platform</div>
+                                    <ul class="text-gray-500 space-y-0.5 list-disc ml-3">
+                                        <li>AI Builder is for structured forms, not 50 PO formats</li>
+                                        <li>Can't fuzzy match against 5K SKUs</li>
+                                        <li class="text-orange-500">Can't use Claude natively</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+
+                        <!-- UC2 -->
+                        <div class="bg-white rounded-xl border border-green-200 p-4 mb-3">
+                            <div class="flex items-center space-x-2 mb-3">
+                                <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded">UC2</span>
+                                <h4 class="text-xs font-bold text-gray-800">AP Processing</h4>
+                                <span class="text-[11px] text-green-600 font-medium ml-auto">Recommendation: Power Platform + Custom Python</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 text-[11px]">
+                                <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
+                                    <div class="font-bold text-gray-600 mb-1">n8n</div>
+                                    <ul class="text-gray-500 space-y-0.5 list-disc ml-3">
+                                        <li>Could work, no advantage</li>
+                                        <li>D365 F&amp;O needs HTTP node</li>
+                                        <li class="text-orange-500">No native D365 F&amp;O connector</li>
+                                    </ul>
+                                </div>
+                                <div class="border-2 border-green-500 bg-green-50 rounded-lg p-3">
+                                    <div class="font-bold text-green-700 mb-1">Power Platform (Core)</div>
+                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-3">
+                                        <li>Native D365 F&amp;O connectors</li>
+                                        <li>Built-in Approvals via Teams</li>
+                                        <li>Audit trail for free</li>
+                                        <li>Finance team already uses it</li>
+                                    </ul>
+                                    <div class="text-[10px] text-green-700 font-medium mt-1">* The right call for UC2</div>
+                                </div>
+                                <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
+                                    <div class="font-bold text-qblue mb-1">Custom Python (Intelligence)</div>
+                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-3">
+                                        <li>Cash app reasoning</li>
+                                        <li>Collections risk scoring</li>
+                                        <li>Claude judgment calls</li>
+                                    </ul>
+                                    <div class="text-[10px] text-qblue font-medium mt-1">* Called from Power Automate</div>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-[10px] text-gray-500 italic">Honest one-liner: "Power Platform for the boring 90% Microsoft already built. Custom Python for the 10% that's actually novel."</div>
+                        </div>
+
+                        <!-- UC3 -->
+                        <div class="bg-white rounded-xl border border-purple-200 p-4">
+                            <div class="flex items-center space-x-2 mb-3">
+                                <span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded">UC3</span>
+                                <h4 class="text-xs font-bold text-gray-800">Product Data Entry</h4>
+                                <span class="text-[11px] text-green-600 font-medium ml-auto">Recommendation: Full Custom Python</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 text-[11px]">
+                                <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
+                                    <div class="font-bold text-gray-600 mb-1">n8n</div>
+                                    <ul class="text-gray-500 space-y-0.5 list-disc ml-3">
+                                        <li>AI Agent node available</li>
+                                        <li class="text-orange-500">Constitutional rules need code precision</li>
+                                        <li class="text-orange-500">Hard to test/validate</li>
+                                    </ul>
+                                </div>
+                                <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
+                                    <div class="font-bold text-gray-600 mb-1">Power Platform</div>
+                                    <ul class="text-gray-500 space-y-0.5 list-disc ml-3">
+                                        <li class="text-orange-500">AI Builder not strong enough</li>
+                                        <li class="text-orange-500">Can't enforce naming rules precisely</li>
+                                        <li class="text-orange-500">Not Claude-native</li>
+                                    </ul>
+                                </div>
+                                <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
+                                    <div class="font-bold text-qblue mb-1">Custom Python (Full)</div>
+                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-3">
+                                        <li>Constitutional rules in DB + prompt</li>
+                                        <li>Validation in code (belt + suspenders)</li>
+                                        <li>Consistency check vs catalog</li>
+                                        <li>Full Claude reasoning</li>
+                                    </ul>
+                                    <div class="text-[10px] text-qblue font-medium mt-1">* Built in this demo</div>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-[10px] text-gray-500 italic">Lower volume than UC1/UC2 &mdash; orchestration tax of n8n/Power Platform isn't worth it.</div>
+                        </div>
+                    </section>
+
+                    <!-- 7. OpenRouter Story -->
+                    <section id="arch-openrouter" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">7</span>
+                            OpenRouter: LLM Resilience &amp; Model Switching
+                        </h3>
+                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                            <p class="text-xs text-gray-700 mb-3">Round 3 callback. We talked about LLM routing for failover. This is the implementation.</p>
+                            <div class="grid grid-cols-3 gap-3 text-[11px]">
+                                <div class="bg-blue-50 rounded p-3 border border-blue-200">
+                                    <div class="font-bold text-qblue mb-1">Claude Sonnet 4 (primary)</div>
+                                    <div class="text-gray-600">Best reasoning for fuzzy matching, constitutional framework, complex extraction.</div>
+                                </div>
+                                <div class="bg-green-50 rounded p-3 border border-green-200">
+                                    <div class="font-bold text-green-700 mb-1">GPT-4o (failover)</div>
+                                    <div class="text-gray-600">Auto-routes if Anthropic is down or rate-limited. ~25ms overhead.</div>
+                                </div>
+                                <div class="bg-yellow-50 rounded p-3 border border-yellow-200">
+                                    <div class="font-bold text-yellow-700 mb-1">Gemini 2.5 Flash (failover)</div>
+                                    <div class="text-gray-600">Final fallback. Different provider, different region.</div>
+                                </div>
+                            </div>
+                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong>Why it matters at Qosina:</strong> Enterprise systems can't go down because a third-party LLM is having a bad day. One API key, one bill, one dashboard. Provider data policies enforced (no training on Qosina data).
+                            </div>
+                            <div class="mt-3 bg-blue-50 border border-blue-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong>Demo move:</strong> Switch the model dropdown in the header from Claude to GPT-4o mid-demo. Process the same PO. Show that the agent, tools, and approval queue work identically. The model is interchangeable &mdash; everything else is the same code.
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 8. Production Path -->
+                    <section id="arch-production" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">8</span>
+                            Production Path: What Changes
+                        </h3>
+                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                            <p class="text-xs text-gray-700 mb-3">The architecture stays identical. Only integration points change.</p>
+                            <table class="w-full text-xs">
+                                <thead>
+                                    <tr class="border-b border-gray-200 text-left text-gray-500">
+                                        <th class="pb-2">Layer</th>
+                                        <th class="pb-2">Demo (today)</th>
+                                        <th class="pb-2">Production (Qosina)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-gray-700">
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2 font-semibold">Database</td>
+                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">SQLite</code> + mock data</td>
+                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">D365 F&amp;O</code> via OData REST API</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2 font-semibold">Auth</td>
+                                        <td class="py-2">None ("Demo User")</td>
+                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">Entra ID</code> OAuth + AD groups</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2 font-semibold">File storage</td>
+                                        <td class="py-2">Browser memory (data URLs)</td>
+                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">Azure Blob</code> with retention policies</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2 font-semibold">Conversation history</td>
+                                        <td class="py-2">In-memory dict (lost on restart)</td>
+                                        <td class="py-2">Persisted SQL with FK to approvals</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2 font-semibold">Logs</td>
+                                        <td class="py-2">stdout / Docker logs</td>
+                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">Application Insights</code> + structured JSON</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2 font-semibold">Error tracking</td>
+                                        <td class="py-2">Generic catch-all</td>
+                                        <td class="py-2">Sentry / App Insights with stack traces</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2 font-semibold">Agent tracing</td>
+                                        <td class="py-2">None (live activity panel)</td>
+                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">LangSmith</code> for full trace replay</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 font-semibold">Hosting</td>
+                                        <td class="py-2">Railway (Docker)</td>
+                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">Azure Container Apps</code> (same Azure tenant as D365)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="mt-3 bg-yellow-50 border border-yellow-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong>The point:</strong> The OData-shaped tool responses make the database swap a config change &mdash; URL + auth, not a rewrite. Auth, observability, and audit are integration points, not architectural changes. Everything else stays the same.
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 9. Observability & Audit -->
+                    <section id="arch-observability" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">9</span>
+                            Observability &amp; Audit
+                        </h3>
+                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                            <p class="text-xs text-gray-700 mb-3">Medical device compliance is non-negotiable. Every AI decision needs a paper trail.</p>
+
+                            <div class="mb-4">
+                                <h4 class="font-bold text-gray-700 text-[11px] mb-2">User Accounts (production)</h4>
+                                <div class="bg-gray-50 rounded p-3 text-[11px] text-gray-700">
+                                    <p class="mb-2">Don't roll your own. Integrate with <strong>Entra ID</strong> via OAuth/OIDC. Every Qosina employee already has an account. JWT validated by FastAPI middleware, user attached to each request. Authorization comes from <strong>AD groups</strong> &mdash; "AP_Approver" can approve invoice matches, "CX_Manager" can approve sales orders, etc.</p>
+                                    <p class="text-gray-600 italic">Demo has no auth. In production this is a Phase 1 integration.</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h4 class="font-bold text-gray-700 text-[11px] mb-2">Troubleshooting FastAPI in Production</h4>
+                                <div class="bg-gray-50 rounded p-3 text-[11px] text-gray-700 space-y-1">
+                                    <div>&bull; <strong>Structured JSON logging</strong> &rarr; Azure Log Analytics (Qosina is on Azure)</div>
+                                    <div>&bull; <strong>Sentry</strong> for error tracking &mdash; every uncaught exception captured with context</div>
+                                    <div>&bull; <strong>Application Insights</strong> for APM &mdash; latency, error rates, dependency tracing</div>
+                                    <div>&bull; <strong>Health endpoint</strong> <code>/health</code> for Railway/Azure liveness probes</div>
+                                    <div>&bull; <strong>LangSmith</strong> for AI traces &mdash; the most important one (see below)</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h4 class="font-bold text-gray-700 text-[11px] mb-2">Auditing the AI Agent</h4>
+                                <div class="bg-gray-50 rounded p-3 text-[11px] text-gray-700">
+                                    <p class="mb-2">For regulated industries, every conversation needs to be replayable. The architecture:</p>
+                                    <ol class="list-decimal ml-5 space-y-1 mb-2">
+                                        <li><strong>Persist every conversation</strong> to a <code>conversations</code> + <code>conversation_messages</code> table</li>
+                                        <li><strong>Link approvals to conversations</strong> via FK on <code>approval_queue</code></li>
+                                        <li><strong>Store source documents</strong> in Azure Blob with the approval record</li>
+                                        <li><strong>Immutable audit log</strong> (write-once or append-only blob storage)</li>
+                                        <li><strong>7+ year retention</strong> for FDA medical device records</li>
+                                    </ol>
+                                    <p class="mb-2"><strong>LangSmith does most of the AI-side tracing for free.</strong> Every agent run, every LLM call, every tool input/output captured in a searchable web UI. When the agent does something unexpected, you replay the trace step by step.</p>
+                                    <p class="text-gray-600 italic">Six months later, an auditor pulls approval #5234 and sees: original PO &rarr; full conversation &rarr; tool calls &rarr; AI reasoning &rarr; who approved &rarr; final D365 sales order. End to end traceability.</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-blue-50 border border-blue-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong>The honest one-liner:</strong> "FastAPI is bare bones compared to Django, so observability is something you add intentionally. For this demo I have basic exception handling and Railway captures container logs. In production at Qosina I'd add Sentry, LangSmith, and Application Insights since you're already on Azure."
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 10. Honest Gaps -->
+                    <section id="arch-gaps" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">10</span>
+                            Honest Gaps: What This Demo Is NOT
+                        </h3>
+                        <div class="bg-white rounded-xl border-2 border-orange-300 p-5">
+                            <p class="text-xs text-gray-700 mb-3">Tom said: <em>"We value honest assessment over polished sales pitches."</em> Here's what's NOT in this demo. Acknowledging this preempts every gotcha question.</p>
+
+                            <div class="space-y-2 text-xs">
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No real D365 connection.</strong> All data is seeded SQLite. Tools return OData-shaped JSON so the production swap is a URL + auth change, not a rewrite.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No user accounts.</strong> Everything posts as "Demo User." Production uses Entra ID OAuth with AD groups for authorization.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No persisted conversations.</strong> Chat history is in-memory and lost on restart. Production needs persisted SQL + FK to approvals + Blob storage for source docs.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No OCR product.</strong> No Azure Form Recognizer, no Tesseract, no Document Intelligence. Claude Vision reads PDFs and images natively. PyMuPDF just renders PDF pages to PNG before sending.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No specific time-savings claims.</strong> I won't say "10 minutes &rarr; 30 seconds" without baselining against Qosina's actual current process. That's a Phase 0 discovery question.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No "FDA traceability built-in" or "healthcare-grade security built-in."</strong> Marketing fluff. These are features you implement, not freebies.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">Sample documents are representative, not Qosina's actual format mix.</strong> Phase 0 = audit 50+ real POs to establish format distribution and accuracy baseline.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">Constitutional framework rules are representative, not Qosina's actual rules.</strong> The 16 seeded rules are placeholders. Phase 0 = sit with Product Development team to codify their actual conventions.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No D365 F&amp;O write integration.</strong> "Approve" in the demo just changes a status in SQLite. Production write would POST to <code class="text-[10px]">/data/SalesOrderHeaders</code> and <code class="text-[10px]">/data/SalesOrderLines</code> via OData with proper Azure AD auth.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 bg-green-50 border border-green-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong class="text-gray-800">What I AM saying:</strong> The architecture supports adding all of these. They're integration points, not rewrites. Phase 1 work, on the job.
+                            </div>
+                        </div>
+                    </section>
+
                 </div>
             </div>
         </div>
@@ -2246,6 +2771,22 @@
             });
         } catch (err) {}
     }
+
+    // Smooth scroll for Architecture TOC links
+    document.querySelectorAll('.arch-toc-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href').slice(1);
+            const target = document.getElementById(targetId);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                document.querySelectorAll('.arch-toc-link').forEach(l => {
+                    l.classList.remove('bg-qblue/10', 'text-qblue', 'font-semibold');
+                });
+                link.classList.add('bg-qblue/10', 'text-qblue', 'font-semibold');
+            }
+        });
+    });
 
     fetchStats();
     fetchApprovals();
