@@ -26,6 +26,8 @@ Literally a copy-pasted email from Jennifer Walsh. New customer (Pacific Coast M
 
 ### 4. `po_handwritten_summit_surgical.png` — HANDWRITTEN, MESSY VERSION
 Hand-drawn on yellow lined paper, **wobbly** handwriting (random offsets per character — intentionally hard to read), red "RUSH" note, scribbled signature.
+
+
 - **Demonstrates:** Claude vision on the *worst-case* handwriting
 - **Caveat:** This is the messier of the two handwritten ones. May or may not extract cleanly depending on the run.
 - **Demo line:** *Backup wow doc — only show if you want maximum drama and you're confident it'll work.*
