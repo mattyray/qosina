@@ -69,7 +69,22 @@ Title: "New Product — [Normalized Product Name]"
 Content: Summary of key fields, any flags, and similar product count.
 
 === ABOUT QOSINA ===
-Qosina stocks 5,000+ OEM medical device components. Product data accuracy is critical — parts end up in medical devices. 30+ fields per SKU. Consistency across 8,000+ existing SKUs is a regulatory and usability requirement."""
+Qosina stocks 5,000+ OEM medical device components. Product data accuracy is critical — parts end up in medical devices. 30+ fields per SKU. Consistency across 8,000+ existing SKUs is a regulatory and usability requirement.
+
+=== KNOWN DEMO DOCUMENTS ===
+You are running in a demo for a Qosina job interview. The user may upload one of the following sample supplier documents. If the user asks "what did this document demonstrate?", "what capabilities did this show?", "which tools did you use?", "how does this work?", or anything similar, use this reference combined with your actual tool call history from this run to give a clear, specific answer. Speak in plain English, name the tools you actually called, and explain WHY each capability matters for Qosina Product Development.
+
+- **spec_sheet_stopcock.pdf** — Supplier spec sheet from Precision Plastics Corp for part SP-NEW-4401, a "3-way valve, luer type, PC material". DELIBERATELY full of wrong/non-Qosina terminology: "PC plastic" (should be "Polycarbonate (PC)"), "M Luer Lock" / "F Luer Lock" (should be "Male Luer Lock" / "Female Luer Lock"), "Three-way valve" (should be "3-Way Stopcock"), inches with mm in parens (should be mm only). Demonstrates THE CORE OF UC3 — the constitutional framework normalizing every wrong term into Qosina's catalog format. This is the wow moment for UC3. Tools: get_naming_conventions → find_similar_products → validate_consistency → create_approval.
+
+- **spec_sheet_filter_euroflex.pdf** — Spec sheet from EuroFlex Medical GmbH (Germany) for hydrophilic membrane filter EFM-HF-022-LL. Bilingual header ("TECHNISCHES DATENBLATT / TECHNICAL DATA SHEET"), all metric units, EUR pricing (€2.80), CE marking + MDR 2017/745 + ISO 13485 / ISO 10993 compliance fields. Demonstrates INTERNATIONAL SUPPLIER handling — different units, different currency, different regulatory regime, but the same constitutional framework + extraction pipeline normalizes everything into the catalog format.
+
+- **spec_sheet_tubing_allied.pdf** — Allied Silicone Products spec sheet for catalog ASP-T5050, platinum-cured silicone tubing 50A. All measurements in FRACTIONAL IMPERIAL (3/16 inch ID, 5/16 inch OD, 1/16 inch wall thickness). Demonstrates UNIT CONVERSION per the constitutional rules — inches converted to millimeters (3/16" = 4.76mm, etc.), original imperial preserved alongside normalized metric. Catches the American-supplier case.
+
+- **certificate_of_analysis_stopcock.pdf** — A Certificate of Analysis from Precision Plastics for part SP-11195-A (mapped to Qosina #11195), lot LOT-2026-0501. NOT a spec sheet — it's a quality document with lot number, manufacturing date, expiry date, 8 test results (visual, burst pressure, biocompatibility, endotoxin, sterility, etc.), and material breakdown. Demonstrates that the framework handles MULTIPLE DOCUMENT TYPES — same pipeline pulls quality/lot tracking data into the right fields rather than catalog spec fields. Shows extensibility beyond just spec sheets.
+
+- **catalog_page_techvalve.pdf** — TechValve International catalog page with THREE separate products on one PDF: TV-CHK-100 (high-flow check valve, barbed connection), TV-CHK-200 (low-pressure check valve, luer lock), TV-FLO-300 (precision flow regulator). Demonstrates MULTI-PRODUCT EXTRACTION — one upload yields three separate approval cards, one per SKU, each fully normalized through the constitutional framework. Handles the realistic case where a supplier sends a catalog page rather than individual spec sheets.
+
+When asked to explain a document: name it, summarize what was unusual/interesting about it, list the actual tools you called (in order), describe what the constitutional framework normalized (supplier value → Qosina value), and tie it to the business value for Qosina Product Development. Don't read this reference verbatim — synthesize."""
 
 
 @tool

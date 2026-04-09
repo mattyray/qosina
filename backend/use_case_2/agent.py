@@ -59,7 +59,26 @@ Rank overdue customer accounts by risk for collections outreach.
 - 'collection_outreach': Collections prioritization recommendation
 
 === ABOUT QOSINA ===
-Qosina is a medical device component distributor. AP processes hundreds of vendor invoices monthly. Finance team needs fast, accurate matching to maintain vendor relationships and cash flow."""
+Qosina is a medical device component distributor. AP processes hundreds of vendor invoices monthly. Finance team needs fast, accurate matching to maintain vendor relationships and cash flow.
+
+=== KNOWN DEMO DOCUMENTS ===
+You are running in a demo for a Qosina job interview. The user may upload one of the following sample AP documents. If the user asks "what did this document demonstrate?", "what capabilities did this show?", "which tools did you use?", "how does this work?", or anything similar, use this reference combined with your actual tool call history from this run to give a clear, specific answer. Speak in plain English, name the tools you actually called, and explain WHY each capability matters for Qosina Finance.
+
+- **vendor_invoice_precision_plastics.pdf** — Vendor invoice VINV-2026-001 from Precision Plastics Corp for $5,700, references PO-2026-001. Three line items (parts 11195, 99720, 99740) all match the seeded PO and receipt records exactly. Demonstrates the THREE-WAY MATCH HAPPY PATH: PO ↔ Receipt ↔ Invoice all agree, all-green, auto-approve eligible. Tools: get_vendor_invoices → three_way_match → create_approval.
+
+- **vendor_invoice_techvalve_discrepancy.pdf** — TechValve International invoice VINV-2026-005 for 500 units of part 80071 ($1,975 total), references PO-2026-005. The receiving dock only logged 480 units actually received. Demonstrates QUANTITY VARIANCE detection in three-way matching — vendor billed for more than was received, system flags the 20-unit gap. Asks the human to investigate (short ship? damaged in transit? back-order?). Catches a real money leak.
+
+- **vendor_invoice_sinomed_penny.pdf** — SinoMed Components invoice VINV-2026-002 for $2,250.03, references PO-2026-002. Variance from PO is THREE CENTS (rounding from $0.4501 × 5,000 units). Demonstrates TOLERANCE THRESHOLDS: under $0.05 should auto-clear with a write-off note rather than waste a human's time. Establishes the principle that the system has tolerance bands — under $0.05 auto-clears, $0.05–$50 quick review, over $50 full investigation.
+
+- **vendor_invoice_allied_price_mismatch.pdf** — Allied Silicone Products invoice VINV-2026-004 for silicone tubing at $67.50/coil. The PO (PO-2026-004) was at $65.00/coil. Vendor included a note claiming "Q2 2026 price adjustment (+3.8%)". Demonstrates PRICE VARIANCE detection (as opposed to quantity variance) — system catches a ~$250 unauthorized price increase that a busy AP clerk might miss. Exactly the kind of leak that compounds across hundreds of invoices.
+
+- **vendor_invoice_unknown_po.pdf** — MedSupply International invoice MSI-INV-8842 for $4,900, references PO-2025-999 which DOES NOT EXIST in the system. Demonstrates the orphan invoice case: AI cannot do three-way match because there's no PO to match against. Could be fraud, could be a legitimate order someone forgot to enter — either way the system refuses to pay until resolved. This is the safety story for Finance.
+
+- **payment_remittance_medline.pdf** — Remittance advice from MedLine Innovations, check #7892 for $1,345. Customer is identified (CUST-003). Remittance says: $1,012.50 → invoice CINV-2026-006 (clean), $332.50 → invoice CINV-2026-007 (which is actually $337.50 — they short-paid by $5 with a note "deducted for damaged goods"). Demonstrates CASH APPLICATION with a partial payment / customer deduction. AI applies the math correctly AND flags that Qosina owes a $5 credit memo for the damaged goods.
+
+- **bank_statement_mystery_payment.pdf** — First National Bank statement showing four transactions for Qosina's operating account. The flagged item is a $2,800 check (#4488) from "Unknown" — NO REMITTANCE ADVICE on file. Bank surfaces two possible matches: CUST-001 Acme Medical (open invoice $2,137.50) and CUST-005 Atlantic Bioprocess (open invoice $650). Combined = $2,787.50, off by $12.50. Demonstrates the HARDEST cash app case: judgment call escalation. AI proposes the split with low confidence, surfaces the candidates with the math, and kicks to a human for the phone call. This is the 30-minutes-per-occurrence problem AP clerks hate.
+
+When asked to explain a document: name it, summarize what was unusual/interesting about it, list the actual tools you called (in order), describe what came back from each, and tie it to the business value for Qosina Finance. Don't read this reference verbatim — synthesize."""
 
 
 @tool
