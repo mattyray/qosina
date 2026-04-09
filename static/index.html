@@ -473,6 +473,7 @@
                         <a href="#arch-production" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">8. Production Path</a>
                         <a href="#arch-observability" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">9. Observability &amp; Audit</a>
                         <a href="#arch-gaps" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">10. Honest Gaps</a>
+                        <a href="#arch-rollout" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">11. Phased Rollout</a>
                     </nav>
                 </aside>
 
@@ -1152,6 +1153,134 @@
 
                             <div class="mt-4 bg-green-50 border border-green-200 rounded p-3 text-[11px] text-gray-700">
                                 <strong class="text-gray-800">What I AM saying:</strong> The architecture supports adding all of these. They're integration points, not rewrites. Phase 1 work, on the job.
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 11. Phased Rollout Plan -->
+                    <section id="arch-rollout" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">11</span>
+                            Phased Rollout Plan
+                        </h3>
+                        <div class="bg-white rounded-xl border border-gray-200 p-5">
+                            <p class="text-xs text-gray-700 mb-4">Build in this order. Each phase compounds &mdash; Phase 1 builds the foundation that Phase 2 and 3 inherit. Sequence is by complexity (simplest first) and dollar impact (highest-value second).</p>
+
+                            <!-- Phase 1 -->
+                            <div class="border-2 border-blue-300 bg-blue-50/30 rounded-lg p-4 mb-3">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded">PHASE 1</span>
+                                    <h4 class="text-xs font-bold text-gray-800">UC1 &mdash; Sales Order Entry</h4>
+                                    <span class="text-[11px] text-gray-500 ml-auto">Foundation phase</span>
+                                </div>
+
+                                <div class="text-[11px] text-gray-700 space-y-2">
+                                    <div>
+                                        <strong class="text-gray-800">Why this first:</strong> One approval type, one team (CX), lowest stakes. Standard product orders only (Tom said this) &mdash; skip medical device orders for Phase 1. If something goes wrong, the reviewer rejects the approval and the order gets processed manually like it does today.
+                                    </div>
+
+                                    <div>
+                                        <strong class="text-gray-800">What gets built:</strong>
+                                        <ul class="list-disc ml-5 mt-1 space-y-0.5">
+                                            <li>The UC1 flow productionized &mdash; D365 OData reads + writes, hybrid n8n trigger + Python AI service</li>
+                                            <li><strong>All foundation pieces every future UC inherits:</strong></li>
+                                            <li class="ml-3">Entra ID OAuth + AD groups for authorization</li>
+                                            <li class="ml-3">Application Insights + structured JSON logging</li>
+                                            <li class="ml-3">LangSmith for full agent tracing</li>
+                                            <li class="ml-3">Persisted conversations with FK to approvals (audit trail)</li>
+                                            <li class="ml-3">Azure Blob Storage for source documents with retention policies</li>
+                                            <li class="ml-3">Sentry for error tracking, health checks, alerting</li>
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <strong class="text-gray-800">Discovery work (Phase 0 sub-phase):</strong> PO format audit with the CX team. Look at 50+ real POs, establish format distribution, baseline current process time. Map the actual D365 sales order fields they use. Identify top 10 customers and their actual PO formats.
+                                    </div>
+
+                                    <div>
+                                        <strong class="text-gray-800">Success metrics:</strong> 80% of standard POs auto-extracted with high confidence. Approval-to-D365 round trip under 60 seconds. Zero false approvals (reviewer always catches AI errors). Time savings baselined and measured.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Phase 2 -->
+                            <div class="border-2 border-green-300 bg-green-50/30 rounded-lg p-4 mb-3">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">PHASE 2</span>
+                                    <h4 class="text-xs font-bold text-gray-800">UC2 &mdash; AP Processing</h4>
+                                    <span class="text-[11px] text-gray-500 ml-auto">Highest dollar impact</span>
+                                </div>
+
+                                <div class="text-[11px] text-gray-700 space-y-2">
+                                    <div>
+                                        <strong class="text-gray-800">Why this second:</strong> Tom's brief literally called this "waste of human effort." It's where Qosina is losing the most money &mdash; missed price discrepancies, mystery payments, overdue accounts not being chased optimally. Foundation pieces from Phase 1 are already in place.
+                                    </div>
+
+                                    <div>
+                                        <strong class="text-gray-800">What gets built (sub-phases):</strong>
+                                        <ul class="list-disc ml-5 mt-1 space-y-0.5">
+                                            <li><strong>2A: Three-way matching</strong> &mdash; most deterministic, easiest to validate. Build first.</li>
+                                            <li><strong>2B: Cash application</strong> &mdash; needs more AI judgment, builds on the 2A approval pattern.</li>
+                                            <li><strong>2C: Collections prioritization</strong> &mdash; pure intelligence layer, lowest write risk.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <strong class="text-gray-800">Architecture shift:</strong> This is where the recommendation changes. UC1 was Hybrid (n8n + Python). UC2 is <strong>Power Platform + Custom Python</strong>. Power Automate handles the D365 reads/writes via native connectors and the Teams approval routing. The Python service from Phase 1 gets called from Power Automate via HTTP for the AI judgment work &mdash; cash app reasoning and collections scoring. <em>Same Python service, just adding new tools.</em>
+                                    </div>
+
+                                    <div>
+                                        <strong class="text-gray-800">Discovery work (Phase 0 sub-phase):</strong> Sit with the Finance team. AP has tribal knowledge &mdash; which vendors are reliable, which customers short-pay, what tolerance thresholds make sense in practice. Map existing Celigo flows so we don't rebuild them. Get tolerance threshold preferences (the $0.05 number is mine, not theirs). Understand approval authority for what dollar amounts (drives AD group setup).
+                                    </div>
+
+                                    <div>
+                                        <strong class="text-gray-800">Success metrics:</strong> 60-70% of vendor invoices auto-recommend "fast-track approval" (perfect or within tolerance). Cash application coverage rate. Collections priority list adopted by AP team in practice. <strong>DSO improvement</strong> (Days Sales Outstanding) &mdash; the executive metric.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Phase 3 -->
+                            <div class="border-2 border-purple-300 bg-purple-50/30 rounded-lg p-4 mb-4">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">PHASE 3</span>
+                                    <h4 class="text-xs font-bold text-gray-800">UC3 &mdash; Product Data Entry</h4>
+                                    <span class="text-[11px] text-gray-500 ml-auto">Most reasoning-heavy</span>
+                                </div>
+
+                                <div class="text-[11px] text-gray-700 space-y-2">
+                                    <div>
+                                        <strong class="text-gray-800">Why this last:</strong> Lowest volume of work (new SKUs added periodically, not hundreds per day). Most reasoning-intensive &mdash; you want the foundation rock-solid before building it. Needs the most pre-work because the constitutional framework is currently tribal knowledge.
+                                    </div>
+
+                                    <div>
+                                        <strong class="text-gray-800">What gets built:</strong> The UC3 flow productionized as <strong>Full Custom Python</strong>. Same service from Phases 1 and 2, just adding the UC3 agent and tools. Plus an admin UI for the Product Dev team to edit constitutional rules themselves (rules live in a database table, not code).
+                                    </div>
+
+                                    <div>
+                                        <strong class="text-gray-800">Discovery work (Phase 0 sub-phase, longest):</strong> Sit with Product Development for several weeks. Audit 30-50 existing product entries to extract the implicit naming conventions. Build the constitutional framework as a table the team can edit themselves. Understand the landed cost calculation downstream (Tom mentioned this in the brief). Map technical drawings &mdash; do these need vision AI? Vendor-specific?
+                                    </div>
+
+                                    <div>
+                                        <strong class="text-gray-800">Success metrics:</strong> Field-level accuracy per category (start with stopcocks, work outward). Time savings per new SKU. Consistency check pass rate against existing 8K SKUs. Product Dev team self-service rate on new naming rules.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Discovery Work Callout -->
+                            <div class="bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
+                                <div class="flex items-start space-x-2">
+                                    <svg class="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    <div class="text-[11px] text-gray-700">
+                                        <div class="font-bold text-orange-800 text-xs mb-1">Discovery work is non-negotiable</div>
+                                        <p class="mb-2">Every phase starts with a Phase 0 sub-phase: <strong>team interviews, process shadowing, real document audits.</strong> AI tools that ignore the actual workflow get rejected by the team. The Phase 0 work is not optional &mdash; it's the most important input.</p>
+                                        <p class="italic text-gray-600">"I'd interview each team individually, sit with their process, understand it like the back of my hand, and then design the solution for them &mdash; not the other way around."</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cross-cutting story -->
+                            <div class="mt-4 bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong class="text-gray-800">The compounding story:</strong> Phase 1 builds the foundation (auth, observability, audit, deployment) with the simplest use case as the vehicle. Phase 2 adds the highest-value AI work to that foundation. Phase 3 adds the most reasoning-heavy work to a now-mature platform. By the end, Qosina has three production AI workflows in active use, one shared platform, and a pattern that can extend to other use cases (warehouse, customer support, QA) without rebuilding.
                             </div>
                         </div>
                     </section>

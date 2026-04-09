@@ -14,6 +14,7 @@ Printable backup of the Architecture tab content. If the demo crashes during the
 8. [Production Path: What Changes](#8-production-path)
 9. [Observability & Audit](#9-observability--audit)
 10. [Honest Gaps: What This Demo Is NOT](#10-honest-gaps)
+11. [Phased Rollout Plan](#11-phased-rollout-plan)
 
 ---
 
@@ -304,3 +305,70 @@ Tom said: *"We value honest assessment over polished sales pitches."* Here's wha
 - ✗ **No D365 F&O write integration.** "Approve" in the demo just changes a status in SQLite. Production write would POST to `/data/SalesOrderHeaders` and `/data/SalesOrderLines` via OData with proper Azure AD auth.
 
 **What I AM saying:** The architecture supports adding all of these. They're integration points, not rewrites. Phase 1 work, on the job.
+
+---
+
+## 11. Phased Rollout Plan
+
+Build in this order. Each phase compounds — Phase 1 builds the foundation that Phase 2 and 3 inherit. Sequence is by complexity (simplest first) and dollar impact (highest-value second).
+
+### Phase 1 — UC1: Sales Order Entry (Foundation Phase)
+
+**Why this first:** One approval type, one team (CX), lowest stakes. Standard product orders only (Tom said this) — skip medical device orders for Phase 1. If something goes wrong, the reviewer rejects the approval and the order gets processed manually like it does today.
+
+**What gets built:**
+- The UC1 flow productionized — D365 OData reads + writes, hybrid n8n trigger + Python AI service
+- **All foundation pieces every future UC inherits:**
+  - Entra ID OAuth + AD groups for authorization
+  - Application Insights + structured JSON logging
+  - LangSmith for full agent tracing
+  - Persisted conversations with FK to approvals (audit trail)
+  - Azure Blob Storage for source documents with retention policies
+  - Sentry for error tracking, health checks, alerting
+
+**Discovery work (Phase 0 sub-phase):** PO format audit with the CX team. Look at 50+ real POs, establish format distribution, baseline current process time. Map the actual D365 sales order fields they use. Identify top 10 customers and their actual PO formats.
+
+**Success metrics:** 80% of standard POs auto-extracted with high confidence. Approval-to-D365 round trip under 60 seconds. Zero false approvals (reviewer always catches AI errors). Time savings baselined and measured.
+
+---
+
+### Phase 2 — UC2: AP Processing (Highest Dollar Impact)
+
+**Why this second:** Tom's brief literally called this "waste of human effort." It's where Qosina is losing the most money — missed price discrepancies, mystery payments, overdue accounts not being chased optimally. Foundation pieces from Phase 1 are already in place.
+
+**What gets built (sub-phases):**
+- **2A: Three-way matching** — most deterministic, easiest to validate. Build first.
+- **2B: Cash application** — needs more AI judgment, builds on the 2A approval pattern.
+- **2C: Collections prioritization** — pure intelligence layer, lowest write risk.
+
+**Architecture shift:** This is where the recommendation changes. UC1 was Hybrid (n8n + Python). UC2 is **Power Platform + Custom Python**. Power Automate handles the D365 reads/writes via native connectors and the Teams approval routing. The Python service from Phase 1 gets called from Power Automate via HTTP for the AI judgment work — cash app reasoning and collections scoring. *Same Python service, just adding new tools.*
+
+**Discovery work (Phase 0 sub-phase):** Sit with the Finance team. AP has tribal knowledge — which vendors are reliable, which customers short-pay, what tolerance thresholds make sense in practice. Map existing Celigo flows so we don't rebuild them. Get tolerance threshold preferences (the $0.05 number is mine, not theirs). Understand approval authority for what dollar amounts (drives AD group setup).
+
+**Success metrics:** 60-70% of vendor invoices auto-recommend "fast-track approval" (perfect or within tolerance). Cash application coverage rate. Collections priority list adopted by AP team in practice. **DSO improvement** (Days Sales Outstanding) — the executive metric.
+
+---
+
+### Phase 3 — UC3: Product Data Entry (Most Reasoning-Heavy)
+
+**Why this last:** Lowest volume of work (new SKUs added periodically, not hundreds per day). Most reasoning-intensive — you want the foundation rock-solid before building it. Needs the most pre-work because the constitutional framework is currently tribal knowledge.
+
+**What gets built:** The UC3 flow productionized as **Full Custom Python**. Same service from Phases 1 and 2, just adding the UC3 agent and tools. Plus an admin UI for the Product Dev team to edit constitutional rules themselves (rules live in a database table, not code).
+
+**Discovery work (Phase 0 sub-phase, longest):** Sit with Product Development for several weeks. Audit 30-50 existing product entries to extract the implicit naming conventions. Build the constitutional framework as a table the team can edit themselves. Understand the landed cost calculation downstream (Tom mentioned this in the brief). Map technical drawings — do these need vision AI? Vendor-specific?
+
+**Success metrics:** Field-level accuracy per category (start with stopcocks, work outward). Time savings per new SKU. Consistency check pass rate against existing 8K SKUs. Product Dev team self-service rate on new naming rules.
+
+---
+
+### ⚠ Discovery Work Is Non-Negotiable
+
+Every phase starts with a Phase 0 sub-phase: **team interviews, process shadowing, real document audits.** AI tools that ignore the actual workflow get rejected by the team. The Phase 0 work is not optional — it's the most important input.
+
+> "I'd interview each team individually, sit with their process, understand it like the back of my hand, and then design the solution for them — not the other way around."
+
+---
+
+### The Compounding Story
+
+Phase 1 builds the foundation (auth, observability, audit, deployment) with the simplest use case as the vehicle. Phase 2 adds the highest-value AI work to that foundation. Phase 3 adds the most reasoning-heavy work to a now-mature platform. By the end, Qosina has three production AI workflows in active use, one shared platform, and a pattern that can extend to other use cases (warehouse, customer support, QA) without rebuilding.
