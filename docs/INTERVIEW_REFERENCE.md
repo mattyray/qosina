@@ -1,71 +1,125 @@
 # INTERVIEW_REFERENCE.md
 
-Printable backup of the Architecture tab content. If the demo crashes during the call, open this file and walk Tom through the same content from text.
+Printable backup of the Architecture tab. Same content, same order, same voice. If the demo crashes during the call, open this file and walk Tom and DJ through it.
 
 ## TABLE OF CONTENTS
 
 1. [Stack at a Glance](#1-stack-at-a-glance)
-2. [Human-in-the-Loop Pattern](#2-human-in-the-loop-pattern)
-3. [The 21 Tools (20 Read-Only + 1 Write)](#3-the-21-tools)
-4. [The Five Approval Types](#4-the-five-approval-types)
-5. [AP Processing Primer](#5-ap-processing-primer)
-6. [Per-UC Architecture: Three Approaches Compared](#6-per-uc-architecture)
-7. [OpenRouter Story](#7-openrouter-story)
-8. [Production Path: What Changes](#8-production-path)
+2. [Human in the Loop](#2-human-in-the-loop)
+3. [The Three Use Cases](#3-the-three-use-cases)
+4. [The Tools](#4-the-tools)
+5. [Approval Types](#5-approval-types)
+6. [AP Processing Primer](#6-ap-processing-primer)
+7. [OpenRouter](#7-openrouter)
+8. [Production Path](#8-production-path)
 9. [Observability & Audit](#9-observability--audit)
-10. [Honest Gaps: What This Demo Is NOT](#10-honest-gaps)
-11. [Phased Rollout Plan](#11-phased-rollout-plan)
+10. [Phased Rollout Plan](#10-phased-rollout-plan)
+11. [Honest Gaps](#11-honest-gaps)
 
 ---
 
 ## 1. Stack at a Glance
 
-If you read nothing else, read this.
+If I had to summarize what this is in one breath: a Python web app that wraps a LangGraph AI agent with a SQLite database mocked to look like D365. But the four pieces worth flagging are these:
 
-| Layer | Technology |
+**LangGraph ReAct Agents** — The framework that lets Claude reason through a problem with tools. Reason → Act (call a tool) → Observe the result → repeat. Same agent code regardless of which LLM is behind it.
+
+**OpenRouter for LLM Resilience** — Claude Sonnet 4 primary, GPT-4o and Gemini 2.5 Flash as failover. This is the resilience story we talked about in Round 3 — if Anthropic goes down, the agent keeps working with a different model. Same code, no rewrite. Switch live in the header dropdown.
+
+**Claude Vision (No OCR Product)** — Worth flagging because everyone assumes you need an OCR product for document parsing. You don't. PDFs get rendered to PNG with PyMuPDF, then sent directly to Claude Vision. No Form Recognizer, no Tesseract, no Document Intelligence. Claude reads the image natively.
+
+**SQLite with OData-Shaped Responses** — All 17 tables return data formatted to look exactly like D365 F&O OData responses. Same field names, same JSON shape, same `@odata.context` headers. The production swap from SQLite to D365 is a URL + auth change, not a rewrite.
+
+**The boring plumbing:** FastAPI backend, vanilla JS frontend with Tailwind CDN, Server-Sent Events for streaming, Docker on Railway with auto-deploy from GitHub. ~7,800 lines of code total, 42 unit tests.
+
+---
+
+## 2. Human in the Loop
+
+We talked about this in Round 3, so I'll keep it brief. The point I want to land:
+
+- The agent has **zero write tools** to your system of record. It can read everything — products, inventory, customers, orders, vendor invoices, payments. It can run matches, score risk, validate pricing. But it cannot post to D365, modify a customer, apply a payment, or create an item master entry.
+- The only write tool is `create_approval`, which adds a recommendation to a queue. That's it.
+- I made it impossible in code, not policy. Even if someone tried to bypass it later, there's literally no tool for the agent to call.
+- Every approval is reviewed in a side-by-side panel that shows the original document, the AI's extracted summary, and editable form fields with confidence colors. The reviewer can change anything before clicking Approve.
+
+The way I'd describe the philosophy: I'm not trying to replace your CX or Finance team. I'm trying to make the boring extraction work disappear so they can focus on the judgment calls. Every approval card says "here's what I think — what do you think?", not "here's what I did, hope that was OK."
+
+---
+
+## 3. The Three Use Cases
+
+For each one I'll cover the business problem, what I built, and which approach I'd actually recommend in production. The recommendation is different per use case — I'm not going to push my stack for everything.
+
+### UC1 — Sales Order Entry (CX Department)
+
+**The business problem:** Your CX team gets POs by email in every format imaginable. Clean PDFs from larger customers, scanned documents from smaller ones, the occasional handwritten form, and sometimes just text typed into the email body. Today someone reads each one and manually keys it into D365 as a sales order with the right customer, line items, prices, and ship-to. It's slow, it doesn't scale, and human typing introduces errors that get caught downstream when something ships wrong.
+
+**What I built:**
+- Drop a PO in any format — PDF, image, paste text. Claude reads it directly.
+- Agent extracts customer, contact, PO number, line items, ship-to, delivery date, payment terms.
+- Then it runs through five tools: `match_customer` against the master, `match_products` fuzzy-matched against the catalog, `validate_pricing` against contracted rates, `check_inventory`, then `create_approval`.
+- Each field gets a confidence score. The reviewer sees red/yellow/green borders so they know exactly which fields the AI was unsure about and need to be checked.
+
+**My recommendation: Hybrid (n8n + Custom Python)**
+
+| Tool | Role |
 |---|---|
-| Backend | FastAPI (Python 3.12), async SSE streaming |
-| Agent Framework | LangGraph ReAct (`create_react_agent`) |
-| LLM Provider | OpenRouter (Claude Sonnet 4 / GPT-4o / Gemini 2.5 Flash, switch live) |
-| Document AI | Claude Vision (no OCR product). PyMuPDF renders PDFs to PNG before sending to Claude. |
-| Database | SQLite, 17 tables, OData-shaped JSON responses (mocks D365) |
-| Frontend | Single HTML + Tailwind CDN + vanilla JS, no build step |
-| Streaming | Server-Sent Events (sse-starlette, native EventSource) |
-| Deployment | Docker → Railway, auto-deploy from GitHub main |
+| n8n | Trigger side — watch inbox, extract attachments, route to Python webhook. Visual, business analysts can maintain it. |
+| Custom Python | AI engine — Claude vision, fuzzy match vs 5K SKUs, confidence scoring, full pytest coverage. *Built in this demo.* |
+| Power Platform | AI Builder is for structured forms, can't fuzzy match 5K SKUs, can't use Claude natively. Not the right tool here. |
 
-**The point:** Same agent code regardless of model. Same approval queue regardless of use case. Architecture is identical end-to-end — only the tools and prompts differ per agent.
+Why hybrid: n8n is great at the email plumbing — watching an inbox, pulling attachments, routing them to a webhook. That's commodity work and a visual flow is easier for the team to maintain than Python. But the AI extraction and fuzzy matching against 5,000 SKUs needs Claude reasoning, which lives in the custom Python service. Use each tool for what it's best at.
+
+### UC2 — AP Processing (Finance Department)
+
+**The business problem:** This is the one your finance team called "waste of human effort" in the brief. It's actually three sub-jobs glued together: deciding whether to pay vendor invoices (three-way matching), figuring out which open invoices an incoming customer payment covers (cash application), and prioritizing which overdue accounts to chase first (collections). All three are full of edge cases — penny rounding, partial payments, mystery checks with no remittance, discontinued POs, vendor price increases. Today your AP team handles each one manually and the long tail of edge cases eats their time.
+
+**What I built:**
+- **Three-way matching:** Drop a vendor invoice PDF or click "Three-Way Match All" — agent calls `three_way_match`, compares the invoice line-by-line against the seeded PO and receipt, and creates an `invoice_match` approval. Tolerance thresholds determine whether it's recommended for fast-track or flagged for investigation.
+- **Cash application:** Drop a payment remittance or click "Cash Application" — agent calls `match_payment`, proposes which invoices the payment covers, handles partial pays and deductions, and creates a `payment_application` approval.
+- **Collections:** Click "Collections Priority" — agent calls `score_collections`, ranks overdue accounts by amount + age + payment trend + tier, creates a `collection_outreach` approval per customer with reasoning.
+
+**My recommendation: Power Platform + Custom Python**
+
+| Tool | Role |
+|---|---|
+| n8n | Could work, no advantage. D365 F&O needs HTTP node. No native D365 F&O connector. Not the right call here. |
+| Power Platform | Core. Native D365 F&O connectors, built-in Approvals via Teams, audit trail for free, finance team already uses it. *The right call here.* |
+| Custom Python | Intelligence. Cash app reasoning, collections risk scoring, Claude judgment calls. Called from Power Automate via HTTP. |
+
+This is the one where I'm explicitly NOT recommending my own stack as the core. Microsoft already built the boring 90% — the D365 F&O connectors, the Teams approval routing, the audit trail. You're already paying for it. Don't rebuild what you own. The custom Python piece is just for the 10% that's actually novel: the AI judgment calls on cash application and collections scoring.
+
+### UC3 — Product Data Entry (Product Development)
+
+**The business problem:** When Product Development sources a new SKU, the supplier sends documentation in every format — spec sheets, certificates of analysis, catalog pages, technical drawings. Today someone manually extracts 30+ data fields per SKU and types them into the D365 item master. With 8,000+ existing SKUs and new ones added regularly, this is a significant time investment. The brief specifically called out that AI would need a "constitutional framework" — non-negotiable rules for translating supplier terminology into Qosina's standards. That's the most interesting part of this use case.
+
+**What I built:**
+- Drop a supplier spec sheet — Claude reads it directly.
+- Agent calls `get_naming_conventions` to load the constitutional rules from a database table.
+- Then it normalizes every field according to the rules: "PC plastic" becomes "Polycarbonate (PC)", "M Luer Lock" becomes "Male Luer Lock", inches become millimeters, "valve" with luer connections becomes "Stopcock".
+- Calls `find_similar_products` to compare against existing catalog entries for consistency, then `validate_consistency` to check the normalized fields against the rules and the catalog patterns.
+- Creates a `product_entry` approval with the structured data grouped by section — Basic Info, Dimensions, Connections, Compliance, Commercial.
+
+**The constitutional framework is the interesting part:** The naming rules live in a database table, not in code. Adding a new rule is an INSERT, not a deployment. The Product Dev team could maintain their own rules through an admin UI without needing me to push code. The rules are enforced in two places: in the agent's prompt (so Claude follows them during extraction) and in validation code (so we double-check before the approval is created). Belt and suspenders.
+
+**My recommendation: Full Custom Python**
+
+| Tool | Role |
+|---|---|
+| n8n | AI Agent node available, but constitutional rules need code precision. Hard to test/validate. Not the right call. |
+| Power Platform | AI Builder not strong enough. Can't enforce naming rules precisely. Not Claude-native. Not the right call. |
+| Custom Python | Full. Constitutional rules in DB + prompt, validation in code (belt + suspenders), consistency check vs catalog, full Claude reasoning. *Built in this demo.* |
+
+This one is full custom Python because the constitutional framework needs precision that low-code tools can't give you. You don't want a no-code workflow subtly mistranslating "PC plastic" as "Polycarbonate (Plastic)" instead of "Polycarbonate (PC)". The rules need to be precisely controlled, testable, and enforceable. It's also lower volume than UC1/UC2 — new product entries, not hundreds of POs per day — so the orchestration tax of a workflow tool isn't worth it.
 
 ---
 
-## 2. Human-in-the-Loop Pattern
+## 4. The Tools
 
-The most important architectural decision in this demo. The agent has no write tools to the system of record. Even a perfect three-way match creates an approval card that a human must click.
+There are four agents total — the original general agent from Round 3 plus one specialized agent per use case. Across all four agents there are 20 read-only tools and exactly 1 write tool.
 
-**What the agent CAN do:**
-- Read products, customers, inventory, orders
-- Query vendor invoices, POs, receipts, payments
-- Run three-way matches and pricing validation
-- Score collections priority
-- Apply naming conventions to spec sheets
-- Create approval recommendations
-
-**What the agent CANNOT do:**
-- Create or modify products
-- Update inventory or customer records
-- Post sales orders to D365
-- Apply payments or pay invoices
-- Modify pricing or contracts
-- Take ANY action without human approval
-
-**Why:** Medical device supply chain. Every part Qosina ships ends up in a device that goes in a human body. Every approval needs a human signature for FDA traceability and regulatory audit. The architecture makes this impossible to bypass — the agent literally has no tools to modify the system of record. It's not policy, it's code.
-
----
-
-## 3. The 21 Tools
-
-Across 4 agents, 20 read-only tools query the database. Exactly ONE write tool (`create_approval`) is shared by all 4 agents.
-
-### General Agent (Round 3) — 6 read-only
+### General Agent — 6 read-only
 - `search_products`
 - `check_inventory`
 - `find_compatible_parts`
@@ -80,7 +134,7 @@ Across 4 agents, 20 read-only tools query the database. Exactly ONE write tool (
 - `check_inventory`
 - `get_sample_pos`
 
-### UC2 AP Processing Agent — 5 read-only
+### UC2 AP Agent — 5 read-only
 - `get_vendor_invoices`
 - `three_way_match`
 - `get_unapplied_payments`
@@ -94,13 +148,15 @@ Across 4 agents, 20 read-only tools query the database. Exactly ONE write tool (
 - `get_sample_spec_sheets`
 
 ### + 1 Write Tool: `create_approval`
-Shared across all 4 agents. The only way data gets written. Creates a row in `approval_queue` with structured field data, confidence scores, and source document reference. No bypass possible.
+Shared across all four agents. Adds a row to the approval queue with the structured field data, confidence scores, and a reference to the source document. That's the only way data gets written. There's no other path.
 
-**Tools are pure Python functions** in `tools.py` with no LangGraph dependency. The `agent.py` file wraps them with `@tool` decorators. Business logic is testable in isolation — 42 unit tests run against the pure functions, no LLM mocking required.
+A few things worth knowing about how I structured this. Each tool is a pure Python function in `tools.py` with no LangGraph dependency. The `agent.py` file wraps them with `@tool` decorators for the agent. That separation matters because it means the business logic is testable in isolation — 42 unit tests run against the pure functions, no LLM mocking required. If you want to know whether `three_way_match` handles a quantity discrepancy correctly, you write a test against the function directly. You don't need to spin up an agent.
 
 ---
 
-## 4. The Five Approval Types
+## 5. Approval Types
+
+The agent produces five distinct approval types across the three use cases. Each one renders differently in the review panel and would route to a different downstream action in production.
 
 | Type | Use Case | What it answers |
 |---|---|---|
@@ -110,132 +166,65 @@ Shared across all 4 agents. The only way data gets written. Creates a row in `ap
 | `collection_outreach` | UC2 | Which overdue customer should we chase first? |
 | `product_entry` | UC3 | Should we add this supplier product to our catalog? |
 
-**UC1: 1 type** — One approval per PO, even if 50 line items. An order is one business object.
+**UC1: 1 type** — One approval per PO, even if it has 50 line items. An order is one business object that gets approved or rejected as a whole.
 
-**UC2: 3 types** — AP is three distinct sub-jobs glued together: pay bills, apply payments, chase overdue.
+**UC2: 3 types** — AP is three distinct sub-jobs glued together: pay bills, apply payments, chase overdue. Each one routes differently.
 
-**UC3: 1 type** — One approval per supplier doc. Catalog page with 3 products = 1 approval with sections.
+**UC3: 1 type** — One approval per supplier doc. A catalog page with three products would be one approval card with three sections.
 
-**If they ask "could you add more types?":** Yes — adding a new type is a 4-line change. Add the type string to the agent's prompt, the frontend's tab type map, the badge color map, and (optionally) a new section renderer for the form. No schema migration. The `approval_queue.recommendation_type` is an open string field.
-
----
-
-## 5. AP Processing Primer
-
-AP = Accounts Payable. The financial plumbing of "money in, money out." Three sub-jobs.
-
-| Direction | Sub-job | Approval type | The question |
-|---|---|---|---|
-| Money OUT | Three-way match | `invoice_match` | "Should we pay this bill?" |
-| Money IN | Cash application | `payment_application` | "Which invoice does this payment pay off?" |
-| Money LATE | Collections | `collection_outreach` | "Who should we chase first?" |
-
-### Sub-job 1: Three-Way Matching (Money OUT)
-
-**What it is:** Three docs need to agree before paying a vendor invoice:
-1. **PO** — Qosina says: "We want 500 stopcocks at $3.95"
-2. **Receipt** — Warehouse says: "We received 480 stopcocks"
-3. **Invoice** — Vendor says: "Pay us for 500 stopcocks at $3.95 = $1,975"
-
-**Why it matters:** Without it, you pay for parts that never arrived, get charged the wrong price, or pay duplicate invoices. #1 way money leaks out of a company.
-
-**What the agent does:** Calls `three_way_match(invoice_id)`, compares line-by-line, creates an `invoice_match` approval that falls into:
-- **Perfect match** → recommend fast-track
-- **Penny variance <$0.05** → fast-track with write-off note
-- **Quantity discrepancy** → HOLD, investigate (TechValve case: billed 500, got 480)
-- **Price discrepancy** → HOLD, investigate (Allied case: $65 PO, $67.50 invoice)
-- **Orphan invoice** → HOLD, do not pay (MedSupply case: PO doesn't exist)
-
-### Sub-job 2: Cash Application (Money IN)
-
-**What it is:** Customer sends Qosina a payment. Finance has to figure out which open invoice it pays off. Sounds simple but:
-- Check arrives with no remittance advice ("$2,800 from someone, figure it out")
-- One big payment supposed to cover three invoices
-- Customer pays the wrong amount (deductions for damages, freight, early-payment discounts)
-- Wire transfer from a payment processor with no clear customer ID
-
-**Why it matters:** Until cash is applied, the customer's account still shows them as overdue even though they paid. You'll call them asking for money they already sent. AR numbers are wrong. Auditors are angry.
-
-**What the agent does:** Calls `match_payment(payment_id)`, proposes allocation, creates a `payment_application` approval:
-- **Exact match** → one open invoice equals the payment amount, apply it
-- **Partial pay with deduction** → "MedLine paid $332.50 instead of $337.50, deducted $5 for damages"
-- **Multi-invoice** → "$1,345 covers CINV-006 + CINV-007"
-- **Mystery payment** → "$2,800 check from Unknown, two candidates, recommend phone call"
-
-### Sub-job 3: Collections Prioritization (Money LATE)
-
-**What it is:** Some customers don't pay on time. AP team has 200 overdue accounts and can't call them all today. Which to call first?
-
-**Why naive sorting is bad:** Alphabetical = random. "Biggest amount first" ignores that a $50K customer who always pays late is less urgent than a $5K customer who's gone silent for 90 days.
-
-**What good prioritization considers:**
-- Amount owed
-- Days overdue (risk shoots up after 90)
-- Payment history (always-late but always-pays vs new risk)
-- Account size (strategic value)
-- Last contact (already called yesterday?)
-
-**Why it matters:** DSO (Days Sales Outstanding) is one of the top metrics finance is measured on. Cutting DSO from 65 to 50 days = tens of thousands in cash flow improvement.
-
-**What the agent does:** Calls `score_collections()`, ranks all overdue accounts, creates a `collection_outreach` approval per customer:
-- **High** → "Acme, $12K overdue 75 days, late payer history, recommend phone call today"
-- **Medium** → "BioFlow, $3K overdue 45 days, normally pays on time, recommend reminder email"
-- **Low** → "Precision, $800 overdue 15 days, excellent history, monitor only"
-
-### One-Sentence Summary
-
-"It handles the three sub-jobs of accounts payable — deciding whether vendor invoices should be paid, deciding which customer payments apply to which invoices, and prioritizing which overdue accounts to chase first. Each one produces a recommendation that goes to a human in an approval queue. The AI doesn't post anything to the books — humans always click."
+One thing worth noting: adding a new approval type is a four-line change. Add the type string to the agent's prompt, the frontend's tab type map, the badge color map, and optionally a new section renderer for the form. No schema migration. The `recommendation_type` column in the approval queue is an open string field. The system is built to grow.
 
 ---
 
-## 6. Per-UC Architecture
+## 6. AP Processing Primer
 
-For each use case I evaluated n8n, Power Platform, and Custom Python. **Different recommendation per UC** — not "my stack for everything."
+Quick framing for AP since it's the use case with the most variety. AP stands for Accounts Payable — the financial plumbing of money in and money out. The whole use case is three sub-jobs.
 
-### UC1: Sales Order Entry
-**Recommendation: Hybrid (n8n + Custom Python)**
+| Direction | Sub-job | The question being answered |
+|---|---|---|
+| Money OUT | Three-way match | "Should we pay this vendor's bill?" |
+| Money IN | Cash application | "Which open invoice does this customer payment pay off?" |
+| Money LATE | Collections | "Which overdue customer should we call first?" |
 
-- **n8n (Trigger Side):** Watch inbox for PO emails, extract attachments, route to Python webhook. Visual flow, business analyst maintainable.
-- **Custom Python (AI Engine):** Claude vision parses any format, fuzzy match vs 5K SKUs, confidence scoring, full pytest coverage. *Built in this demo.*
-- **Power Platform:** AI Builder is for structured forms, not 50 PO formats. Can't fuzzy match against 5K SKUs. Can't use Claude natively.
+### Three-way matching (money out)
 
-### UC2: AP Processing
-**Recommendation: Power Platform + Custom Python**
+Three documents need to agree before paying a vendor. The PO says "we ordered 500 stopcocks at $3.95." The receipt says "we got 480 stopcocks." The invoice says "pay us $1,975 for 500 stopcocks." If all three agree, the bill gets paid. If they don't agree, somebody investigates before money moves.
 
-- **n8n:** Could work, no advantage. D365 F&O needs HTTP node. No native D365 F&O connector.
-- **Power Platform (Core):** Native D365 F&O connectors, built-in Approvals via Teams, audit trail for free, finance team already uses it. *The right call for UC2.*
-- **Custom Python (Intelligence):** Cash app reasoning, collections risk scoring, Claude judgment calls. *Called from Power Automate.*
+Without three-way matching you pay for parts that never arrived, get charged the wrong price, or pay the same invoice twice. It's the number one way money leaks out of a business. My agent calls `three_way_match`, compares line by line, and creates an approval that's either green (perfect match), yellow (penny variance, recommend write-off), or red (real discrepancy, hold and investigate).
 
-**Honest one-liner:** "Power Platform for the boring 90% Microsoft already built. Custom Python for the 10% that's actually novel."
+### Cash application (money in)
 
-### UC3: Product Data Entry
-**Recommendation: Full Custom Python**
+A customer sends Qosina a payment. Finance has to figure out which open invoice it pays off. Sounds simple, but it's actually the hardest of the three. Customers send checks with no remittance advice (the note that tells you which invoices the payment is for). They send one big check that's supposed to cover three invoices. They pay the wrong amount because of damage deductions, freight charges, or early-payment discounts.
 
-- **n8n:** AI Agent node available, but constitutional rules need code precision. Hard to test/validate.
-- **Power Platform:** AI Builder not strong enough. Can't enforce naming rules precisely. Not Claude-native.
-- **Custom Python (Full):** Constitutional rules in DB + prompt, validation in code (belt + suspenders), consistency check vs catalog, full Claude reasoning. *Built in this demo.*
+Until cash is applied, the customer's account still shows them as overdue even though they paid you. You'll call them asking for money they already sent. AR numbers are wrong. Auditors get angry. My agent calls `match_payment`, proposes how to allocate the money, and creates an approval the reviewer can adjust before applying.
 
-Lower volume than UC1/UC2 — orchestration tax of n8n/Power Platform isn't worth it.
+### Collections prioritization (money late)
+
+Some customers don't pay on time. The AP team might have 200 overdue accounts on any given day and they can't call them all. Which to call first? Naive sorting like "biggest amount" or alphabetical is bad. Good prioritization considers amount owed, days overdue, payment history, account size, and last contact date.
+
+This matters at the executive level because **DSO** — Days Sales Outstanding — is one of the top metrics finance teams are measured on. Cutting DSO from 65 days to 50 days is tens of thousands in cash flow improvement. My agent calls `score_collections` and produces a ranked list with reasoning per customer.
+
+**One-sentence summary:** It handles the three sub-jobs of accounts payable — deciding whether vendor invoices should be paid, deciding which customer payments apply to which invoices, and prioritizing which overdue accounts to chase first. Each one produces a recommendation that goes to a human in the approval queue. The AI doesn't post anything to the books. Humans always click.
 
 ---
 
-## 7. OpenRouter Story
+## 7. OpenRouter
 
-Round 3 callback. We talked about LLM routing for failover. This is the implementation.
+This is the resilience story we talked about last time. The idea is that all LLM calls go through a single gateway that can route to whichever provider is healthy.
 
-- **Claude Sonnet 4 (primary)** — Best reasoning for fuzzy matching, constitutional framework, complex extraction.
-- **GPT-4o (failover)** — Auto-routes if Anthropic is down or rate-limited. ~25ms overhead.
-- **Gemini 2.5 Flash (failover)** — Final fallback. Different provider, different region.
+- **Claude Sonnet 4 (primary)** — best reasoning for fuzzy matching, the constitutional framework, complex extraction.
+- **GPT-4o (failover)** — auto-routes if Anthropic is down or rate-limited. Roughly 25 ms of routing overhead.
+- **Gemini 2.5 Flash (failover)** — final fallback. Different provider, different region, completely separate infrastructure.
 
-**Why it matters at Qosina:** Enterprise systems can't go down because a third-party LLM is having a bad day. One API key, one bill, one dashboard. Provider data policies enforced (no training on Qosina data).
+The reason this matters at Qosina specifically: enterprise systems can't go down because a third-party LLM provider is having a bad day. With this setup you get one API key, one bill, one dashboard, and provider data policies enforced (no training on Qosina data). If Claude breaks, the agent keeps working. If OpenRouter itself breaks, I can flip a feature flag and call Claude or OpenAI directly.
 
-**Demo move:** Switch the model dropdown in the header from Claude to GPT-4o mid-demo. Process the same PO. Show that the agent, tools, and approval queue work identically. The model is interchangeable — everything else is the same code.
+**Demo move I'll do during the call:** switch the model dropdown in the header from Claude to GPT-4o mid-demo. Process the same PO. Show that the agent, the tools, and the approval queue work identically. The model is interchangeable — everything else is the same code. Same prompt, same result. That's the resilience story made concrete.
 
 ---
 
 ## 8. Production Path
 
-The architecture stays identical. Only integration points change.
+The architecture stays identical between this demo and a production deployment at Qosina. Only integration points change. Here's the layer-by-layer:
 
 | Layer | Demo (today) | Production (Qosina) |
 |---|---|---|
@@ -245,130 +234,103 @@ The architecture stays identical. Only integration points change.
 | Conversation history | In-memory dict (lost on restart) | Persisted SQL with FK to approvals |
 | Logs | stdout / Docker logs | Application Insights + structured JSON |
 | Error tracking | Generic catch-all | Sentry / App Insights with stack traces |
-| Agent tracing | None (live activity panel) | LangSmith for full trace replay |
+| Agent tracing | Live activity panel | LangSmith for full trace replay |
 | Hosting | Railway (Docker) | Azure Container Apps (same Azure tenant as D365) |
 
-**The point:** The OData-shaped tool responses make the database swap a config change — URL + auth, not a rewrite. Auth, observability, and audit are integration points, not architectural changes. Everything else stays the same.
+The point I want to land: the OData-shaped tool responses make the database swap a config change. The production deployment is URL + auth, not a rewrite. Every integration point in the right column is something you add at the edges — the agent code, the tools, the approval workflow, the frontend — all of that stays the same.
 
 ---
 
 ## 9. Observability & Audit
 
-Medical device compliance is non-negotiable. Every AI decision needs a paper trail.
+Three things matter here for medical device compliance. I want to be clear about all of them because for a regulated industry this isn't optional.
 
-### User Accounts (production)
+### User accounts in production
 
-Don't roll your own. Integrate with **Entra ID** via OAuth/OIDC. Every Qosina employee already has an account. JWT validated by FastAPI middleware, user attached to each request. Authorization comes from **AD groups** — "AP_Approver" can approve invoice matches, "CX_Manager" can approve sales orders, etc.
+I wouldn't roll my own user system. Qosina is on Azure, every employee already has an account in Entra ID (the new name for Azure AD). I'd integrate with that via OAuth. The user logs in through Microsoft, comes back with a JWT, FastAPI middleware validates it and attaches the user to each request. Authorization comes from **AD groups** — like "AP_Approver", "CX_Manager", "Product_Dev_Lead". Your IT team already manages who's in what group. I'm just consuming that. Don't rebuild what you own.
 
-Demo has no auth. In production this is a Phase 1 integration.
+### Troubleshooting FastAPI in production
 
-### Troubleshooting FastAPI in Production
+FastAPI is bare-bones compared to Django, so observability is something you add on purpose. For this demo I have basic exception handling and Railway captures the container logs. In production at Qosina I'd add:
 
-- **Structured JSON logging** → Azure Log Analytics (Qosina is on Azure)
-- **Sentry** for error tracking — every uncaught exception captured with context
-- **Application Insights** for APM — latency, error rates, dependency tracing
-- **Health endpoint** `/health` for Railway/Azure liveness probes
-- **LangSmith** for AI traces — the most important one
+- **Structured JSON logging** flowing into Azure Log Analytics
+- **Sentry** or **Application Insights** for error tracking with full stack traces and request context
+- **Health endpoint** at `/health` for liveness probes
+- **Application Insights APM** for latency, error rates, dependency tracing (you're already on Azure, may as well use it)
+- **LangSmith** for AI traces — this is the most important one, see below
 
-### Auditing the AI Agent
+### Auditing the AI agent — the FDA story
 
-For regulated industries, every conversation needs to be replayable. The architecture:
+For a regulated industry every conversation needs to be replayable. Six months later, an auditor pulls approval #5234 and needs to see the original PO, the full conversation, every tool call, the AI's reasoning, who approved it, and the final D365 sales order. End to end traceability. Here's how I'd build that:
 
-1. **Persist every conversation** to a `conversations` + `conversation_messages` table
-2. **Link approvals to conversations** via FK on `approval_queue`
-3. **Store source documents** in Azure Blob with the approval record
-4. **Immutable audit log** (write-once or append-only blob storage)
-5. **7+ year retention** for FDA medical device records
+1. Persist every conversation to a `conversations` + `conversation_messages` table
+2. Foreign key approvals back to the conversation that produced them
+3. Store source documents in Azure Blob Storage with retention policies (7+ years for FDA medical device records)
+4. Append-only or write-once storage for the audit log (tamper-evident)
+5. LangSmith captures the agent side automatically — every LLM call, every tool input/output, searchable web UI, replay step by step
 
-**LangSmith does most of the AI-side tracing for free.** Every agent run, every LLM call, every tool input/output captured in a searchable web UI. When the agent does something unexpected, you replay the trace step by step.
-
-Six months later, an auditor pulls approval #5234 and sees: original PO → full conversation → tool calls → AI reasoning → who approved → final D365 sales order. End-to-end traceability.
-
-### The Honest One-Liner
-
-"FastAPI is bare bones compared to Django, so observability is something you add intentionally. For this demo I have basic exception handling and Railway captures container logs. In production at Qosina I'd add Sentry, LangSmith, and Application Insights since you're already on Azure."
+The honest framing: most of this is integration work, not algorithm work. The architecture supports adding it. It's Phase 1 alongside building UC1.
 
 ---
 
-## 10. Honest Gaps
+## 10. Phased Rollout Plan
 
-Tom said: *"We value honest assessment over polished sales pitches."* Here's what's NOT in this demo. Acknowledging this preempts every gotcha question.
-
-- ✗ **No real D365 connection.** All data is seeded SQLite. Tools return OData-shaped JSON so the production swap is a URL + auth change, not a rewrite.
-- ✗ **No user accounts.** Everything posts as "Demo User." Production uses Entra ID OAuth with AD groups.
-- ✗ **No persisted conversations.** Chat history is in-memory and lost on restart. Production needs persisted SQL + FK to approvals + Blob storage for source docs.
-- ✗ **No OCR product.** No Azure Form Recognizer, no Tesseract, no Document Intelligence. Claude Vision reads PDFs and images natively. PyMuPDF just renders PDF pages to PNG before sending.
-- ✗ **No specific time-savings claims.** I won't say "10 minutes → 30 seconds" without baselining against Qosina's actual current process. That's a Phase 0 discovery question.
-- ✗ **No "FDA traceability built-in" or "healthcare-grade security built-in."** Marketing fluff. These are features you implement, not freebies.
-- ✗ **Sample documents are representative, not Qosina's actual format mix.** Phase 0 = audit 50+ real POs to establish format distribution and accuracy baseline.
-- ✗ **Constitutional framework rules are representative, not Qosina's actual rules.** The 16 seeded rules are placeholders. Phase 0 = sit with Product Development team to codify their actual conventions.
-- ✗ **No D365 F&O write integration.** "Approve" in the demo just changes a status in SQLite. Production write would POST to `/data/SalesOrderHeaders` and `/data/SalesOrderLines` via OData with proper Azure AD auth.
-
-**What I AM saying:** The architecture supports adding all of these. They're integration points, not rewrites. Phase 1 work, on the job.
-
----
-
-## 11. Phased Rollout Plan
-
-Build in this order. Each phase compounds — Phase 1 builds the foundation that Phase 2 and 3 inherit. Sequence is by complexity (simplest first) and dollar impact (highest-value second).
+Build in this order. Each phase compounds — Phase 1 builds the foundation that Phase 2 and 3 inherit. The sequence is by complexity (simplest first) and dollar impact (highest-value second).
 
 ### Phase 1 — UC1: Sales Order Entry (Foundation Phase)
 
-**Why this first:** One approval type, one team (CX), lowest stakes. Standard product orders only (Tom said this) — skip medical device orders for Phase 1. If something goes wrong, the reviewer rejects the approval and the order gets processed manually like it does today.
+**Why this first:** One approval type, one team (CX), lowest stakes. Standard product orders only — skip medical device orders for Phase 1 like Tom suggested. If something goes wrong, the reviewer rejects the approval and the order gets processed manually like it does today.
 
-**What gets built:**
-- The UC1 flow productionized — D365 OData reads + writes, hybrid n8n trigger + Python AI service
-- **All foundation pieces every future UC inherits:**
-  - Entra ID OAuth + AD groups for authorization
-  - Application Insights + structured JSON logging
-  - LangSmith for full agent tracing
-  - Persisted conversations with FK to approvals (audit trail)
-  - Azure Blob Storage for source documents with retention policies
-  - Sentry for error tracking, health checks, alerting
+**What gets built:** The UC1 flow productionized — D365 OData reads and writes, hybrid n8n trigger plus the Python AI service. Plus all the foundation pieces every future use case will inherit: Entra ID OAuth, AD groups for authorization, Application Insights logging, LangSmith agent tracing, persisted conversations with audit FK, Azure Blob Storage for source documents, Sentry, health checks, alerting.
 
-**Discovery work (Phase 0 sub-phase):** PO format audit with the CX team. Look at 50+ real POs, establish format distribution, baseline current process time. Map the actual D365 sales order fields they use. Identify top 10 customers and their actual PO formats.
+**Discovery work first:** Spend a couple weeks doing a PO format audit with the CX team. Look at 50+ real POs, establish format distribution, baseline current process time. Map the actual D365 sales order fields they use in production. Identify the top 10 customers and what their POs actually look like.
 
-**Success metrics:** 80% of standard POs auto-extracted with high confidence. Approval-to-D365 round trip under 60 seconds. Zero false approvals (reviewer always catches AI errors). Time savings baselined and measured.
-
----
+**Success metrics:** 80% of standard POs auto-extracted with high confidence. Approval-to-D365 round trip under 60 seconds. Zero false approvals (the reviewer always catches AI errors). Time savings baselined and measured against the current process.
 
 ### Phase 2 — UC2: AP Processing (Highest Dollar Impact)
 
-**Why this second:** Tom's brief literally called this "waste of human effort." It's where Qosina is losing the most money — missed price discrepancies, mystery payments, overdue accounts not being chased optimally. Foundation pieces from Phase 1 are already in place.
+**Why this second:** The brief literally called this "waste of human effort". This is where Qosina is losing the most money — missed price discrepancies, mystery payments, overdue accounts not being chased optimally. By the time we get here all the foundation pieces from Phase 1 are already in place.
 
-**What gets built (sub-phases):**
-- **2A: Three-way matching** — most deterministic, easiest to validate. Build first.
-- **2B: Cash application** — needs more AI judgment, builds on the 2A approval pattern.
-- **2C: Collections prioritization** — pure intelligence layer, lowest write risk.
+**Sub-phased delivery:** Three-way matching first because it's the most deterministic and easiest to validate. Cash application second, builds on the same approval pattern. Collections prioritization third, lowest write risk because it just produces a ranked list.
 
-**Architecture shift:** This is where the recommendation changes. UC1 was Hybrid (n8n + Python). UC2 is **Power Platform + Custom Python**. Power Automate handles the D365 reads/writes via native connectors and the Teams approval routing. The Python service from Phase 1 gets called from Power Automate via HTTP for the AI judgment work — cash app reasoning and collections scoring. *Same Python service, just adding new tools.*
+**Architecture shift:** This is the use case where I switch the recommendation. UC1 was hybrid n8n + Python. UC2 is Power Platform plus custom Python. Power Automate handles the D365 reads and writes via native connectors and the Teams approval routing. The same Python service from Phase 1 gets called from Power Automate via HTTP for the AI judgment work. New tools, same service.
 
-**Discovery work (Phase 0 sub-phase):** Sit with the Finance team. AP has tribal knowledge — which vendors are reliable, which customers short-pay, what tolerance thresholds make sense in practice. Map existing Celigo flows so we don't rebuild them. Get tolerance threshold preferences (the $0.05 number is mine, not theirs). Understand approval authority for what dollar amounts (drives AD group setup).
+**Discovery work first:** Sit with the Finance team for a couple weeks. AP has tribal knowledge — which vendors are reliable, which customers are notorious for short-pays, what tolerance thresholds make sense in practice. Map existing Celigo flows so we don't rebuild what's already working. Get the team's actual tolerance threshold preferences. Understand who has approval authority for what dollar amounts so we set up AD groups correctly.
 
-**Success metrics:** 60-70% of vendor invoices auto-recommend "fast-track approval" (perfect or within tolerance). Cash application coverage rate. Collections priority list adopted by AP team in practice. **DSO improvement** (Days Sales Outstanding) — the executive metric.
-
----
+**Success metrics:** 60-70% of vendor invoices auto-recommend "fast-track approval". Cash application coverage rate. Collections priority list actually used by the AP team. **DSO improvement** — the executive metric.
 
 ### Phase 3 — UC3: Product Data Entry (Most Reasoning-Heavy)
 
-**Why this last:** Lowest volume of work (new SKUs added periodically, not hundreds per day). Most reasoning-intensive — you want the foundation rock-solid before building it. Needs the most pre-work because the constitutional framework is currently tribal knowledge.
+**Why this last:** Lowest volume of work (new SKUs added periodically, not hundreds per day). Most reasoning-intensive — you want the foundation rock-solid before building it. And it needs the most pre-work because the constitutional framework is currently tribal knowledge that nobody has codified.
 
-**What gets built:** The UC3 flow productionized as **Full Custom Python**. Same service from Phases 1 and 2, just adding the UC3 agent and tools. Plus an admin UI for the Product Dev team to edit constitutional rules themselves (rules live in a database table, not code).
+**What gets built:** The UC3 flow productionized as full custom Python. Same service from Phases 1 and 2, just adding the UC3 agent and tools. Plus an admin UI for the Product Dev team to edit the constitutional rules themselves — rules live in a database table, not code, so no developer needed for new rules.
 
-**Discovery work (Phase 0 sub-phase, longest):** Sit with Product Development for several weeks. Audit 30-50 existing product entries to extract the implicit naming conventions. Build the constitutional framework as a table the team can edit themselves. Understand the landed cost calculation downstream (Tom mentioned this in the brief). Map technical drawings — do these need vision AI? Vendor-specific?
+**Discovery work first (longest of the three):** Sit with Product Development for several weeks. Audit 30-50 existing product entries to extract the implicit naming conventions. Build the constitutional framework as a database table they can edit themselves. Understand the landed cost calculation downstream — the brief mentioned this connects to it. Map technical drawings — do those need vision AI? Are they vendor-specific?
 
-**Success metrics:** Field-level accuracy per category (start with stopcocks, work outward). Time savings per new SKU. Consistency check pass rate against existing 8K SKUs. Product Dev team self-service rate on new naming rules.
-
----
+**Success metrics:** Field-level accuracy per category (start with stopcocks, work outward). Time savings per new SKU. Consistency check pass rate against existing 8K SKUs. Product Dev team self-service rate on new naming rules — do they actually maintain the framework themselves or do they keep coming back to me?
 
 ### ⚠ Discovery Work Is Non-Negotiable
 
-Every phase starts with a Phase 0 sub-phase: **team interviews, process shadowing, real document audits.** AI tools that ignore the actual workflow get rejected by the team. The Phase 0 work is not optional — it's the most important input.
-
-> "I'd interview each team individually, sit with their process, understand it like the back of my hand, and then design the solution for them — not the other way around."
-
----
+Every phase starts with a Phase 0 sub-phase: team interviews, process shadowing, real document audits. The way I'd put it — I'd interview each team individually, sit with their process, understand it like the back of my hand, and then design the solution for them, not the other way around. AI tools that ignore the actual workflow get rejected by the team. The Phase 0 work is the most important input, not a sidebar.
 
 ### The Compounding Story
 
 Phase 1 builds the foundation (auth, observability, audit, deployment) with the simplest use case as the vehicle. Phase 2 adds the highest-value AI work to that foundation. Phase 3 adds the most reasoning-heavy work to a now-mature platform. By the end, Qosina has three production AI workflows in active use, one shared platform, and a pattern that can extend to other use cases (warehouse, customer support, QA) without rebuilding.
+
+---
+
+## 11. Honest Gaps
+
+Tom said in the brief: "we value honest assessment over polished sales pitches." So here's what's NOT in this demo, explicitly. I'd rather acknowledge these upfront than have them caught in a gotcha question.
+
+- ✗ **No real D365 connection.** All data is seeded SQLite. The tools return OData-shaped JSON so the production swap is a URL + auth change, not a rewrite, but the actual D365 integration is Phase 1 work.
+- ✗ **No user accounts.** Everything posts as "Demo User". Production uses Entra ID OAuth with AD groups for authorization. Phase 1 integration.
+- ✗ **No persisted conversations.** Chat history is in-memory and lost on restart. Production needs persisted SQL with FK to approvals and Azure Blob Storage for source documents. The audit trail story is the architecture, not what's actually wired up today.
+- ✗ **No OCR product.** No Azure Form Recognizer, no Tesseract, no Document Intelligence service. Claude Vision reads PDFs and images natively. PyMuPDF just renders PDF pages to PNG before sending to Claude. This is intentional — Claude is more flexible than any of those tools for diverse document formats — but I want to be explicit about it because everyone assumes you need OCR for document parsing.
+- ✗ **No specific time-savings claims.** I'm not going to say "this saves your team 10 hours a week" without baselining against your actual current process. That's a Phase 0 discovery question for each team.
+- ✗ **No "FDA traceability built-in" or "healthcare-grade security built-in".** Marketing fluff. These are features you implement, not free architectural defaults. The HITL pattern and the audit trail story are how I'd build toward FDA compliance, but neither is "free."
+- ✗ **Sample documents are representative, not Qosina's actual format mix.** I generated the PDFs and the handwritten image to cover a range of scenarios. The real format distribution is something you only learn from auditing 50+ actual POs in Phase 0.
+- ✗ **Constitutional framework rules are representative, not Qosina's actual rules.** The 16 seeded rules are placeholders. The real ones are tribal knowledge in your Product Development team and codifying them is Phase 0 work for UC3.
+- ✗ **No D365 F&O write integration.** "Approve" in this demo just changes a status in SQLite. A production write would POST to `/data/SalesOrderHeaders` and `/data/SalesOrderLines` via OData with proper Azure AD auth.
+
+**What I AM saying:** The architecture supports adding all of these. They're integration points, not rewrites. Phase 1 work, on the job. The reason I built it this way is that I wanted the demo to land the hardest part — the AI reasoning, the tool architecture, the HITL pattern, the OData mock layer — and let the boring integration work be exactly what it is: boring integration work that takes two weeks per piece, not architectural risk.

@@ -464,16 +464,16 @@
                     <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Contents</div>
                     <nav class="space-y-1 text-xs">
                         <a href="#arch-stack" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">1. Stack at a Glance</a>
-                        <a href="#arch-hitl" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">2. HITL Pattern</a>
-                        <a href="#arch-tools" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">3. The 21 Tools</a>
-                        <a href="#arch-approvals" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">4. Five Approval Types</a>
-                        <a href="#arch-ap" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">5. AP Processing Primer</a>
-                        <a href="#arch-uc" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">6. Per-UC Architecture</a>
-                        <a href="#arch-openrouter" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">7. OpenRouter Story</a>
+                        <a href="#arch-hitl" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">2. Human in the Loop</a>
+                        <a href="#arch-uc" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">3. The Three Use Cases</a>
+                        <a href="#arch-tools" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">4. The Tools</a>
+                        <a href="#arch-approvals" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">5. Approval Types</a>
+                        <a href="#arch-ap" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">6. AP Processing Primer</a>
+                        <a href="#arch-openrouter" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">7. OpenRouter</a>
                         <a href="#arch-production" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">8. Production Path</a>
                         <a href="#arch-observability" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">9. Observability &amp; Audit</a>
-                        <a href="#arch-gaps" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">10. Honest Gaps</a>
-                        <a href="#arch-rollout" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">11. Phased Rollout</a>
+                        <a href="#arch-rollout" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">10. Phased Rollout</a>
+                        <a href="#arch-gaps" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">11. Honest Gaps</a>
                     </nav>
                 </aside>
 
@@ -481,7 +481,7 @@
                 <div class="flex-1 p-6 space-y-8 max-w-4xl">
                     <div class="text-center mb-4">
                         <h2 class="text-lg font-bold text-gray-800">Architecture &amp; Design Reference</h2>
-                        <p class="text-xs text-gray-500 mt-1">Everything about how this demo is built and what production would look like</p>
+                        <p class="text-xs text-gray-500 mt-1">What I built, why I built it that way, and what would change in production at Qosina.</p>
                     </div>
 
                     <!-- 1. Stack at a Glance -->
@@ -491,105 +491,261 @@
                             Stack at a Glance
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-600 mb-4">If you read nothing else, read this. This is what the demo actually is.</p>
-                            <div class="grid grid-cols-2 gap-3 text-xs">
-                                <div class="bg-blue-50 rounded-lg p-3">
-                                    <div class="font-bold text-qblue text-[11px]">Backend</div>
-                                    <div class="text-gray-700 mt-1">FastAPI (Python 3.12)</div>
-                                    <div class="text-[10px] text-gray-500">Async SSE streaming</div>
+                            <p class="text-xs text-gray-700 mb-4">If I had to summarize what this is in one breath: a Python web app that wraps a LangGraph AI agent with a SQLite database mocked to look like D365. But the four pieces worth flagging are these:</p>
+
+                            <div class="space-y-3 mb-4">
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <div class="font-bold text-qblue text-xs mb-1">LangGraph ReAct Agents</div>
+                                    <div class="text-[11px] text-gray-700">The framework that lets Claude reason through a problem with tools. Reason &rarr; Act (call a tool) &rarr; Observe the result &rarr; repeat. Same agent code regardless of which LLM is behind it.</div>
                                 </div>
-                                <div class="bg-green-50 rounded-lg p-3">
-                                    <div class="font-bold text-green-700 text-[11px]">Agent Framework</div>
-                                    <div class="text-gray-700 mt-1">LangGraph ReAct</div>
-                                    <div class="text-[10px] text-gray-500">create_react_agent</div>
+                                <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                                    <div class="font-bold text-purple-700 text-xs mb-1">OpenRouter for LLM Resilience</div>
+                                    <div class="text-[11px] text-gray-700">Claude Sonnet 4 primary, GPT-4o and Gemini 2.5 Flash as failover. This is the resilience story we talked about in Round 3 &mdash; if Anthropic goes down, the agent keeps working with a different model. Same code, no rewrite. Switch live in the header dropdown.</div>
                                 </div>
-                                <div class="bg-purple-50 rounded-lg p-3">
-                                    <div class="font-bold text-purple-700 text-[11px]">LLM Provider</div>
-                                    <div class="text-gray-700 mt-1">OpenRouter</div>
-                                    <div class="text-[10px] text-gray-500">Claude / GPT-4o / Gemini, switch live</div>
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                    <div class="font-bold text-yellow-700 text-xs mb-1">Claude Vision (No OCR Product)</div>
+                                    <div class="text-[11px] text-gray-700">Worth flagging because everyone assumes you need an OCR product for document parsing. You don't. PDFs get rendered to PNG with PyMuPDF, then sent directly to Claude Vision. No Form Recognizer, no Tesseract, no Document Intelligence. Claude reads the image natively.</div>
                                 </div>
-                                <div class="bg-yellow-50 rounded-lg p-3">
-                                    <div class="font-bold text-yellow-700 text-[11px]">Document AI</div>
-                                    <div class="text-gray-700 mt-1">Claude Vision (no OCR)</div>
-                                    <div class="text-[10px] text-gray-500">PyMuPDF renders PDFs to PNG</div>
-                                </div>
-                                <div class="bg-gray-50 rounded-lg p-3">
-                                    <div class="font-bold text-gray-700 text-[11px]">Database</div>
-                                    <div class="text-gray-700 mt-1">SQLite, 17 tables</div>
-                                    <div class="text-[10px] text-gray-500">OData-shaped JSON, mocks D365</div>
-                                </div>
-                                <div class="bg-pink-50 rounded-lg p-3">
-                                    <div class="font-bold text-pink-700 text-[11px]">Frontend</div>
-                                    <div class="text-gray-700 mt-1">Single HTML + Tailwind CDN</div>
-                                    <div class="text-[10px] text-gray-500">Vanilla JS, no build step</div>
-                                </div>
-                                <div class="bg-indigo-50 rounded-lg p-3">
-                                    <div class="font-bold text-indigo-700 text-[11px]">Streaming</div>
-                                    <div class="text-gray-700 mt-1">Server-Sent Events</div>
-                                    <div class="text-[10px] text-gray-500">sse-starlette, native EventSource</div>
-                                </div>
-                                <div class="bg-teal-50 rounded-lg p-3">
-                                    <div class="font-bold text-teal-700 text-[11px]">Deployment</div>
-                                    <div class="text-gray-700 mt-1">Docker &rarr; Railway</div>
-                                    <div class="text-[10px] text-gray-500">Auto-deploy from GitHub main</div>
+                                <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                                    <div class="font-bold text-green-700 text-xs mb-1">SQLite with OData-Shaped Responses</div>
+                                    <div class="text-[11px] text-gray-700">All 17 tables return data formatted to look exactly like D365 F&amp;O OData responses. Same field names, same JSON shape, same <code class="text-[10px] bg-white px-1 rounded">@odata.context</code> headers. The production swap from SQLite to D365 is a URL + auth change, not a rewrite.</div>
                                 </div>
                             </div>
-                            <div class="mt-4 text-[11px] text-gray-500 italic">
-                                Same agent code regardless of model. Same approval queue regardless of use case. The architecture is the same end-to-end &mdash; only the tools and prompts differ per agent.
+
+                            <div class="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-600">
+                                <strong class="text-gray-700">The boring plumbing:</strong> FastAPI backend, vanilla JS frontend with Tailwind CDN, Server-Sent Events for streaming, Docker on Railway with auto-deploy from GitHub. ~7,800 lines of code total, 42 unit tests.
                             </div>
                         </div>
                     </section>
 
-                    <!-- 2. HITL Pattern -->
+                    <!-- 2. Human in the Loop -->
                     <section id="arch-hitl" class="scroll-mt-4">
                         <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
                             <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">2</span>
-                            Human-in-the-Loop Pattern
+                            Human in the Loop
                         </h3>
                         <div class="bg-white rounded-xl border border-yellow-300 p-5">
-                            <p class="text-xs text-gray-700 mb-3"><strong>The most important architectural decision in this demo.</strong> The agent has no write tools to the system of record. Even a perfect three-way match creates an approval card that a human must click.</p>
-                            <div class="grid grid-cols-2 gap-3 text-xs">
-                                <div class="bg-green-50 rounded-lg p-3 border border-green-200">
-                                    <div class="font-bold text-green-700 mb-1">What the agent CAN do</div>
-                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-4">
-                                        <li>Read products, customers, inventory, orders</li>
-                                        <li>Query vendor invoices, POs, receipts, payments</li>
-                                        <li>Run three-way matches and pricing validation</li>
-                                        <li>Score collections priority</li>
-                                        <li>Apply naming conventions to spec sheets</li>
-                                        <li>Create approval recommendations</li>
-                                    </ul>
-                                </div>
-                                <div class="bg-red-50 rounded-lg p-3 border border-red-200">
-                                    <div class="font-bold text-red-700 mb-1">What the agent CANNOT do</div>
-                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-4">
-                                        <li>Create or modify products</li>
-                                        <li>Update inventory or customer records</li>
-                                        <li>Post sales orders to D365</li>
-                                        <li>Apply payments or pay invoices</li>
-                                        <li>Modify pricing or contracts</li>
-                                        <li>Take ANY action without human approval</li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="mt-3 bg-yellow-50 border border-yellow-200 rounded p-3 text-[11px] text-gray-700">
-                                <strong>Why it's enforced this way:</strong> Medical device supply chain. Every part Qosina ships ends up in a device that goes in a human body. Every approval needs a human signature for FDA traceability and regulatory audit. The architecture makes this impossible to bypass &mdash; the agent literally has no tools to modify the system of record. It's not policy, it's code.
+                            <p class="text-xs text-gray-700 mb-3">We talked about this in Round 3, so I'll keep it brief. The point I want to land:</p>
+
+                            <ul class="text-xs text-gray-700 space-y-2 mb-3 ml-4 list-disc">
+                                <li>The agent has <strong>zero write tools</strong> to your system of record. It can read everything &mdash; products, inventory, customers, orders, vendor invoices, payments. It can run matches, score risk, validate pricing. But it cannot post to D365, modify a customer, apply a payment, or create an item master entry.</li>
+                                <li>The only write tool is <code class="text-[10px] bg-gray-100 px-1 rounded">create_approval</code>, which adds a recommendation to a queue. That's it.</li>
+                                <li>I made it impossible in code, not policy. Even if someone tried to bypass it later, there's literally no tool for the agent to call.</li>
+                                <li>Every approval is reviewed in a side-by-side panel that shows the original document, the AI's extracted summary, and editable form fields with confidence colors. The reviewer can change anything before clicking Approve.</li>
+                            </ul>
+
+                            <div class="bg-yellow-50 border border-yellow-200 rounded p-3 text-[11px] text-gray-700">
+                                The way I'd describe the philosophy: I'm not trying to replace your CX or Finance team. I'm trying to make the boring extraction work disappear so they can focus on the judgment calls. Every approval card says "here's what I think &mdash; what do you think?", not "here's what I did, hope that was OK."
                             </div>
                         </div>
                     </section>
 
-                    <!-- 3. The 21 Tools -->
-                    <section id="arch-tools" class="scroll-mt-4">
+                    <!-- 3. The Three Use Cases (combined problem + architecture + recommendation) -->
+                    <section id="arch-uc" class="scroll-mt-4">
                         <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
                             <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">3</span>
-                            The Tools &mdash; 20 Read-Only + 1 Write
+                            The Three Use Cases
+                        </h3>
+                        <p class="text-xs text-gray-600 mb-4">For each one I'll cover the business problem, what I built, and which approach I'd actually recommend in production. The recommendation is different per use case &mdash; I'm not going to push my stack for everything.</p>
+
+                        <!-- UC1 -->
+                        <div class="bg-white rounded-xl border-2 border-blue-300 p-5 mb-4">
+                            <div class="flex items-center space-x-2 mb-3">
+                                <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded">UC1</span>
+                                <h4 class="text-sm font-bold text-gray-800">Sales Order Entry</h4>
+                                <span class="text-[10px] text-gray-500 ml-auto">CX Department</span>
+                            </div>
+
+                            <div class="text-[11px] text-gray-700 space-y-3">
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">The business problem</div>
+                                    <p>Your CX team gets POs by email in every format imaginable. Clean PDFs from larger customers, scanned documents from smaller ones, the occasional handwritten form, and sometimes just text typed into the email body. Today someone reads each one and manually keys it into D365 as a sales order with the right customer, line items, prices, and ship-to. It's slow, it doesn't scale, and human typing introduces errors that get caught downstream when something ships wrong.</p>
+                                </div>
+
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">What I built</div>
+                                    <ul class="list-disc ml-5 space-y-0.5">
+                                        <li>Drop a PO in any format &mdash; PDF, image, paste text. Claude reads it directly.</li>
+                                        <li>Agent extracts customer, contact, PO number, line items, ship-to, delivery date, payment terms.</li>
+                                        <li>Then it runs through five tools: <code class="text-[10px] bg-gray-100 px-1 rounded">match_customer</code> against the master, <code class="text-[10px] bg-gray-100 px-1 rounded">match_products</code> fuzzy-matched against the catalog, <code class="text-[10px] bg-gray-100 px-1 rounded">validate_pricing</code> against contracted rates, <code class="text-[10px] bg-gray-100 px-1 rounded">check_inventory</code>, then <code class="text-[10px] bg-gray-100 px-1 rounded">create_approval</code>.</li>
+                                        <li>Each field gets a confidence score. The reviewer sees red/yellow/green borders so they know exactly which fields the AI was unsure about and need to be checked.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">My recommendation: Hybrid (n8n + Custom Python)</div>
+                                    <div class="grid grid-cols-3 gap-2 text-[10px] mt-2">
+                                        <div class="border border-green-300 bg-green-50 rounded p-2">
+                                            <div class="font-bold text-green-700">n8n &mdash; Trigger Side</div>
+                                            <ul class="list-disc ml-3 mt-1 text-gray-600">
+                                                <li>Watch inbox for PO emails</li>
+                                                <li>Extract attachments</li>
+                                                <li>Route to Python webhook</li>
+                                                <li>Visual flow, business analysts can maintain it</li>
+                                            </ul>
+                                        </div>
+                                        <div class="border-2 border-qblue bg-blue-50 rounded p-2">
+                                            <div class="font-bold text-qblue">Custom Python &mdash; AI</div>
+                                            <ul class="list-disc ml-3 mt-1 text-gray-600">
+                                                <li>Claude vision parses any format</li>
+                                                <li>Fuzzy match vs 5K SKUs</li>
+                                                <li>Confidence scoring</li>
+                                                <li>Full pytest coverage</li>
+                                            </ul>
+                                            <div class="text-[9px] text-qblue font-semibold mt-1">* Built in this demo</div>
+                                        </div>
+                                        <div class="border border-gray-300 bg-gray-50 rounded p-2">
+                                            <div class="font-bold text-gray-600">Power Platform</div>
+                                            <ul class="list-disc ml-3 mt-1 text-gray-500">
+                                                <li>AI Builder is for structured forms</li>
+                                                <li>Can't fuzzy match 5K SKUs</li>
+                                                <li class="text-orange-500">Can't use Claude natively</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <p class="mt-2 italic text-gray-600">Why hybrid: n8n is great at the email plumbing &mdash; watching an inbox, pulling attachments, routing them to a webhook. That's commodity work and a visual flow is easier for the team to maintain than Python. But the AI extraction and fuzzy matching against 5,000 SKUs needs Claude reasoning, which lives in the custom Python service. Use each tool for what it's best at.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- UC2 -->
+                        <div class="bg-white rounded-xl border-2 border-green-300 p-5 mb-4">
+                            <div class="flex items-center space-x-2 mb-3">
+                                <span class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">UC2</span>
+                                <h4 class="text-sm font-bold text-gray-800">AP Processing</h4>
+                                <span class="text-[10px] text-gray-500 ml-auto">Finance Department</span>
+                            </div>
+
+                            <div class="text-[11px] text-gray-700 space-y-3">
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">The business problem</div>
+                                    <p>This is the one your finance team called "waste of human effort" in the brief. It's actually three sub-jobs glued together: deciding whether to pay vendor invoices (three-way matching), figuring out which open invoices an incoming customer payment covers (cash application), and prioritizing which overdue accounts to chase first (collections). All three are full of edge cases &mdash; penny rounding, partial payments, mystery checks with no remittance, discontinued POs, vendor price increases. Today your AP team handles each one manually and the long tail of edge cases eats their time.</p>
+                                </div>
+
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">What I built</div>
+                                    <ul class="list-disc ml-5 space-y-0.5">
+                                        <li><strong>Three-way matching:</strong> Drop a vendor invoice PDF or click "Three-Way Match All" &mdash; agent calls <code class="text-[10px] bg-gray-100 px-1 rounded">three_way_match</code>, compares the invoice line-by-line against the seeded PO and receipt, and creates an <code class="text-[10px] bg-gray-100 px-1 rounded">invoice_match</code> approval. Tolerance thresholds determine whether it's recommended for fast-track or flagged for investigation.</li>
+                                        <li><strong>Cash application:</strong> Drop a payment remittance or click "Cash Application" &mdash; agent calls <code class="text-[10px] bg-gray-100 px-1 rounded">match_payment</code>, proposes which invoices the payment covers, handles partial pays and deductions, and creates a <code class="text-[10px] bg-gray-100 px-1 rounded">payment_application</code> approval.</li>
+                                        <li><strong>Collections:</strong> Click "Collections Priority" &mdash; agent calls <code class="text-[10px] bg-gray-100 px-1 rounded">score_collections</code>, ranks overdue accounts by amount + age + payment trend + tier, creates a <code class="text-[10px] bg-gray-100 px-1 rounded">collection_outreach</code> approval per customer with reasoning.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">My recommendation: Power Platform + Custom Python</div>
+                                    <div class="grid grid-cols-3 gap-2 text-[10px] mt-2">
+                                        <div class="border border-gray-300 bg-gray-50 rounded p-2">
+                                            <div class="font-bold text-gray-600">n8n</div>
+                                            <ul class="list-disc ml-3 mt-1 text-gray-500">
+                                                <li>Could work, no advantage</li>
+                                                <li>D365 F&amp;O needs HTTP node</li>
+                                                <li class="text-orange-500">No native D365 F&amp;O connector</li>
+                                            </ul>
+                                        </div>
+                                        <div class="border-2 border-green-500 bg-green-50 rounded p-2">
+                                            <div class="font-bold text-green-700">Power Platform &mdash; Core</div>
+                                            <ul class="list-disc ml-3 mt-1 text-gray-600">
+                                                <li>Native D365 F&amp;O connectors</li>
+                                                <li>Built-in Approvals via Teams</li>
+                                                <li>Audit trail for free</li>
+                                                <li>Finance already uses it</li>
+                                            </ul>
+                                            <div class="text-[9px] text-green-700 font-semibold mt-1">* The right call here</div>
+                                        </div>
+                                        <div class="border-2 border-qblue bg-blue-50 rounded p-2">
+                                            <div class="font-bold text-qblue">Custom Python &mdash; Intelligence</div>
+                                            <ul class="list-disc ml-3 mt-1 text-gray-600">
+                                                <li>Cash app reasoning</li>
+                                                <li>Collections risk scoring</li>
+                                                <li>Claude judgment calls</li>
+                                            </ul>
+                                            <div class="text-[9px] text-qblue font-semibold mt-1">* Called from Power Automate</div>
+                                        </div>
+                                    </div>
+                                    <p class="mt-2 italic text-gray-600">This is the one where I'm explicitly NOT recommending my own stack as the core. Microsoft already built the boring 90% &mdash; the D365 F&amp;O connectors, the Teams approval routing, the audit trail. You're already paying for it. Don't rebuild what you own. The custom Python piece is just for the 10% that's actually novel: the AI judgment calls on cash application and collections scoring.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- UC3 -->
+                        <div class="bg-white rounded-xl border-2 border-purple-300 p-5">
+                            <div class="flex items-center space-x-2 mb-3">
+                                <span class="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">UC3</span>
+                                <h4 class="text-sm font-bold text-gray-800">Product Data Entry</h4>
+                                <span class="text-[10px] text-gray-500 ml-auto">Product Development</span>
+                            </div>
+
+                            <div class="text-[11px] text-gray-700 space-y-3">
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">The business problem</div>
+                                    <p>When Product Development sources a new SKU, the supplier sends documentation in every format &mdash; spec sheets, certificates of analysis, catalog pages, technical drawings. Today someone manually extracts 30+ data fields per SKU and types them into the D365 item master. With 8,000+ existing SKUs and new ones added regularly, this is a significant time investment. The brief specifically called out that AI would need a "constitutional framework" &mdash; non-negotiable rules for translating supplier terminology into Qosina's standards. That's the most interesting part of this use case.</p>
+                                </div>
+
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">What I built</div>
+                                    <ul class="list-disc ml-5 space-y-0.5">
+                                        <li>Drop a supplier spec sheet &mdash; Claude reads it directly.</li>
+                                        <li>Agent calls <code class="text-[10px] bg-gray-100 px-1 rounded">get_naming_conventions</code> to load the constitutional rules from a database table.</li>
+                                        <li>Then it normalizes every field according to the rules: "PC plastic" becomes "Polycarbonate (PC)", "M Luer Lock" becomes "Male Luer Lock", inches become millimeters, "valve" with luer connections becomes "Stopcock".</li>
+                                        <li>Calls <code class="text-[10px] bg-gray-100 px-1 rounded">find_similar_products</code> to compare against existing catalog entries for consistency, then <code class="text-[10px] bg-gray-100 px-1 rounded">validate_consistency</code> to check the normalized fields against the rules and the catalog patterns.</li>
+                                        <li>Creates a <code class="text-[10px] bg-gray-100 px-1 rounded">product_entry</code> approval with the structured data grouped by section &mdash; Basic Info, Dimensions, Connections, Compliance, Commercial.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">The constitutional framework is the interesting part</div>
+                                    <p>The naming rules live in a database table, not in code. Adding a new rule is an INSERT, not a deployment. The Product Dev team could maintain their own rules through an admin UI without needing me to push code. The rules are enforced in two places: in the agent's prompt (so Claude follows them during extraction) and in validation code (so we double-check before the approval is created). Belt and suspenders.</p>
+                                </div>
+
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">My recommendation: Full Custom Python</div>
+                                    <div class="grid grid-cols-3 gap-2 text-[10px] mt-2">
+                                        <div class="border border-gray-300 bg-gray-50 rounded p-2">
+                                            <div class="font-bold text-gray-600">n8n</div>
+                                            <ul class="list-disc ml-3 mt-1 text-gray-500">
+                                                <li>AI Agent node available</li>
+                                                <li class="text-orange-500">Constitutional rules need code precision</li>
+                                                <li class="text-orange-500">Hard to test/validate</li>
+                                            </ul>
+                                        </div>
+                                        <div class="border border-gray-300 bg-gray-50 rounded p-2">
+                                            <div class="font-bold text-gray-600">Power Platform</div>
+                                            <ul class="list-disc ml-3 mt-1 text-gray-500">
+                                                <li class="text-orange-500">AI Builder not strong enough</li>
+                                                <li class="text-orange-500">Can't enforce naming rules precisely</li>
+                                                <li class="text-orange-500">Not Claude-native</li>
+                                            </ul>
+                                        </div>
+                                        <div class="border-2 border-qblue bg-blue-50 rounded p-2">
+                                            <div class="font-bold text-qblue">Custom Python &mdash; Full</div>
+                                            <ul class="list-disc ml-3 mt-1 text-gray-600">
+                                                <li>Constitutional rules in DB + prompt</li>
+                                                <li>Validation in code (belt + suspenders)</li>
+                                                <li>Consistency check vs catalog</li>
+                                                <li>Full Claude reasoning</li>
+                                            </ul>
+                                            <div class="text-[9px] text-qblue font-semibold mt-1">* Built in this demo</div>
+                                        </div>
+                                    </div>
+                                    <p class="mt-2 italic text-gray-600">This one is full custom Python because the constitutional framework needs precision that low-code tools can't give you. You don't want a no-code workflow subtly mistranslating "PC plastic" as "Polycarbonate (Plastic)" instead of "Polycarbonate (PC)". The rules need to be precisely controlled, testable, and enforceable. It's also lower volume than UC1/UC2 &mdash; new product entries, not hundreds of POs per day &mdash; so the orchestration tax of a workflow tool isn't worth it.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 4. The Tools -->
+                    <section id="arch-tools" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">4</span>
+                            The Tools
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-600 mb-3">Across 4 agents (general + 3 use cases), 20 read-only tools query the database. Exactly ONE write tool (<code class="bg-gray-100 px-1 rounded">create_approval</code>) is shared by all 4 agents. That's the only way anything gets written to the approval queue.</p>
-                            <div class="grid grid-cols-2 gap-3 text-xs">
+                            <p class="text-xs text-gray-700 mb-3">There are four agents total &mdash; the original general agent from Round 3 plus one specialized agent per use case. Across all four agents there are 20 read-only tools and exactly 1 write tool.</p>
+
+                            <div class="grid grid-cols-2 gap-3 text-xs mb-3">
                                 <div class="border border-gray-200 rounded-lg p-3">
-                                    <div class="font-bold text-gray-700 mb-1">General Agent (6 read-only)</div>
-                                    <ul class="text-gray-600 space-y-0.5 ml-2">
+                                    <div class="font-bold text-gray-700 mb-1">General Agent &mdash; 6 read-only</div>
+                                    <ul class="text-[11px] text-gray-600 space-y-0.5 ml-2">
                                         <li>&bull; <code class="text-[10px]">search_products</code></li>
                                         <li>&bull; <code class="text-[10px]">check_inventory</code></li>
                                         <li>&bull; <code class="text-[10px]">find_compatible_parts</code></li>
@@ -599,8 +755,8 @@
                                     </ul>
                                 </div>
                                 <div class="border border-blue-200 rounded-lg p-3 bg-blue-50/30">
-                                    <div class="font-bold text-qblue mb-1">UC1 Sales Order Agent (5 read-only)</div>
-                                    <ul class="text-gray-600 space-y-0.5 ml-2">
+                                    <div class="font-bold text-qblue mb-1">UC1 Sales Order Agent &mdash; 5 read-only</div>
+                                    <ul class="text-[11px] text-gray-600 space-y-0.5 ml-2">
                                         <li>&bull; <code class="text-[10px]">match_customer</code></li>
                                         <li>&bull; <code class="text-[10px]">match_products</code></li>
                                         <li>&bull; <code class="text-[10px]">validate_pricing</code></li>
@@ -609,8 +765,8 @@
                                     </ul>
                                 </div>
                                 <div class="border border-green-200 rounded-lg p-3 bg-green-50/30">
-                                    <div class="font-bold text-green-700 mb-1">UC2 AP Agent (5 read-only)</div>
-                                    <ul class="text-gray-600 space-y-0.5 ml-2">
+                                    <div class="font-bold text-green-700 mb-1">UC2 AP Agent &mdash; 5 read-only</div>
+                                    <ul class="text-[11px] text-gray-600 space-y-0.5 ml-2">
                                         <li>&bull; <code class="text-[10px]">get_vendor_invoices</code></li>
                                         <li>&bull; <code class="text-[10px]">three_way_match</code></li>
                                         <li>&bull; <code class="text-[10px]">get_unapplied_payments</code></li>
@@ -619,8 +775,8 @@
                                     </ul>
                                 </div>
                                 <div class="border border-purple-200 rounded-lg p-3 bg-purple-50/30">
-                                    <div class="font-bold text-purple-700 mb-1">UC3 Product Data Agent (4 read-only)</div>
-                                    <ul class="text-gray-600 space-y-0.5 ml-2">
+                                    <div class="font-bold text-purple-700 mb-1">UC3 Product Data Agent &mdash; 4 read-only</div>
+                                    <ul class="text-[11px] text-gray-600 space-y-0.5 ml-2">
                                         <li>&bull; <code class="text-[10px]">get_naming_conventions</code></li>
                                         <li>&bull; <code class="text-[10px]">find_similar_products</code></li>
                                         <li>&bull; <code class="text-[10px]">validate_consistency</code></li>
@@ -628,25 +784,28 @@
                                     </ul>
                                 </div>
                             </div>
-                            <div class="mt-3 bg-yellow-50 border-2 border-yellow-300 rounded-lg p-3">
+
+                            <div class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-3 mb-3">
                                 <div class="font-bold text-yellow-800 text-[11px] mb-1">+ 1 Write Tool: <code>create_approval</code></div>
-                                <div class="text-[11px] text-gray-700">Shared across all 4 agents. The only way data gets written. Creates a row in <code class="bg-white px-1 rounded text-[10px]">approval_queue</code> with structured field data, confidence scores, and the source document reference. No bypass possible.</div>
+                                <div class="text-[11px] text-gray-700">Shared across all four agents. Adds a row to the approval queue with the structured field data, confidence scores, and a reference to the source document. That's the only way data gets written. There's no other path.</div>
                             </div>
-                            <div class="mt-3 text-[11px] text-gray-500 italic">
-                                Tools are pure Python functions in <code>tools.py</code> with no LangGraph dependency. The agent.py file wraps them with <code>@tool</code> decorators. Business logic is testable in isolation &mdash; 42 unit tests run against the pure functions, no LLM mocking required.
+
+                            <div class="text-[11px] text-gray-600 italic">
+                                A few things worth knowing about how I structured this. Each tool is a pure Python function in <code>tools.py</code> with no LangGraph dependency. The <code>agent.py</code> file wraps them with <code>@tool</code> decorators for the agent. That separation matters because it means the business logic is testable in isolation &mdash; 42 unit tests run against the pure functions, no LLM mocking required. If you want to know whether <code>three_way_match</code> handles a quantity discrepancy correctly, you write a test against the function directly. You don't need to spin up an agent.
                             </div>
                         </div>
                     </section>
 
-                    <!-- 4. Five Approval Types -->
+                    <!-- 5. Approval Types -->
                     <section id="arch-approvals" class="scroll-mt-4">
                         <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
-                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">4</span>
-                            The Five Approval Types
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">5</span>
+                            Approval Types
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-600 mb-3">The agent produces 5 distinct approval types across the three use cases. Each one renders differently in the review panel and routes to a different downstream action.</p>
-                            <table class="w-full text-xs">
+                            <p class="text-xs text-gray-700 mb-3">The agent produces five distinct approval types across the three use cases. Each one renders differently in the review panel and would route to a different downstream action in production.</p>
+
+                            <table class="w-full text-xs mb-3">
                                 <thead>
                                     <tr class="border-b border-gray-200 text-left text-gray-500">
                                         <th class="pb-2">Type</th>
@@ -682,290 +841,115 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <div class="mt-4 grid grid-cols-3 gap-2 text-[11px]">
+
+                            <div class="grid grid-cols-3 gap-2 text-[11px] mb-3">
                                 <div class="bg-blue-50 rounded p-2">
                                     <div class="font-bold text-qblue">UC1: 1 type</div>
-                                    <div class="text-gray-600 mt-0.5">One approval per PO, even if 50 line items. An order is one business object.</div>
+                                    <div class="text-gray-600 mt-0.5">One approval per PO, even if it has 50 line items. An order is one business object that gets approved or rejected as a whole.</div>
                                 </div>
                                 <div class="bg-green-50 rounded p-2">
                                     <div class="font-bold text-green-700">UC2: 3 types</div>
-                                    <div class="text-gray-600 mt-0.5">AP is three distinct sub-jobs glued together: pay bills, apply payments, chase overdue.</div>
+                                    <div class="text-gray-600 mt-0.5">AP is three distinct sub-jobs glued together: pay bills, apply payments, chase overdue. Each one routes differently.</div>
                                 </div>
                                 <div class="bg-purple-50 rounded p-2">
                                     <div class="font-bold text-purple-700">UC3: 1 type</div>
-                                    <div class="text-gray-600 mt-0.5">One approval per supplier doc. Catalog page with 3 products = 1 approval with sections.</div>
+                                    <div class="text-gray-600 mt-0.5">One approval per supplier doc. A catalog page with three products would be one approval card with three sections.</div>
                                 </div>
                             </div>
-                            <div class="mt-4 bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700">
-                                <strong class="text-gray-800">If they ask "could you add more types?":</strong> Yes &mdash; adding a new type is a 4-line change. Add the type string to the agent's prompt, the frontend's tab type map, the badge color map, and (optionally) a new section renderer for the form. No schema migration. The <code class="bg-white px-1 rounded">approval_queue.recommendation_type</code> is an open string field.
+
+                            <div class="text-[11px] text-gray-600 italic">
+                                One thing worth noting: adding a new approval type is a four-line change. Add the type string to the agent's prompt, the frontend's tab type map, the badge color map, and optionally a new section renderer for the form. No schema migration. The <code>recommendation_type</code> column in the approval queue is an open string field. The system is built to grow.
                             </div>
                         </div>
                     </section>
 
-                    <!-- 5. AP Processing Primer -->
+                    <!-- 6. AP Processing Primer -->
                     <section id="arch-ap" class="scroll-mt-4">
                         <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
-                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">5</span>
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">6</span>
                             AP Processing Primer
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-600 mb-3">AP = Accounts Payable. The financial plumbing of "money in, money out." Three sub-jobs.</p>
+                            <p class="text-xs text-gray-700 mb-3">Quick framing for AP since it's the use case with the most variety. AP stands for Accounts Payable &mdash; the financial plumbing of money in and money out. The whole use case is three sub-jobs.</p>
 
                             <table class="w-full text-xs mb-4">
                                 <thead>
                                     <tr class="border-b border-gray-200 text-left text-gray-500">
                                         <th class="pb-2">Direction</th>
                                         <th class="pb-2">Sub-job</th>
-                                        <th class="pb-2">Approval type</th>
-                                        <th class="pb-2">The question</th>
+                                        <th class="pb-2">The question being answered</th>
                                     </tr>
                                 </thead>
                                 <tbody class="text-gray-700">
                                     <tr class="border-b border-gray-100">
                                         <td class="py-2 font-semibold text-red-600">Money OUT</td>
                                         <td>Three-way match</td>
-                                        <td><code class="text-[10px]">invoice_match</code></td>
-                                        <td>"Should we pay this bill?"</td>
+                                        <td>"Should we pay this vendor's bill?"</td>
                                     </tr>
                                     <tr class="border-b border-gray-100">
                                         <td class="py-2 font-semibold text-green-600">Money IN</td>
                                         <td>Cash application</td>
-                                        <td><code class="text-[10px]">payment_application</code></td>
-                                        <td>"Which invoice does this payment pay off?"</td>
+                                        <td>"Which open invoice does this customer payment pay off?"</td>
                                     </tr>
                                     <tr>
                                         <td class="py-2 font-semibold text-amber-600">Money LATE</td>
                                         <td>Collections</td>
-                                        <td><code class="text-[10px]">collection_outreach</code></td>
-                                        <td>"Who should we chase first?"</td>
+                                        <td>"Which overdue customer should we call first?"</td>
                                     </tr>
                                 </tbody>
                             </table>
 
                             <div class="space-y-3">
-                                <details class="bg-red-50 border border-red-200 rounded p-3" open>
-                                    <summary class="font-bold text-red-700 text-xs cursor-pointer">Sub-job 1: Three-way matching (Money OUT)</summary>
-                                    <div class="mt-2 text-[11px] text-gray-700">
-                                        <p class="mb-2"><strong>What it is:</strong> Three docs need to agree before paying a vendor invoice:</p>
-                                        <ol class="list-decimal ml-5 space-y-1 mb-3">
-                                            <li><strong>PO</strong> &mdash; Qosina says: "We want 500 stopcocks at $3.95"</li>
-                                            <li><strong>Receipt</strong> &mdash; Warehouse says: "We received 480 stopcocks"</li>
-                                            <li><strong>Invoice</strong> &mdash; Vendor says: "Pay us for 500 stopcocks at $3.95 = $1,975"</li>
-                                        </ol>
-                                        <p class="mb-2"><strong>Why it matters:</strong> Without it, you pay for parts that never arrived, get charged the wrong price, or pay duplicate invoices. #1 way money leaks out of a company.</p>
-                                        <p class="mb-2"><strong>What the agent does:</strong> Calls <code class="bg-white px-1 rounded">three_way_match(invoice_id)</code>, compares line-by-line, creates an <code class="bg-white px-1 rounded">invoice_match</code> approval that falls into:</p>
-                                        <ul class="list-disc ml-5 space-y-0.5">
-                                            <li><strong>Perfect match</strong> &rarr; recommend fast-track</li>
-                                            <li><strong>Penny variance &lt;$0.05</strong> &rarr; fast-track with write-off note</li>
-                                            <li><strong>Quantity discrepancy</strong> &rarr; HOLD, investigate (TechValve case: billed 500, got 480)</li>
-                                            <li><strong>Price discrepancy</strong> &rarr; HOLD, investigate (Allied case: $65 PO, $67.50 invoice)</li>
-                                            <li><strong>Orphan invoice</strong> &rarr; HOLD, do not pay (MedSupply case: PO doesn't exist)</li>
-                                        </ul>
+                                <div class="bg-red-50 border border-red-200 rounded p-3">
+                                    <div class="font-bold text-red-700 text-xs mb-1">Three-way matching (money out)</div>
+                                    <div class="text-[11px] text-gray-700">
+                                        <p class="mb-2">Three documents need to agree before paying a vendor. The PO says "we ordered 500 stopcocks at $3.95." The receipt says "we got 480 stopcocks." The invoice says "pay us $1,975 for 500 stopcocks." If all three agree, the bill gets paid. If they don't agree, somebody investigates before money moves.</p>
+                                        <p>Without three-way matching you pay for parts that never arrived, get charged the wrong price, or pay the same invoice twice. It's the number one way money leaks out of a business. My agent calls <code>three_way_match</code>, compares line by line, and creates an approval that's either green (perfect match), yellow (penny variance, recommend write-off), or red (real discrepancy, hold and investigate).</p>
                                     </div>
-                                </details>
+                                </div>
 
-                                <details class="bg-green-50 border border-green-200 rounded p-3">
-                                    <summary class="font-bold text-green-700 text-xs cursor-pointer">Sub-job 2: Cash application (Money IN)</summary>
-                                    <div class="mt-2 text-[11px] text-gray-700">
-                                        <p class="mb-2"><strong>What it is:</strong> Customer sends Qosina a payment. Finance has to figure out which open invoice it pays off. Sounds simple but:</p>
-                                        <ul class="list-disc ml-5 space-y-0.5 mb-3">
-                                            <li>Check arrives with no remittance advice ("$2,800 from someone, figure it out")</li>
-                                            <li>One big payment supposed to cover three invoices</li>
-                                            <li>Customer pays the wrong amount (deductions for damages, freight, early-payment discounts)</li>
-                                            <li>Wire transfer from a payment processor with no clear customer ID</li>
-                                        </ul>
-                                        <p class="mb-2"><strong>Why it matters:</strong> Until cash is applied, the customer's account still shows them as overdue even though they paid. You'll call them asking for money they already sent. AR numbers are wrong. Auditors are angry.</p>
-                                        <p class="mb-2"><strong>What the agent does:</strong> Calls <code class="bg-white px-1 rounded">match_payment(payment_id)</code>, proposes allocation, creates a <code class="bg-white px-1 rounded">payment_application</code> approval:</p>
-                                        <ul class="list-disc ml-5 space-y-0.5">
-                                            <li><strong>Exact match</strong> &rarr; one open invoice equals the payment amount, apply it</li>
-                                            <li><strong>Partial pay with deduction</strong> &rarr; "MedLine paid $332.50 instead of $337.50, deducted $5 for damages"</li>
-                                            <li><strong>Multi-invoice</strong> &rarr; "$1,345 covers CINV-006 + CINV-007"</li>
-                                            <li><strong>Mystery payment</strong> &rarr; "$2,800 check from Unknown, two candidates, recommend phone call"</li>
-                                        </ul>
+                                <div class="bg-green-50 border border-green-200 rounded p-3">
+                                    <div class="font-bold text-green-700 text-xs mb-1">Cash application (money in)</div>
+                                    <div class="text-[11px] text-gray-700">
+                                        <p class="mb-2">A customer sends Qosina a payment. Finance has to figure out which open invoice it pays off. Sounds simple, but it's actually the hardest of the three. Customers send checks with no remittance advice (the note that tells you which invoices the payment is for). They send one big check that's supposed to cover three invoices. They pay the wrong amount because of damage deductions, freight charges, or early-payment discounts.</p>
+                                        <p>Until cash is applied, the customer's account still shows them as overdue even though they paid you. You'll call them asking for money they already sent. AR numbers are wrong. Auditors get angry. My agent calls <code>match_payment</code>, proposes how to allocate the money, and creates an approval the reviewer can adjust before applying.</p>
                                     </div>
-                                </details>
+                                </div>
 
-                                <details class="bg-amber-50 border border-amber-200 rounded p-3">
-                                    <summary class="font-bold text-amber-700 text-xs cursor-pointer">Sub-job 3: Collections prioritization (Money LATE)</summary>
-                                    <div class="mt-2 text-[11px] text-gray-700">
-                                        <p class="mb-2"><strong>What it is:</strong> Some customers don't pay on time. AP team has 200 overdue accounts and can't call them all today. Which to call first?</p>
-                                        <p class="mb-2"><strong>Why naive sorting is bad:</strong> Alphabetical = random. "Biggest amount first" ignores that a $50K customer who always pays late is less urgent than a $5K customer who's gone silent for 90 days.</p>
-                                        <p class="mb-2"><strong>What good prioritization considers:</strong></p>
-                                        <ul class="list-disc ml-5 space-y-0.5 mb-3">
-                                            <li>Amount owed</li>
-                                            <li>Days overdue (risk shoots up after 90)</li>
-                                            <li>Payment history (always-late but always-pays vs new risk)</li>
-                                            <li>Account size (strategic value)</li>
-                                            <li>Last contact (already called yesterday?)</li>
-                                        </ul>
-                                        <p class="mb-2"><strong>Why it matters:</strong> DSO (Days Sales Outstanding) is one of the top metrics finance is measured on. Cutting DSO from 65 to 50 days = tens of thousands in cash flow improvement.</p>
-                                        <p class="mb-2"><strong>What the agent does:</strong> Calls <code class="bg-white px-1 rounded">score_collections()</code>, ranks all overdue accounts, creates a <code class="bg-white px-1 rounded">collection_outreach</code> approval per customer:</p>
-                                        <ul class="list-disc ml-5 space-y-0.5">
-                                            <li><strong>High</strong> &rarr; "Acme, $12K overdue 75 days, late payer history, recommend phone call today"</li>
-                                            <li><strong>Medium</strong> &rarr; "BioFlow, $3K overdue 45 days, normally pays on time, recommend reminder email"</li>
-                                            <li><strong>Low</strong> &rarr; "Precision, $800 overdue 15 days, excellent history, monitor only"</li>
-                                        </ul>
+                                <div class="bg-amber-50 border border-amber-200 rounded p-3">
+                                    <div class="font-bold text-amber-700 text-xs mb-1">Collections prioritization (money late)</div>
+                                    <div class="text-[11px] text-gray-700">
+                                        <p class="mb-2">Some customers don't pay on time. The AP team might have 200 overdue accounts on any given day and they can't call them all. Which to call first? Naive sorting like "biggest amount" or alphabetical is bad. Good prioritization considers amount owed, days overdue, payment history, account size, and last contact date.</p>
+                                        <p>This matters at the executive level because <strong>DSO</strong> &mdash; Days Sales Outstanding &mdash; is one of the top metrics finance teams are measured on. Cutting DSO from 65 days to 50 days is tens of thousands in cash flow improvement. My agent calls <code>score_collections</code> and produces a ranked list with reasoning per customer.</p>
                                     </div>
-                                </details>
+                                </div>
                             </div>
 
                             <div class="mt-4 bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700">
-                                <strong class="text-gray-800">One-sentence summary if Tom asks:</strong> "It handles the three sub-jobs of accounts payable &mdash; deciding whether vendor invoices should be paid, deciding which customer payments apply to which invoices, and prioritizing which overdue accounts to chase first. Each one produces a recommendation that goes to a human in an approval queue. The AI doesn't post anything to the books &mdash; humans always click."
+                                If I had to summarize UC2 in one sentence: it handles the three sub-jobs of accounts payable &mdash; deciding whether vendor invoices should be paid, deciding which customer payments apply to which invoices, and prioritizing which overdue accounts to chase first. Each one produces a recommendation that goes to a human in the approval queue. The AI doesn't post anything to the books. Humans always click.
                             </div>
                         </div>
                     </section>
 
-                    <!-- 6. Per-UC Architecture (the comparison cards) -->
-                    <section id="arch-uc" class="scroll-mt-4">
-                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
-                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">6</span>
-                            Per-UC Architecture: Three Approaches Compared
-                        </h3>
-                        <p class="text-xs text-gray-600 mb-3">For each use case I evaluated n8n, Power Platform, and Custom Python. Different recommendation per UC &mdash; not "my stack for everything."</p>
-
-                        <!-- UC1 -->
-                        <div class="bg-white rounded-xl border border-blue-200 p-4 mb-3">
-                            <div class="flex items-center space-x-2 mb-3">
-                                <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">UC1</span>
-                                <h4 class="text-xs font-bold text-gray-800">Sales Order Entry</h4>
-                                <span class="text-[11px] text-green-600 font-medium ml-auto">Recommendation: Hybrid (n8n + Custom Python)</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-3 text-[11px]">
-                                <div class="border border-green-300 bg-green-50 rounded-lg p-3">
-                                    <div class="font-bold text-green-700 mb-1">n8n (Trigger Side)</div>
-                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-3">
-                                        <li>Watch inbox for PO emails</li>
-                                        <li>Extract attachments</li>
-                                        <li>Route to Python webhook</li>
-                                        <li>Visual flow, business analyst maintainable</li>
-                                    </ul>
-                                </div>
-                                <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
-                                    <div class="font-bold text-qblue mb-1">Custom Python (AI Engine)</div>
-                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-3">
-                                        <li>Claude vision parses any format</li>
-                                        <li>Fuzzy match vs 5K SKUs</li>
-                                        <li>Confidence scoring</li>
-                                        <li>Full pytest coverage</li>
-                                    </ul>
-                                    <div class="text-[10px] text-qblue font-medium mt-1">* Built in this demo</div>
-                                </div>
-                                <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
-                                    <div class="font-bold text-gray-600 mb-1">Power Platform</div>
-                                    <ul class="text-gray-500 space-y-0.5 list-disc ml-3">
-                                        <li>AI Builder is for structured forms, not 50 PO formats</li>
-                                        <li>Can't fuzzy match against 5K SKUs</li>
-                                        <li class="text-orange-500">Can't use Claude natively</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- UC2 -->
-                        <div class="bg-white rounded-xl border border-green-200 p-4 mb-3">
-                            <div class="flex items-center space-x-2 mb-3">
-                                <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded">UC2</span>
-                                <h4 class="text-xs font-bold text-gray-800">AP Processing</h4>
-                                <span class="text-[11px] text-green-600 font-medium ml-auto">Recommendation: Power Platform + Custom Python</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-3 text-[11px]">
-                                <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
-                                    <div class="font-bold text-gray-600 mb-1">n8n</div>
-                                    <ul class="text-gray-500 space-y-0.5 list-disc ml-3">
-                                        <li>Could work, no advantage</li>
-                                        <li>D365 F&amp;O needs HTTP node</li>
-                                        <li class="text-orange-500">No native D365 F&amp;O connector</li>
-                                    </ul>
-                                </div>
-                                <div class="border-2 border-green-500 bg-green-50 rounded-lg p-3">
-                                    <div class="font-bold text-green-700 mb-1">Power Platform (Core)</div>
-                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-3">
-                                        <li>Native D365 F&amp;O connectors</li>
-                                        <li>Built-in Approvals via Teams</li>
-                                        <li>Audit trail for free</li>
-                                        <li>Finance team already uses it</li>
-                                    </ul>
-                                    <div class="text-[10px] text-green-700 font-medium mt-1">* The right call for UC2</div>
-                                </div>
-                                <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
-                                    <div class="font-bold text-qblue mb-1">Custom Python (Intelligence)</div>
-                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-3">
-                                        <li>Cash app reasoning</li>
-                                        <li>Collections risk scoring</li>
-                                        <li>Claude judgment calls</li>
-                                    </ul>
-                                    <div class="text-[10px] text-qblue font-medium mt-1">* Called from Power Automate</div>
-                                </div>
-                            </div>
-                            <div class="mt-2 text-[10px] text-gray-500 italic">Honest one-liner: "Power Platform for the boring 90% Microsoft already built. Custom Python for the 10% that's actually novel."</div>
-                        </div>
-
-                        <!-- UC3 -->
-                        <div class="bg-white rounded-xl border border-purple-200 p-4">
-                            <div class="flex items-center space-x-2 mb-3">
-                                <span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded">UC3</span>
-                                <h4 class="text-xs font-bold text-gray-800">Product Data Entry</h4>
-                                <span class="text-[11px] text-green-600 font-medium ml-auto">Recommendation: Full Custom Python</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-3 text-[11px]">
-                                <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
-                                    <div class="font-bold text-gray-600 mb-1">n8n</div>
-                                    <ul class="text-gray-500 space-y-0.5 list-disc ml-3">
-                                        <li>AI Agent node available</li>
-                                        <li class="text-orange-500">Constitutional rules need code precision</li>
-                                        <li class="text-orange-500">Hard to test/validate</li>
-                                    </ul>
-                                </div>
-                                <div class="border border-gray-300 bg-gray-50 rounded-lg p-3">
-                                    <div class="font-bold text-gray-600 mb-1">Power Platform</div>
-                                    <ul class="text-gray-500 space-y-0.5 list-disc ml-3">
-                                        <li class="text-orange-500">AI Builder not strong enough</li>
-                                        <li class="text-orange-500">Can't enforce naming rules precisely</li>
-                                        <li class="text-orange-500">Not Claude-native</li>
-                                    </ul>
-                                </div>
-                                <div class="border-2 border-qblue bg-blue-50 rounded-lg p-3">
-                                    <div class="font-bold text-qblue mb-1">Custom Python (Full)</div>
-                                    <ul class="text-gray-600 space-y-0.5 list-disc ml-3">
-                                        <li>Constitutional rules in DB + prompt</li>
-                                        <li>Validation in code (belt + suspenders)</li>
-                                        <li>Consistency check vs catalog</li>
-                                        <li>Full Claude reasoning</li>
-                                    </ul>
-                                    <div class="text-[10px] text-qblue font-medium mt-1">* Built in this demo</div>
-                                </div>
-                            </div>
-                            <div class="mt-2 text-[10px] text-gray-500 italic">Lower volume than UC1/UC2 &mdash; orchestration tax of n8n/Power Platform isn't worth it.</div>
-                        </div>
-                    </section>
-
-                    <!-- 7. OpenRouter Story -->
+                    <!-- 7. OpenRouter -->
                     <section id="arch-openrouter" class="scroll-mt-4">
                         <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
                             <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">7</span>
-                            OpenRouter: LLM Resilience &amp; Model Switching
+                            OpenRouter
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-700 mb-3">Round 3 callback. We talked about LLM routing for failover. This is the implementation.</p>
-                            <div class="grid grid-cols-3 gap-3 text-[11px]">
-                                <div class="bg-blue-50 rounded p-3 border border-blue-200">
-                                    <div class="font-bold text-qblue mb-1">Claude Sonnet 4 (primary)</div>
-                                    <div class="text-gray-600">Best reasoning for fuzzy matching, constitutional framework, complex extraction.</div>
-                                </div>
-                                <div class="bg-green-50 rounded p-3 border border-green-200">
-                                    <div class="font-bold text-green-700 mb-1">GPT-4o (failover)</div>
-                                    <div class="text-gray-600">Auto-routes if Anthropic is down or rate-limited. ~25ms overhead.</div>
-                                </div>
-                                <div class="bg-yellow-50 rounded p-3 border border-yellow-200">
-                                    <div class="font-bold text-yellow-700 mb-1">Gemini 2.5 Flash (failover)</div>
-                                    <div class="text-gray-600">Final fallback. Different provider, different region.</div>
-                                </div>
-                            </div>
-                            <div class="mt-3 bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700">
-                                <strong>Why it matters at Qosina:</strong> Enterprise systems can't go down because a third-party LLM is having a bad day. One API key, one bill, one dashboard. Provider data policies enforced (no training on Qosina data).
-                            </div>
-                            <div class="mt-3 bg-blue-50 border border-blue-200 rounded p-3 text-[11px] text-gray-700">
-                                <strong>Demo move:</strong> Switch the model dropdown in the header from Claude to GPT-4o mid-demo. Process the same PO. Show that the agent, tools, and approval queue work identically. The model is interchangeable &mdash; everything else is the same code.
+                            <p class="text-xs text-gray-700 mb-3">This is the resilience story we talked about last time. The idea is that all LLM calls go through a single gateway that can route to whichever provider is healthy.</p>
+
+                            <ul class="text-xs text-gray-700 space-y-1 mb-3 ml-4 list-disc">
+                                <li><strong>Claude Sonnet 4 (primary)</strong> &mdash; best reasoning for fuzzy matching, the constitutional framework, complex extraction.</li>
+                                <li><strong>GPT-4o (failover)</strong> &mdash; auto-routes if Anthropic is down or rate-limited. Roughly 25 ms of routing overhead.</li>
+                                <li><strong>Gemini 2.5 Flash (failover)</strong> &mdash; final fallback. Different provider, different region, completely separate infrastructure.</li>
+                            </ul>
+
+                            <p class="text-xs text-gray-700 mb-3">The reason this matters at Qosina specifically: enterprise systems can't go down because a third-party LLM provider is having a bad day. With this setup you get one API key, one bill, one dashboard, and provider data policies enforced (no training on Qosina data). If Claude breaks, the agent keeps working. If OpenRouter itself breaks, I can flip a feature flag and call Claude or OpenAI directly.</p>
+
+                            <div class="bg-blue-50 border border-blue-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong>Demo move I'll do during the call:</strong> switch the model dropdown in the header from Claude to GPT-4o mid-demo. Process the same PO. Show that the agent, the tools, and the approval queue work identically. The model is interchangeable &mdash; everything else is the same code. Same prompt, same result. That's the resilience story made concrete.
                             </div>
                         </div>
                     </section>
@@ -974,10 +958,11 @@
                     <section id="arch-production" class="scroll-mt-4">
                         <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
                             <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">8</span>
-                            Production Path: What Changes
+                            Production Path
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-700 mb-3">The architecture stays identical. Only integration points change.</p>
+                            <p class="text-xs text-gray-700 mb-3">The architecture stays identical between this demo and a production deployment at Qosina. Only integration points change. Here's the layer-by-layer:</p>
+
                             <table class="w-full text-xs">
                                 <thead>
                                     <tr class="border-b border-gray-200 text-left text-gray-500">
@@ -1019,7 +1004,7 @@
                                     </tr>
                                     <tr class="border-b border-gray-100">
                                         <td class="py-2 font-semibold">Agent tracing</td>
-                                        <td class="py-2">None (live activity panel)</td>
+                                        <td class="py-2">Live activity panel</td>
                                         <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">LangSmith</code> for full trace replay</td>
                                     </tr>
                                     <tr>
@@ -1029,8 +1014,9 @@
                                     </tr>
                                 </tbody>
                             </table>
+
                             <div class="mt-3 bg-yellow-50 border border-yellow-200 rounded p-3 text-[11px] text-gray-700">
-                                <strong>The point:</strong> The OData-shaped tool responses make the database swap a config change &mdash; URL + auth, not a rewrite. Auth, observability, and audit are integration points, not architectural changes. Everything else stays the same.
+                                The point I want to land: the OData-shaped tool responses make the database swap a config change. The production deployment is URL + auth, not a rewrite. Every integration point in the right column is something you add at the edges &mdash; the agent code, the tools, the approval workflow, the frontend &mdash; all of that stays the same.
                             </div>
                         </div>
                     </section>
@@ -1042,129 +1028,56 @@
                             Observability &amp; Audit
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-700 mb-3">Medical device compliance is non-negotiable. Every AI decision needs a paper trail.</p>
+                            <p class="text-xs text-gray-700 mb-3">Three things matter here for medical device compliance. I want to be clear about all of them because for a regulated industry this isn't optional.</p>
 
-                            <div class="mb-4">
-                                <h4 class="font-bold text-gray-700 text-[11px] mb-2">User Accounts (production)</h4>
-                                <div class="bg-gray-50 rounded p-3 text-[11px] text-gray-700">
-                                    <p class="mb-2">Don't roll your own. Integrate with <strong>Entra ID</strong> via OAuth/OIDC. Every Qosina employee already has an account. JWT validated by FastAPI middleware, user attached to each request. Authorization comes from <strong>AD groups</strong> &mdash; "AP_Approver" can approve invoice matches, "CX_Manager" can approve sales orders, etc.</p>
-                                    <p class="text-gray-600 italic">Demo has no auth. In production this is a Phase 1 integration.</p>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">User accounts in production</div>
+                                    <div class="bg-gray-50 rounded p-3 text-[11px] text-gray-700">
+                                        I wouldn't roll my own user system. Qosina is on Azure, every employee already has an account in Entra ID (the new name for Azure AD). I'd integrate with that via OAuth. The user logs in through Microsoft, comes back with a JWT, FastAPI middleware validates it and attaches the user to each request. Authorization comes from <strong>AD groups</strong> &mdash; like "AP_Approver", "CX_Manager", "Product_Dev_Lead". Your IT team already manages who's in what group. I'm just consuming that. Don't rebuild what you own.
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="mb-4">
-                                <h4 class="font-bold text-gray-700 text-[11px] mb-2">Troubleshooting FastAPI in Production</h4>
-                                <div class="bg-gray-50 rounded p-3 text-[11px] text-gray-700 space-y-1">
-                                    <div>&bull; <strong>Structured JSON logging</strong> &rarr; Azure Log Analytics (Qosina is on Azure)</div>
-                                    <div>&bull; <strong>Sentry</strong> for error tracking &mdash; every uncaught exception captured with context</div>
-                                    <div>&bull; <strong>Application Insights</strong> for APM &mdash; latency, error rates, dependency tracing</div>
-                                    <div>&bull; <strong>Health endpoint</strong> <code>/health</code> for Railway/Azure liveness probes</div>
-                                    <div>&bull; <strong>LangSmith</strong> for AI traces &mdash; the most important one (see below)</div>
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">Troubleshooting FastAPI in production</div>
+                                    <div class="bg-gray-50 rounded p-3 text-[11px] text-gray-700">
+                                        <p class="mb-2">FastAPI is bare-bones compared to Django, so observability is something you add on purpose. For this demo I have basic exception handling and Railway captures the container logs. In production at Qosina I'd add:</p>
+                                        <ul class="list-disc ml-5 space-y-0.5">
+                                            <li><strong>Structured JSON logging</strong> flowing into Azure Log Analytics</li>
+                                            <li><strong>Sentry</strong> or <strong>Application Insights</strong> for error tracking with full stack traces and request context</li>
+                                            <li><strong>Health endpoint</strong> at <code>/health</code> for liveness probes</li>
+                                            <li><strong>Application Insights APM</strong> for latency, error rates, dependency tracing (you're already on Azure, may as well use it)</li>
+                                            <li><strong>LangSmith</strong> for AI traces &mdash; this is the most important one, see below</li>
+                                        </ul>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="mb-4">
-                                <h4 class="font-bold text-gray-700 text-[11px] mb-2">Auditing the AI Agent</h4>
-                                <div class="bg-gray-50 rounded p-3 text-[11px] text-gray-700">
-                                    <p class="mb-2">For regulated industries, every conversation needs to be replayable. The architecture:</p>
-                                    <ol class="list-decimal ml-5 space-y-1 mb-2">
-                                        <li><strong>Persist every conversation</strong> to a <code>conversations</code> + <code>conversation_messages</code> table</li>
-                                        <li><strong>Link approvals to conversations</strong> via FK on <code>approval_queue</code></li>
-                                        <li><strong>Store source documents</strong> in Azure Blob with the approval record</li>
-                                        <li><strong>Immutable audit log</strong> (write-once or append-only blob storage)</li>
-                                        <li><strong>7+ year retention</strong> for FDA medical device records</li>
-                                    </ol>
-                                    <p class="mb-2"><strong>LangSmith does most of the AI-side tracing for free.</strong> Every agent run, every LLM call, every tool input/output captured in a searchable web UI. When the agent does something unexpected, you replay the trace step by step.</p>
-                                    <p class="text-gray-600 italic">Six months later, an auditor pulls approval #5234 and sees: original PO &rarr; full conversation &rarr; tool calls &rarr; AI reasoning &rarr; who approved &rarr; final D365 sales order. End to end traceability.</p>
-                                </div>
-                            </div>
-
-                            <div class="bg-blue-50 border border-blue-200 rounded p-3 text-[11px] text-gray-700">
-                                <strong>The honest one-liner:</strong> "FastAPI is bare bones compared to Django, so observability is something you add intentionally. For this demo I have basic exception handling and Railway captures container logs. In production at Qosina I'd add Sentry, LangSmith, and Application Insights since you're already on Azure."
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- 10. Honest Gaps -->
-                    <section id="arch-gaps" class="scroll-mt-4">
-                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
-                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">10</span>
-                            Honest Gaps: What This Demo Is NOT
-                        </h3>
-                        <div class="bg-white rounded-xl border-2 border-orange-300 p-5">
-                            <p class="text-xs text-gray-700 mb-3">Tom said: <em>"We value honest assessment over polished sales pitches."</em> Here's what's NOT in this demo. Acknowledging this preempts every gotcha question.</p>
-
-                            <div class="space-y-2 text-xs">
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No real D365 connection.</strong> All data is seeded SQLite. Tools return OData-shaped JSON so the production swap is a URL + auth change, not a rewrite.
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">Auditing the AI agent &mdash; the FDA story</div>
+                                    <div class="bg-gray-50 rounded p-3 text-[11px] text-gray-700">
+                                        <p class="mb-2">For a regulated industry every conversation needs to be replayable. Six months later, an auditor pulls approval #5234 and needs to see the original PO, the full conversation, every tool call, the AI's reasoning, who approved it, and the final D365 sales order. End to end traceability. Here's how I'd build that:</p>
+                                        <ol class="list-decimal ml-5 space-y-1 mb-2">
+                                            <li>Persist every conversation to a <code>conversations</code> + <code>conversation_messages</code> table</li>
+                                            <li>Foreign key approvals back to the conversation that produced them</li>
+                                            <li>Store source documents in Azure Blob Storage with retention policies (7+ years for FDA medical device records)</li>
+                                            <li>Append-only or write-once storage for the audit log (tamper-evident)</li>
+                                            <li>LangSmith captures the agent side automatically &mdash; every LLM call, every tool input/output, searchable web UI, replay step by step</li>
+                                        </ol>
+                                        <p class="italic text-gray-600">The honest framing: most of this is integration work, not algorithm work. The architecture supports adding it. It's Phase 1 alongside building UC1.</p>
                                     </div>
                                 </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No user accounts.</strong> Everything posts as "Demo User." Production uses Entra ID OAuth with AD groups for authorization.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No persisted conversations.</strong> Chat history is in-memory and lost on restart. Production needs persisted SQL + FK to approvals + Blob storage for source docs.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No OCR product.</strong> No Azure Form Recognizer, no Tesseract, no Document Intelligence. Claude Vision reads PDFs and images natively. PyMuPDF just renders PDF pages to PNG before sending.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No specific time-savings claims.</strong> I won't say "10 minutes &rarr; 30 seconds" without baselining against Qosina's actual current process. That's a Phase 0 discovery question.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No "FDA traceability built-in" or "healthcare-grade security built-in."</strong> Marketing fluff. These are features you implement, not freebies.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">Sample documents are representative, not Qosina's actual format mix.</strong> Phase 0 = audit 50+ real POs to establish format distribution and accuracy baseline.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">Constitutional framework rules are representative, not Qosina's actual rules.</strong> The 16 seeded rules are placeholders. Phase 0 = sit with Product Development team to codify their actual conventions.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No D365 F&amp;O write integration.</strong> "Approve" in the demo just changes a status in SQLite. Production write would POST to <code class="text-[10px]">/data/SalesOrderHeaders</code> and <code class="text-[10px]">/data/SalesOrderLines</code> via OData with proper Azure AD auth.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 bg-green-50 border border-green-200 rounded p-3 text-[11px] text-gray-700">
-                                <strong class="text-gray-800">What I AM saying:</strong> The architecture supports adding all of these. They're integration points, not rewrites. Phase 1 work, on the job.
                             </div>
                         </div>
                     </section>
 
-                    <!-- 11. Phased Rollout Plan -->
+                    <!-- 10. Phased Rollout -->
                     <section id="arch-rollout" class="scroll-mt-4">
                         <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
-                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">11</span>
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">10</span>
                             Phased Rollout Plan
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-700 mb-4">Build in this order. Each phase compounds &mdash; Phase 1 builds the foundation that Phase 2 and 3 inherit. Sequence is by complexity (simplest first) and dollar impact (highest-value second).</p>
+                            <p class="text-xs text-gray-700 mb-4">Build in this order. Each phase compounds &mdash; Phase 1 builds the foundation that Phase 2 and 3 inherit. The sequence is by complexity (simplest first) and dollar impact (highest-value second).</p>
 
                             <!-- Phase 1 -->
                             <div class="border-2 border-blue-300 bg-blue-50/30 rounded-lg p-4 mb-3">
@@ -1173,33 +1086,11 @@
                                     <h4 class="text-xs font-bold text-gray-800">UC1 &mdash; Sales Order Entry</h4>
                                     <span class="text-[11px] text-gray-500 ml-auto">Foundation phase</span>
                                 </div>
-
                                 <div class="text-[11px] text-gray-700 space-y-2">
-                                    <div>
-                                        <strong class="text-gray-800">Why this first:</strong> One approval type, one team (CX), lowest stakes. Standard product orders only (Tom said this) &mdash; skip medical device orders for Phase 1. If something goes wrong, the reviewer rejects the approval and the order gets processed manually like it does today.
-                                    </div>
-
-                                    <div>
-                                        <strong class="text-gray-800">What gets built:</strong>
-                                        <ul class="list-disc ml-5 mt-1 space-y-0.5">
-                                            <li>The UC1 flow productionized &mdash; D365 OData reads + writes, hybrid n8n trigger + Python AI service</li>
-                                            <li><strong>All foundation pieces every future UC inherits:</strong></li>
-                                            <li class="ml-3">Entra ID OAuth + AD groups for authorization</li>
-                                            <li class="ml-3">Application Insights + structured JSON logging</li>
-                                            <li class="ml-3">LangSmith for full agent tracing</li>
-                                            <li class="ml-3">Persisted conversations with FK to approvals (audit trail)</li>
-                                            <li class="ml-3">Azure Blob Storage for source documents with retention policies</li>
-                                            <li class="ml-3">Sentry for error tracking, health checks, alerting</li>
-                                        </ul>
-                                    </div>
-
-                                    <div>
-                                        <strong class="text-gray-800">Discovery work (Phase 0 sub-phase):</strong> PO format audit with the CX team. Look at 50+ real POs, establish format distribution, baseline current process time. Map the actual D365 sales order fields they use. Identify top 10 customers and their actual PO formats.
-                                    </div>
-
-                                    <div>
-                                        <strong class="text-gray-800">Success metrics:</strong> 80% of standard POs auto-extracted with high confidence. Approval-to-D365 round trip under 60 seconds. Zero false approvals (reviewer always catches AI errors). Time savings baselined and measured.
-                                    </div>
+                                    <p><strong class="text-gray-800">Why this first:</strong> One approval type, one team (CX), lowest stakes. Standard product orders only &mdash; skip medical device orders for Phase 1 like Tom suggested. If something goes wrong, the reviewer rejects the approval and the order gets processed manually like it does today.</p>
+                                    <p><strong class="text-gray-800">What gets built:</strong> The UC1 flow productionized &mdash; D365 OData reads and writes, hybrid n8n trigger plus the Python AI service. Plus all the foundation pieces every future use case will inherit: Entra ID OAuth, AD groups for authorization, Application Insights logging, LangSmith agent tracing, persisted conversations with audit FK, Azure Blob Storage for source documents, Sentry, health checks, alerting.</p>
+                                    <p><strong class="text-gray-800">Discovery work first:</strong> Spend a couple weeks doing a PO format audit with the CX team. Look at 50+ real POs, establish format distribution, baseline current process time. Map the actual D365 sales order fields they use in production. Identify the top 10 customers and what their POs actually look like.</p>
+                                    <p><strong class="text-gray-800">Success metrics:</strong> 80% of standard POs auto-extracted with high confidence. Approval-to-D365 round trip under 60 seconds. Zero false approvals (the reviewer always catches AI errors). Time savings baselined and measured against the current process.</p>
                                 </div>
                             </div>
 
@@ -1210,32 +1101,12 @@
                                     <h4 class="text-xs font-bold text-gray-800">UC2 &mdash; AP Processing</h4>
                                     <span class="text-[11px] text-gray-500 ml-auto">Highest dollar impact</span>
                                 </div>
-
                                 <div class="text-[11px] text-gray-700 space-y-2">
-                                    <div>
-                                        <strong class="text-gray-800">Why this second:</strong> Tom's brief literally called this "waste of human effort." It's where Qosina is losing the most money &mdash; missed price discrepancies, mystery payments, overdue accounts not being chased optimally. Foundation pieces from Phase 1 are already in place.
-                                    </div>
-
-                                    <div>
-                                        <strong class="text-gray-800">What gets built (sub-phases):</strong>
-                                        <ul class="list-disc ml-5 mt-1 space-y-0.5">
-                                            <li><strong>2A: Three-way matching</strong> &mdash; most deterministic, easiest to validate. Build first.</li>
-                                            <li><strong>2B: Cash application</strong> &mdash; needs more AI judgment, builds on the 2A approval pattern.</li>
-                                            <li><strong>2C: Collections prioritization</strong> &mdash; pure intelligence layer, lowest write risk.</li>
-                                        </ul>
-                                    </div>
-
-                                    <div>
-                                        <strong class="text-gray-800">Architecture shift:</strong> This is where the recommendation changes. UC1 was Hybrid (n8n + Python). UC2 is <strong>Power Platform + Custom Python</strong>. Power Automate handles the D365 reads/writes via native connectors and the Teams approval routing. The Python service from Phase 1 gets called from Power Automate via HTTP for the AI judgment work &mdash; cash app reasoning and collections scoring. <em>Same Python service, just adding new tools.</em>
-                                    </div>
-
-                                    <div>
-                                        <strong class="text-gray-800">Discovery work (Phase 0 sub-phase):</strong> Sit with the Finance team. AP has tribal knowledge &mdash; which vendors are reliable, which customers short-pay, what tolerance thresholds make sense in practice. Map existing Celigo flows so we don't rebuild them. Get tolerance threshold preferences (the $0.05 number is mine, not theirs). Understand approval authority for what dollar amounts (drives AD group setup).
-                                    </div>
-
-                                    <div>
-                                        <strong class="text-gray-800">Success metrics:</strong> 60-70% of vendor invoices auto-recommend "fast-track approval" (perfect or within tolerance). Cash application coverage rate. Collections priority list adopted by AP team in practice. <strong>DSO improvement</strong> (Days Sales Outstanding) &mdash; the executive metric.
-                                    </div>
+                                    <p><strong class="text-gray-800">Why this second:</strong> The brief literally called this "waste of human effort". This is where Qosina is losing the most money &mdash; missed price discrepancies, mystery payments, overdue accounts not being chased optimally. By the time we get here all the foundation pieces from Phase 1 are already in place.</p>
+                                    <p><strong class="text-gray-800">Sub-phased delivery:</strong> Three-way matching first because it's the most deterministic and easiest to validate. Cash application second, builds on the same approval pattern. Collections prioritization third, lowest write risk because it just produces a ranked list.</p>
+                                    <p><strong class="text-gray-800">Architecture shift:</strong> This is the use case where I switch the recommendation. UC1 was hybrid n8n + Python. UC2 is Power Platform plus custom Python. Power Automate handles the D365 reads and writes via native connectors and the Teams approval routing. The same Python service from Phase 1 gets called from Power Automate via HTTP for the AI judgment work. New tools, same service.</p>
+                                    <p><strong class="text-gray-800">Discovery work first:</strong> Sit with the Finance team for a couple weeks. AP has tribal knowledge &mdash; which vendors are reliable, which customers are notorious for short-pays, what tolerance thresholds make sense in practice. Map existing Celigo flows so we don't rebuild what's already working. Get the team's actual tolerance threshold preferences. Understand who has approval authority for what dollar amounts so we set up AD groups correctly.</p>
+                                    <p><strong class="text-gray-800">Success metrics:</strong> 60-70% of vendor invoices auto-recommend "fast-track approval". Cash application coverage rate. Collections priority list actually used by the AP team. <strong>DSO improvement</strong> &mdash; the executive metric.</p>
                                 </div>
                             </div>
 
@@ -1246,41 +1117,99 @@
                                     <h4 class="text-xs font-bold text-gray-800">UC3 &mdash; Product Data Entry</h4>
                                     <span class="text-[11px] text-gray-500 ml-auto">Most reasoning-heavy</span>
                                 </div>
-
                                 <div class="text-[11px] text-gray-700 space-y-2">
-                                    <div>
-                                        <strong class="text-gray-800">Why this last:</strong> Lowest volume of work (new SKUs added periodically, not hundreds per day). Most reasoning-intensive &mdash; you want the foundation rock-solid before building it. Needs the most pre-work because the constitutional framework is currently tribal knowledge.
-                                    </div>
-
-                                    <div>
-                                        <strong class="text-gray-800">What gets built:</strong> The UC3 flow productionized as <strong>Full Custom Python</strong>. Same service from Phases 1 and 2, just adding the UC3 agent and tools. Plus an admin UI for the Product Dev team to edit constitutional rules themselves (rules live in a database table, not code).
-                                    </div>
-
-                                    <div>
-                                        <strong class="text-gray-800">Discovery work (Phase 0 sub-phase, longest):</strong> Sit with Product Development for several weeks. Audit 30-50 existing product entries to extract the implicit naming conventions. Build the constitutional framework as a table the team can edit themselves. Understand the landed cost calculation downstream (Tom mentioned this in the brief). Map technical drawings &mdash; do these need vision AI? Vendor-specific?
-                                    </div>
-
-                                    <div>
-                                        <strong class="text-gray-800">Success metrics:</strong> Field-level accuracy per category (start with stopcocks, work outward). Time savings per new SKU. Consistency check pass rate against existing 8K SKUs. Product Dev team self-service rate on new naming rules.
-                                    </div>
+                                    <p><strong class="text-gray-800">Why this last:</strong> Lowest volume of work (new SKUs added periodically, not hundreds per day). Most reasoning-intensive &mdash; you want the foundation rock-solid before building it. And it needs the most pre-work because the constitutional framework is currently tribal knowledge that nobody has codified.</p>
+                                    <p><strong class="text-gray-800">What gets built:</strong> The UC3 flow productionized as full custom Python. Same service from Phases 1 and 2, just adding the UC3 agent and tools. Plus an admin UI for the Product Dev team to edit the constitutional rules themselves &mdash; rules live in a database table, not code, so no developer needed for new rules.</p>
+                                    <p><strong class="text-gray-800">Discovery work first (longest of the three):</strong> Sit with Product Development for several weeks. Audit 30-50 existing product entries to extract the implicit naming conventions. Build the constitutional framework as a database table they can edit themselves. Understand the landed cost calculation downstream &mdash; the brief mentioned this connects to it. Map technical drawings &mdash; do those need vision AI? Are they vendor-specific?</p>
+                                    <p><strong class="text-gray-800">Success metrics:</strong> Field-level accuracy per category (start with stopcocks, work outward). Time savings per new SKU. Consistency check pass rate against existing 8K SKUs. Product Dev team self-service rate on new naming rules &mdash; do they actually maintain the framework themselves or do they keep coming back to me?</p>
                                 </div>
                             </div>
 
-                            <!-- Discovery Work Callout -->
-                            <div class="bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
+                            <!-- Discovery callout -->
+                            <div class="bg-orange-50 border-2 border-orange-300 rounded-lg p-4 mb-3">
                                 <div class="flex items-start space-x-2">
                                     <svg class="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                                     <div class="text-[11px] text-gray-700">
                                         <div class="font-bold text-orange-800 text-xs mb-1">Discovery work is non-negotiable</div>
-                                        <p class="mb-2">Every phase starts with a Phase 0 sub-phase: <strong>team interviews, process shadowing, real document audits.</strong> AI tools that ignore the actual workflow get rejected by the team. The Phase 0 work is not optional &mdash; it's the most important input.</p>
-                                        <p class="italic text-gray-600">"I'd interview each team individually, sit with their process, understand it like the back of my hand, and then design the solution for them &mdash; not the other way around."</p>
+                                        <p>Every phase starts with a Phase 0 sub-phase: team interviews, process shadowing, real document audits. The way I'd put it &mdash; I'd interview each team individually, sit with their process, understand it like the back of my hand, and then design the solution for them, not the other way around. AI tools that ignore the actual workflow get rejected by the team. The Phase 0 work is the most important input, not a sidebar.</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Cross-cutting story -->
-                            <div class="mt-4 bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700">
+                            <div class="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700">
                                 <strong class="text-gray-800">The compounding story:</strong> Phase 1 builds the foundation (auth, observability, audit, deployment) with the simplest use case as the vehicle. Phase 2 adds the highest-value AI work to that foundation. Phase 3 adds the most reasoning-heavy work to a now-mature platform. By the end, Qosina has three production AI workflows in active use, one shared platform, and a pattern that can extend to other use cases (warehouse, customer support, QA) without rebuilding.
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 11. Honest Gaps -->
+                    <section id="arch-gaps" class="scroll-mt-4">
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">11</span>
+                            Honest Gaps
+                        </h3>
+                        <div class="bg-white rounded-xl border-2 border-orange-300 p-5">
+                            <p class="text-xs text-gray-700 mb-3">Tom said in the brief: "we value honest assessment over polished sales pitches." So here's what's NOT in this demo, explicitly. I'd rather acknowledge these upfront than have them caught in a gotcha question.</p>
+
+                            <div class="space-y-2 text-xs">
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No real D365 connection.</strong> All data is seeded SQLite. The tools return OData-shaped JSON so the production swap is a URL + auth change, not a rewrite, but the actual D365 integration is Phase 1 work.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No user accounts.</strong> Everything posts as "Demo User". Production uses Entra ID OAuth with AD groups for authorization. Phase 1 integration.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No persisted conversations.</strong> Chat history is in-memory and lost on restart. Production needs persisted SQL with FK to approvals and Azure Blob Storage for source documents. The audit trail story is the architecture, not what's actually wired up today.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No OCR product.</strong> No Azure Form Recognizer, no Tesseract, no Document Intelligence service. Claude Vision reads PDFs and images natively. PyMuPDF just renders PDF pages to PNG before sending to Claude. This is intentional &mdash; Claude is more flexible than any of those tools for diverse document formats &mdash; but I want to be explicit about it because everyone assumes you need OCR for document parsing.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No specific time-savings claims.</strong> I'm not going to say "this saves your team 10 hours a week" without baselining against your actual current process. That's a Phase 0 discovery question for each team.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No "FDA traceability built-in" or "healthcare-grade security built-in".</strong> Marketing fluff. These are features you implement, not free architectural defaults. The HITL pattern and the audit trail story are how I'd build toward FDA compliance, but neither is "free."
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">Sample documents are representative, not Qosina's actual format mix.</strong> I generated the PDFs and the handwritten image to cover a range of scenarios. The real format distribution is something you only learn from auditing 50+ actual POs in Phase 0.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">Constitutional framework rules are representative, not Qosina's actual rules.</strong> The 16 seeded rules are placeholders. The real ones are tribal knowledge in your Product Development team and codifying them is Phase 0 work for UC3.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">No D365 F&amp;O write integration.</strong> "Approve" in this demo just changes a status in SQLite. A production write would POST to <code class="text-[10px]">/data/SalesOrderHeaders</code> and <code class="text-[10px]">/data/SalesOrderLines</code> via OData with proper Azure AD auth.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 bg-green-50 border border-green-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong class="text-gray-800">What I AM saying:</strong> The architecture supports adding all of these. They're integration points, not rewrites. Phase 1 work, on the job. The reason I built it this way is that I wanted the demo to land the hardest part &mdash; the AI reasoning, the tool architecture, the HITL pattern, the OData mock layer &mdash; and let the boring integration work be exactly what it is: boring integration work that takes two weeks per piece, not architectural risk.
                             </div>
                         </div>
                     </section>
