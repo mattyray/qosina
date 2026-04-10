@@ -491,7 +491,7 @@
                             Stack at a Glance
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-700 mb-4">If I had to summarize what this is in one breath: a Python web app that wraps a LangGraph AI agent with a SQLite database mocked to look like D365. But the four pieces worth flagging are these:</p>
+                            <p class="text-xs text-gray-700 mb-4">I created a Python web app that wraps a LangGraph AI agent with a SQLite database mocked to look like D365 Finance &amp; Operations. Here are the key technology choices and why I made them:</p>
 
                             <div class="space-y-3 mb-4">
                                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -512,8 +512,9 @@
                                 </div>
                             </div>
 
-                            <div class="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-600">
-                                <strong class="text-gray-700">The boring plumbing:</strong> FastAPI backend, vanilla JS frontend with Tailwind CDN, Server-Sent Events for streaming, Docker on Railway with auto-deploy from GitHub. ~7,800 lines of code total, 64 unit tests across 4 test files.
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                <div class="font-bold text-gray-700 text-xs mb-1">Application Infrastructure</div>
+                                <div class="text-[11px] text-gray-700">FastAPI backend (Python 3.12), vanilla JS frontend with Tailwind CDN, Server-Sent Events for real-time streaming, Docker on Railway with auto-deploy from GitHub. ~7,800 lines of code total, 64 unit tests across 4 test files.</div>
                             </div>
                         </div>
                     </section>
@@ -525,7 +526,7 @@
                             Human in the Loop
                         </h3>
                         <div class="bg-white rounded-xl border border-yellow-300 p-5">
-                            <p class="text-xs text-gray-700 mb-3">We talked about this in Round 3, so I'll keep it brief. The point I want to land:</p>
+                            <p class="text-xs text-gray-700 mb-3">We briefly discussed this in Round 3, but in summary:</p>
 
                             <ul class="text-xs text-gray-700 space-y-2 mb-3 ml-4 list-disc">
                                 <li>The agent has <strong>zero write tools</strong> to your system of record. It can read everything &mdash; products, inventory, customers, orders, vendor invoices, payments. It can run matches, score risk, validate pricing. But it cannot post to D365, modify a customer, apply a payment, or create an item master entry.</li>
@@ -535,7 +536,7 @@
                             </ul>
 
                             <div class="bg-yellow-50 border border-yellow-200 rounded p-3 text-[11px] text-gray-700">
-                                The way I'd describe the philosophy: I'm not trying to replace your CX or Finance team. I'm trying to make the boring extraction work disappear so they can focus on the judgment calls. Every approval card says "here's what I think &mdash; what do you think?", not "here's what I did, hope that was OK."
+                                As we discussed, the goal isn't to replace anyone &mdash; it's to improve their workflow so they have time for higher-value work like growth, analysis, and vendor relationships. The AI handles the repetitive extraction and matching; the team makes the decisions that matter.
                             </div>
                         </div>
                     </section>
@@ -1136,7 +1137,6 @@
                                     <p><strong class="text-gray-800">Why this first:</strong> One approval type, one team (CX), lowest stakes. Standard product orders only &mdash; skip medical device orders for Phase 1 like Tom suggested. If something goes wrong, the reviewer rejects the approval and the order gets processed manually like it does today.</p>
                                     <p><strong class="text-gray-800">What gets built:</strong> The UC1 flow productionized &mdash; D365 OData reads and writes, hybrid n8n trigger plus the Python AI service. Plus all the foundation pieces every future use case will inherit: Entra ID OAuth, AD groups for authorization, Application Insights logging, LangSmith agent tracing, persisted conversations with audit FK, Azure Blob Storage for source documents, Sentry, health checks, alerting.</p>
                                     <p><strong class="text-gray-800">Discovery work first:</strong> Spend a couple weeks doing a PO format audit with the CX team. Look at 50+ real POs, establish format distribution, baseline current process time. Map the actual D365 sales order fields they use in production. Identify the top 10 customers and what their POs actually look like.</p>
-                                    <p><strong class="text-gray-800">Success metrics:</strong> 80% of standard POs auto-extracted with high confidence. Approval-to-D365 round trip under 60 seconds. Zero false approvals (the reviewer always catches AI errors). Time savings baselined and measured against the current process.</p>
                                 </div>
                             </div>
 
@@ -1152,7 +1152,6 @@
                                     <p><strong class="text-gray-800">Sub-phased delivery:</strong> Three-way matching first because it's the most deterministic and easiest to validate. Cash application second, builds on the same approval pattern. Collections prioritization third, lowest write risk because it just produces a ranked list.</p>
                                     <p><strong class="text-gray-800">Architecture shift:</strong> This is the use case where I switch the recommendation. UC1 was hybrid n8n + Python. UC2 is Power Platform plus custom Python. Power Automate handles the D365 reads and writes via native connectors and the Teams approval routing. The same Python service from Phase 1 gets called from Power Automate via HTTP for the AI judgment work. New tools, same service.</p>
                                     <p><strong class="text-gray-800">Discovery work first:</strong> Sit with the Finance team for a couple weeks. AP has tribal knowledge &mdash; which vendors are reliable, which customers are notorious for short-pays, what tolerance thresholds make sense in practice. Map existing Celigo flows so we don't rebuild what's already working. Get the team's actual tolerance threshold preferences. Understand who has approval authority for what dollar amounts so we set up AD groups correctly.</p>
-                                    <p><strong class="text-gray-800">Success metrics:</strong> 60-70% of vendor invoices auto-recommend "fast-track approval". Cash application coverage rate. Collections priority list actually used by the AP team. <strong>DSO improvement</strong> &mdash; the executive metric.</p>
                                 </div>
                             </div>
 
@@ -1167,23 +1166,15 @@
                                     <p><strong class="text-gray-800">Why this last:</strong> Lowest volume of work (new SKUs added periodically, not hundreds per day). Most reasoning-intensive &mdash; you want the foundation rock-solid before building it. And it needs the most pre-work because the constitutional framework is currently tribal knowledge that nobody has codified.</p>
                                     <p><strong class="text-gray-800">What gets built:</strong> The UC3 flow productionized as full custom Python. Same service from Phases 1 and 2, just adding the UC3 agent and tools. Plus an admin UI for the Product Dev team to edit the constitutional rules themselves &mdash; rules live in a database table, not code, so no developer needed for new rules.</p>
                                     <p><strong class="text-gray-800">Discovery work first (longest of the three):</strong> Sit with Product Development for several weeks. Audit 30-50 existing product entries to extract the implicit naming conventions. Build the constitutional framework as a database table they can edit themselves. Understand the landed cost calculation downstream &mdash; the brief mentioned this connects to it. Map technical drawings &mdash; do those need vision AI? Are they vendor-specific?</p>
-                                    <p><strong class="text-gray-800">Success metrics:</strong> Field-level accuracy per category (start with stopcocks, work outward). Time savings per new SKU. Consistency check pass rate against existing 8K SKUs. Product Dev team self-service rate on new naming rules &mdash; do they actually maintain the framework themselves or do they keep coming back to me?</p>
                                 </div>
                             </div>
 
-                            <!-- Discovery callout -->
-                            <div class="bg-orange-50 border-2 border-orange-300 rounded-lg p-4 mb-3">
-                                <div class="flex items-start space-x-2">
-                                    <svg class="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                    <div class="text-[11px] text-gray-700">
-                                        <div class="font-bold text-orange-800 text-xs mb-1">Discovery work is non-negotiable</div>
-                                        <p>Every phase starts with a Phase 0 sub-phase: team interviews, process shadowing, real document audits. The way I'd put it &mdash; I'd interview each team individually, sit with their process, understand it like the back of my hand, and then design the solution for them, not the other way around. AI tools that ignore the actual workflow get rejected by the team. The Phase 0 work is the most important input, not a sidebar.</p>
-                                    </div>
-                                </div>
+                            <div class="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700 mb-3">
+                                <strong class="text-gray-800">Every phase starts with discovery.</strong> Team interviews, process shadowing, real document audits. Each workflow needs to be fully understood before anything gets built. The discovery work is the most important input.
                             </div>
 
                             <div class="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700">
-                                <strong class="text-gray-800">The compounding story:</strong> Phase 1 builds the foundation (auth, observability, audit, deployment) with the simplest use case as the vehicle. Phase 2 adds the highest-value AI work to that foundation. Phase 3 adds the most reasoning-heavy work to a now-mature platform. By the end, Qosina has three production AI workflows in active use, one shared platform, and a pattern that can extend to other use cases (warehouse, customer support, QA) without rebuilding.
+                                <strong class="text-gray-800">The compounding story:</strong> Phase 1 builds the foundation (auth, observability, audit, deployment) with the simplest use case. Phase 2 adds the highest-value AI work to that foundation. Phase 3 adds the most reasoning-heavy work to a mature platform. By the end: three production workflows, one shared platform, and a pattern that extends to future use cases without rebuilding.
                             </div>
                         </div>
                     </section>
@@ -1219,12 +1210,6 @@
                                 <div class="flex items-start space-x-2">
                                     <span class="text-orange-500 font-bold">&times;</span>
                                     <div>
-                                        <strong class="text-gray-800">No OCR product.</strong> No Azure Form Recognizer, no Tesseract, no Document Intelligence service. Claude Vision reads PDFs and images natively. PyMuPDF just renders PDF pages to PNG before sending to Claude. This is intentional &mdash; Claude is more flexible than any of those tools for diverse document formats &mdash; but I want to be explicit about it because everyone assumes you need OCR for document parsing.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
                                         <strong class="text-gray-800">No specific time-savings claims.</strong> I'm not going to say "this saves your team 10 hours a week" without baselining against your actual current process. That's a Phase 0 discovery question for each team.
                                     </div>
                                 </div>
@@ -1250,6 +1235,12 @@
                                     <span class="text-orange-500 font-bold">&times;</span>
                                     <div>
                                         <strong class="text-gray-800">No D365 F&amp;O write integration.</strong> "Approve" in this demo just changes a status in SQLite. A production write would POST to <code class="text-[10px]">/data/SalesOrderHeaders</code> and <code class="text-[10px]">/data/SalesOrderLines</code> via OData with proper Azure AD auth.
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-orange-500 font-bold">&times;</span>
+                                    <div>
+                                        <strong class="text-gray-800">I need to understand Qosina's actual system landscape.</strong> D365 F&amp;O, D365 CE, Celigo iPaaS, StockIQ, the Shopify migration &mdash; every technology choice I've proposed needs to be validated against how these systems are actually configured and connected at Qosina. I don't know which Celigo flows exist today, how D365 F&amp;O entities are customized, what the approval authority structure looks like, or how CE is being used for customer management. This is Phase 0 work that requires Tom's and the team's expertise. The architecture is designed to plug into these systems, but the specific wiring is a conversation, not a guess.
                                     </div>
                                 </div>
                             </div>

@@ -20,7 +20,7 @@ Printable backup of the Architecture tab. Same content, same order, same voice. 
 
 ## 1. Stack at a Glance
 
-If I had to summarize what this is in one breath: a Python web app that wraps a LangGraph AI agent with a SQLite database mocked to look like D365. But the four pieces worth flagging are these:
+I created a Python web app that wraps a LangGraph AI agent with a SQLite database mocked to look like D365 Finance & Operations. Here are the key technology choices and why I made them:
 
 **LangGraph ReAct Agents** — The framework that lets Claude reason through a problem with tools. Reason → Act (call a tool) → Observe the result → repeat. Same agent code regardless of which LLM is behind it.
 
@@ -30,20 +30,20 @@ If I had to summarize what this is in one breath: a Python web app that wraps a 
 
 **SQLite with OData-Shaped Responses** — All 17 tables return data formatted to look exactly like D365 F&O OData responses. Same field names, same JSON shape, same `@odata.context` headers. The production swap from SQLite to D365 is a URL + auth change, not a rewrite.
 
-**The boring plumbing:** FastAPI backend, vanilla JS frontend with Tailwind CDN, Server-Sent Events for streaming, Docker on Railway with auto-deploy from GitHub. ~7,800 lines of code total, 64 unit tests across 4 test files.
+**Application Infrastructure** — FastAPI backend (Python 3.12), vanilla JS frontend with Tailwind CDN, Server-Sent Events for real-time streaming, Docker on Railway with auto-deploy from GitHub. ~7,800 lines of code total, 64 unit tests across 4 test files.
 
 ---
 
 ## 2. Human in the Loop
 
-We talked about this in Round 3, so I'll keep it brief. The point I want to land:
+We briefly discussed this in Round 3, but in summary:
 
 - The agent has **zero write tools** to your system of record. It can read everything — products, inventory, customers, orders, vendor invoices, payments. It can run matches, score risk, validate pricing. But it cannot post to D365, modify a customer, apply a payment, or create an item master entry.
 - The only write tool is `create_approval`, which adds a recommendation to a queue. That's it.
 - I made it impossible in code, not policy. Even if someone tried to bypass it later, there's literally no tool for the agent to call.
 - Every approval is reviewed in a side-by-side panel that shows the original document, the AI's extracted summary, and editable form fields with confidence colors. The reviewer can change anything before clicking Approve.
 
-The way I'd describe the philosophy: I'm not trying to replace your CX or Finance team. I'm trying to make the boring extraction work disappear so they can focus on the judgment calls. Every approval card says "here's what I think — what do you think?", not "here's what I did, hope that was OK."
+As we discussed, the goal isn't to replace anyone — it's to improve their workflow so they have time for higher-value work like growth, analysis, and vendor relationships. The AI handles the repetitive extraction and matching; the team makes the decisions that matter.
 
 ---
 
@@ -313,8 +313,6 @@ Build in this order. Each phase compounds — Phase 1 builds the foundation that
 
 **Discovery work first:** Spend a couple weeks doing a PO format audit with the CX team. Look at 50+ real POs, establish format distribution, baseline current process time. Map the actual D365 sales order fields they use in production. Identify the top 10 customers and what their POs actually look like.
 
-**Success metrics:** 80% of standard POs auto-extracted with high confidence. Approval-to-D365 round trip under 60 seconds. Zero false approvals (the reviewer always catches AI errors). Time savings baselined and measured against the current process.
-
 ### Phase 2 — UC2: AP Processing (Highest Dollar Impact)
 
 **Why this second:** The brief literally called this "waste of human effort". This is where Qosina is losing the most money — missed price discrepancies, mystery payments, overdue accounts not being chased optimally. By the time we get here all the foundation pieces from Phase 1 are already in place.
@@ -325,8 +323,6 @@ Build in this order. Each phase compounds — Phase 1 builds the foundation that
 
 **Discovery work first:** Sit with the Finance team for a couple weeks. AP has tribal knowledge — which vendors are reliable, which customers are notorious for short-pays, what tolerance thresholds make sense in practice. Map existing Celigo flows so we don't rebuild what's already working. Get the team's actual tolerance threshold preferences. Understand who has approval authority for what dollar amounts so we set up AD groups correctly.
 
-**Success metrics:** 60-70% of vendor invoices auto-recommend "fast-track approval". Cash application coverage rate. Collections priority list actually used by the AP team. **DSO improvement** — the executive metric.
-
 ### Phase 3 — UC3: Product Data Entry (Most Reasoning-Heavy)
 
 **Why this last:** Lowest volume of work (new SKUs added periodically, not hundreds per day). Most reasoning-intensive — you want the foundation rock-solid before building it. And it needs the most pre-work because the constitutional framework is currently tribal knowledge that nobody has codified.
@@ -335,15 +331,9 @@ Build in this order. Each phase compounds — Phase 1 builds the foundation that
 
 **Discovery work first (longest of the three):** Sit with Product Development for several weeks. Audit 30-50 existing product entries to extract the implicit naming conventions. Build the constitutional framework as a database table they can edit themselves. Understand the landed cost calculation downstream — the brief mentioned this connects to it. Map technical drawings — do those need vision AI? Are they vendor-specific?
 
-**Success metrics:** Field-level accuracy per category (start with stopcocks, work outward). Time savings per new SKU. Consistency check pass rate against existing 8K SKUs. Product Dev team self-service rate on new naming rules — do they actually maintain the framework themselves or do they keep coming back to me?
+**Every phase starts with discovery.** Team interviews, process shadowing, real document audits. Each workflow needs to be fully understood before anything gets built. The discovery work is the most important input.
 
-### ⚠ Discovery Work Is Non-Negotiable
-
-Every phase starts with a Phase 0 sub-phase: team interviews, process shadowing, real document audits. The way I'd put it — I'd interview each team individually, sit with their process, understand it like the back of my hand, and then design the solution for them, not the other way around. AI tools that ignore the actual workflow get rejected by the team. The Phase 0 work is the most important input, not a sidebar.
-
-### The Compounding Story
-
-Phase 1 builds the foundation (auth, observability, audit, deployment) with the simplest use case as the vehicle. Phase 2 adds the highest-value AI work to that foundation. Phase 3 adds the most reasoning-heavy work to a now-mature platform. By the end, Qosina has three production AI workflows in active use, one shared platform, and a pattern that can extend to other use cases (warehouse, customer support, QA) without rebuilding.
+**The compounding story:** Phase 1 builds the foundation (auth, observability, audit, deployment) with the simplest use case. Phase 2 adds the highest-value AI work to that foundation. Phase 3 adds the most reasoning-heavy work to a mature platform. By the end: three production workflows, one shared platform, and a pattern that extends to future use cases without rebuilding.
 
 ---
 
@@ -354,11 +344,11 @@ Tom said in the brief: "we value honest assessment over polished sales pitches."
 - ✗ **No real D365 connection.** All data is seeded SQLite. The tools return OData-shaped JSON so the production swap is a URL + auth change, not a rewrite, but the actual D365 integration is Phase 1 work.
 - ✗ **No user accounts.** Everything posts as "Demo User". Production uses Entra ID OAuth with AD groups for authorization. Phase 1 integration.
 - ✗ **No persisted conversations.** Chat history is in-memory and lost on restart. Production needs persisted SQL with FK to approvals and Azure Blob Storage for source documents. The audit trail story is the architecture, not what's actually wired up today.
-- ✗ **No OCR product.** No Azure Form Recognizer, no Tesseract, no Document Intelligence service. Claude Vision reads PDFs and images natively. PyMuPDF just renders PDF pages to PNG before sending to Claude. This is intentional — Claude is more flexible than any of those tools for diverse document formats — but I want to be explicit about it because everyone assumes you need OCR for document parsing.
 - ✗ **No specific time-savings claims.** I'm not going to say "this saves your team 10 hours a week" without baselining against your actual current process. That's a Phase 0 discovery question for each team.
 - ✗ **No "FDA traceability built-in" or "healthcare-grade security built-in".** Marketing fluff. These are features you implement, not free architectural defaults. The HITL pattern and the audit trail story are how I'd build toward FDA compliance, but neither is "free."
 - ✗ **Sample documents are representative, not Qosina's actual format mix.** I generated the PDFs and the handwritten image to cover a range of scenarios. The real format distribution is something you only learn from auditing 50+ actual POs in Phase 0.
 - ✗ **Constitutional framework rules are representative, not Qosina's actual rules.** The 16 seeded rules are placeholders. The real ones are tribal knowledge in your Product Development team and codifying them is Phase 0 work for UC3.
 - ✗ **No D365 F&O write integration.** "Approve" in this demo just changes a status in SQLite. A production write would POST to `/data/SalesOrderHeaders` and `/data/SalesOrderLines` via OData with proper Azure AD auth.
+- ✗ **I need to understand Qosina's actual system landscape.** D365 F&O, D365 CE, Celigo iPaaS, StockIQ, the Shopify migration — every technology choice I've proposed needs to be validated against how these systems are actually configured and connected at Qosina. I don't know which Celigo flows exist today, how D365 F&O entities are customized, what the approval authority structure looks like, or how CE is being used for customer management. This is Phase 0 work that requires Tom's and the team's expertise. The architecture is designed to plug into these systems, but the specific wiring is a conversation, not a guess.
 
 **What I AM saying:** The architecture supports adding all of these. They're integration points, not rewrites. Phase 1 work, on the job. The reason I built it this way is that I wanted the demo to land the hardest part — the AI reasoning, the tool architecture, the HITL pattern, the OData mock layer — and let the boring integration work be exactly what it is: boring integration work that takes two weeks per piece, not architectural risk.
