@@ -468,7 +468,7 @@
                         <a href="#arch-uc" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">3. The Three Use Cases</a>
                         <a href="#arch-tools" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">4. The Tools</a>
                         <a href="#arch-approvals" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">5. Approval Types</a>
-                        <a href="#arch-ap" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">6. AP Processing Primer</a>
+                        <a href="#arch-ap" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">6. AP &mdash; The Three Sub-Jobs</a>
                         <a href="#arch-openrouter" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">7. OpenRouter</a>
                         <a href="#arch-production" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">8. Production Path</a>
                         <a href="#arch-observability" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">9. Observability &amp; Audit</a>
@@ -547,7 +547,7 @@
                             <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">3</span>
                             The Three Use Cases
                         </h3>
-                        <p class="text-xs text-gray-600 mb-4">For each one I'll cover the business problem, what I built, and which approach I'd actually recommend in production. The recommendation is different per use case &mdash; I'm not going to push my stack for everything.</p>
+                        <p class="text-xs text-gray-600 mb-4">For each use case I'd like to go over the business problem, what I built, and which approach I would recommend for production. The recommendation is different for each use case. I would need your guidance on which technologies are the best fit &mdash; my recommendations are based on research, but I don't have hands-on experience with Qosina's actual systems. Getting this right would require working closely with you and the teams involved.</p>
 
                         <!-- UC1 -->
                         <div class="bg-white rounded-xl border-2 border-blue-300 p-5 mb-4">
@@ -810,7 +810,7 @@
                             Approval Types
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-700 mb-3">The agent produces five distinct approval types across the three use cases. Each one renders differently in the review panel and would route to a different downstream action in production.</p>
+                            <p class="text-xs text-gray-700 mb-3">The agent produces five distinct approval types across the three use cases. Each one renders differently in the review panel and would route to a different downstream action in production &mdash; writing to D365 F&amp;O for sales orders, vendor payments, and item master entries, or creating activities in D365 CE for collections outreach. The specifics of those write-backs would depend on how Qosina's D365 and Celigo are configured.</p>
 
                             <table class="w-full text-xs mb-3">
                                 <thead>
@@ -865,7 +865,7 @@
                             </div>
 
                             <div class="text-[11px] text-gray-600 italic">
-                                One thing worth noting: adding a new approval type is a four-line change. Add the type string to the agent's prompt, the frontend's tab type map, the badge color map, and optionally a new section renderer for the form. No schema migration. The <code>recommendation_type</code> column in the approval queue is an open string field. The system is built to grow.
+                                The system is extensible &mdash; new approval types can be added without schema changes since the type field is an open string.
                             </div>
                         </div>
                     </section>
@@ -874,10 +874,10 @@
                     <section id="arch-ap" class="scroll-mt-4">
                         <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
                             <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">6</span>
-                            AP Processing Primer
+                            Accounts Payable &mdash; The Three Sub-Jobs
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-700 mb-3">Quick framing for AP since it's the use case with the most variety. AP stands for Accounts Payable &mdash; the financial plumbing of money in and money out. The whole use case is three sub-jobs.</p>
+                            <p class="text-xs text-gray-700 mb-3">Accounts Payable looks like it has the biggest impact &mdash; the brief called it "waste of human effort." It's actually three sub-jobs that I'd like to walk through. The AI handles the analysis for each and produces a recommendation; humans always make the final call.</p>
 
                             <table class="w-full text-xs mb-4">
                                 <thead>
@@ -932,9 +932,6 @@
                                 </div>
                             </div>
 
-                            <div class="mt-4 bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-700">
-                                If I had to summarize UC2 in one sentence: it handles the three sub-jobs of accounts payable &mdash; deciding whether vendor invoices should be paid, deciding which customer payments apply to which invoices, and prioritizing which overdue accounts to chase first. Each one produces a recommendation that goes to a human in the approval queue. The AI doesn't post anything to the books. Humans always click.
-                            </div>
                         </div>
                     </section>
 
@@ -955,12 +952,8 @@
 
                             <p class="text-xs text-gray-700 mb-3">The reason this matters at Qosina specifically: enterprise systems can't go down because a third-party LLM provider is having a bad day. With this setup you get one API key, one bill, one dashboard, and provider data policies enforced (no training on Qosina data). If Claude breaks, the agent keeps working. If OpenRouter itself breaks, I can flip a feature flag and call Claude or OpenAI directly.</p>
 
-                            <div class="bg-green-50 border border-green-200 rounded p-3 text-[11px] text-gray-700 mb-3">
-                                <strong>Worth flagging:</strong> your brief lists Anthropic Claude as already part of Qosina's AI stack. This isn't a new vendor introduction &mdash; I'm building on a model your team is already evaluating. The multi-model approach through OpenRouter also aligns with your stated "multi model approach" strategy. If procurement ever says "we have an OpenAI contract instead," I flip the dropdown and the agent keeps working.
-                            </div>
-
                             <div class="bg-blue-50 border border-blue-200 rounded p-3 text-[11px] text-gray-700">
-                                <strong>Demo move I'll do during the call:</strong> switch the model dropdown in the header from Claude to GPT-4o mid-demo. Process the same PO. Show that the agent, the tools, and the approval queue work identically. The model is interchangeable &mdash; everything else is the same code. Same prompt, same result. That's the resilience story made concrete.
+                                When we get to the live demos and start working with the agents and documents, I'll show you how the OpenRouter model switching works in real time &mdash; switching between Claude, GPT-4o, and Gemini mid-demo to demonstrate that the entire system is model-agnostic.
                             </div>
                         </div>
                     </section>

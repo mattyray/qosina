@@ -49,7 +49,7 @@ As we discussed, the goal isn't to replace anyone — it's to improve their work
 
 ## 3. The Three Use Cases
 
-For each one I'll cover the business problem, what I built, and which approach I'd actually recommend in production. The recommendation is different per use case — I'm not going to push my stack for everything.
+For each use case I'd like to go over the business problem, what I built, and which approach I would recommend for production. The recommendation is different for each use case. I would need your guidance on which technologies are the best fit — my recommendations are based on research, but I don't have hands-on experience with Qosina's actual systems. Getting this right would require working closely with you and the teams involved.
 
 ### UC1 — Sales Order Entry (CX Department)
 
@@ -160,7 +160,7 @@ A few things worth knowing about how I structured this. Each tool is a pure Pyth
 
 ## 5. Approval Types
 
-The agent produces five distinct approval types across the three use cases. Each one renders differently in the review panel and would route to a different downstream action in production.
+The agent produces five distinct approval types across the three use cases. Each one renders differently in the review panel and would route to a different downstream action in production — writing to D365 F&O for sales orders, vendor payments, and item master entries, or creating activities in D365 CE for collections outreach. The specifics of those write-backs would depend on how Qosina's D365 and Celigo are configured.
 
 | Type | Use Case | What it answers |
 |---|---|---|
@@ -176,13 +176,13 @@ The agent produces five distinct approval types across the three use cases. Each
 
 **UC3: 1 type** — One approval per supplier doc. A catalog page with three products would be one approval card with three sections.
 
-One thing worth noting: adding a new approval type is a four-line change. Add the type string to the agent's prompt, the frontend's tab type map, the badge color map, and optionally a new section renderer for the form. No schema migration. The `recommendation_type` column in the approval queue is an open string field. The system is built to grow.
+The system is extensible — new approval types can be added without schema changes since the type field is an open string.
 
 ---
 
-## 6. AP Processing Primer
+## 6. Accounts Payable — The Three Sub-Jobs
 
-Quick framing for AP since it's the use case with the most variety. AP stands for Accounts Payable — the financial plumbing of money in and money out. The whole use case is three sub-jobs.
+Accounts Payable looks like it has the biggest impact — the brief called it "waste of human effort." It's actually three sub-jobs that I'd like to walk through. The AI handles the analysis for each and produces a recommendation; humans always make the final call.
 
 | Direction | Sub-job | The question being answered |
 |---|---|---|
@@ -208,8 +208,6 @@ Some customers don't pay on time. The AP team might have 200 overdue accounts on
 
 This matters at the executive level because **DSO** — Days Sales Outstanding — is one of the top metrics finance teams are measured on. Cutting DSO from 65 days to 50 days is tens of thousands in cash flow improvement. My agent calls `score_collections` and produces a ranked list with reasoning per customer.
 
-**One-sentence summary:** It handles the three sub-jobs of accounts payable — deciding whether vendor invoices should be paid, deciding which customer payments apply to which invoices, and prioritizing which overdue accounts to chase first. Each one produces a recommendation that goes to a human in the approval queue. The AI doesn't post anything to the books. Humans always click.
-
 ---
 
 ## 7. OpenRouter
@@ -222,9 +220,7 @@ This is the resilience story we talked about last time. The idea is that all LLM
 
 The reason this matters at Qosina specifically: enterprise systems can't go down because a third-party LLM provider is having a bad day. With this setup you get one API key, one bill, one dashboard, and provider data policies enforced (no training on Qosina data). If Claude breaks, the agent keeps working. If OpenRouter itself breaks, I can flip a feature flag and call Claude or OpenAI directly.
 
-**Worth flagging:** Your brief lists Anthropic Claude as already part of Qosina's AI stack. This isn't a new vendor introduction — I'm building on a model your team is already evaluating. The multi-model approach through OpenRouter also aligns with your stated "multi model approach" strategy. If procurement ever says "we have an OpenAI contract instead," I flip the dropdown and the agent keeps working.
-
-**Demo move I'll do during the call:** switch the model dropdown in the header from Claude to GPT-4o mid-demo. Process the same PO. Show that the agent, the tools, and the approval queue work identically. The model is interchangeable — everything else is the same code. Same prompt, same result. That's the resilience story made concrete.
+When we get to the live demos and start working with the agents and documents, I'll show you how the OpenRouter model switching works in real time — switching between Claude, GPT-4o, and Gemini mid-demo to demonstrate that the entire system is model-agnostic.
 
 ---
 
