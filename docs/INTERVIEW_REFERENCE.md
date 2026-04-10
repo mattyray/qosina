@@ -226,42 +226,29 @@ When we get to the live demos and start working with the agents and documents, I
 
 ## 8. Production Path
 
-The architecture stays identical between this demo and a production deployment at Qosina. Only integration points change. Here's the layer-by-layer:
+The architecture stays identical between this demo and production. Only the integration points change:
 
 | Layer | Demo (today) | Production (Qosina) |
 |---|---|---|
-| Database | SQLite + mock data | D365 F&O via OData REST API |
-| Auth | None ("Demo User") | Entra ID OAuth + AD groups |
-| File storage | Browser memory (data URLs) | Azure Blob with retention policies |
-| Conversation history | In-memory dict (lost on restart) | Persisted SQL with FK to approvals |
-| Logs | stdout / Docker logs | Application Insights + structured JSON |
-| Error tracking | Generic catch-all | Sentry / App Insights with stack traces |
-| Agent tracing | Live activity panel | LangSmith for full trace replay |
-| Hosting | Railway (Docker) | Azure Container Apps (same Azure tenant as D365) |
+| **ERP Data** | SQLite + mock data | **D365 F&O** via OData REST / MCP |
+| **CRM Data** | SQLite + mock data | **D365 CE** via Dataverse API |
+| **Integration** | None | **Celigo iPaaS** triggers + write-back |
+| **Auth** | None ("Demo User") | **Entra ID** OAuth + AD groups |
+| **File Storage** | Browser memory (data URLs) | **Azure Blob** with retention policies |
+| **Conversations** | In-memory (lost on restart) | Persisted SQL with FK to approvals |
+| **Logs** | stdout / Docker logs | **Application Insights** + structured JSON |
+| **Error Tracking** | Generic catch-all | **Sentry** / App Insights with stack traces |
+| **Agent Tracing** | Live activity panel | **LangSmith** full trace replay |
+| **Hosting** | Railway (Docker) | **Azure Container Apps** same tenant as D365 |
 
-The point I want to land: the OData-shaped tool responses make the database swap a config change. The production deployment is URL + auth, not a rewrite. Every integration point in the right column is something you add at the edges — the agent code, the tools, the approval workflow, the frontend — all of that stays the same.
+**D365 ERP MCP Server (GA February 2026):** Microsoft recently released a Model Context Protocol server for D365 Finance & Operations. This could simplify the production integration significantly — instead of hand-writing OData calls per entity, the agent connects through MCP with built-in governance, auth, and business logic execution. This is something I'd evaluate in Phase 0 discovery.
 
-### How the agents connect to D365 in production
+### What each use case connects to in production
 
-**D365 Finance & Operations (transactional data):** Every table is exposed as an OData REST entity. My tools currently query SQLite; in production they'd query the same field names at `https://qosina.operations.dynamics.com/data/...` instead.
-
-- **UC1 reads:** `CustomersV3`, `ReleasedProductsV2`, `SalesTradeAgreements`, `InventoryOnhandEntities`. After approval → writes `SalesOrderHeaders` + `SalesOrderLines`.
-- **UC2 reads:** `PurchaseOrderLines`, `PurchaseOrderReceiptLines`, `VendorInvoiceLines`, `CustomerPaymentJournalLines`, `CustomerInvoices`, `CustomerAgingSnapshot`. After approval → writes `VendorPaymentJournalLines` or `CustomerPaymentSettlements`.
-- **UC3 reads:** `ReleasedProductsV2` (for similar-product lookup). After approval → writes `ReleasedProductCreationV2` + product attributes + dimension groups.
-
-**D365 Customer Engagement (CRM / relationship data):** Connected to F&O via Dual Write or Celigo. The Python service talks to CE via the Dataverse Web API for relationship context that F&O doesn't own.
-
-- **UC1:** Customer relationship history, account manager context — helpful for new-customer flagging.
-- **UC2 Collections:** This is where CE matters most. `score_collections` pulls customer tier, last contact date, and activity history from CE. After a collection outreach approval is approved → creates a Phone Call Activity in CE assigned to the AR manager. That updates `last_contact_date`, so the next scoring run deprioritizes that customer.
-- **UC3:** Minimal CE involvement — product catalog records in CE sync from F&O item master via Dual Write.
-
-**Where Celigo iPaaS fits:** Celigo is already Qosina's integration backbone. I didn't recommend it as the orchestration layer (iPaaS is built for system-to-system data sync, not AI agent loops with human approval queues), but it has two high-value roles in production:
-
-- **Trigger layer:** If Celigo already has a flow watching `orders@qosina.com` and routing attachments, I'd add a step to that existing flow: "when a PO arrives, webhook it to the Python agent service." Simpler than deploying n8n alongside an existing iPaaS.
-- **Write-back layer:** After human approval, instead of the Python service writing directly to D365 F&O, Celigo handles the write. Celigo already knows D365's field mappings, handles retries, and logs everything. Especially valuable for UC3's item master write, which touches 5-6 related D365 entities.
-- **D365 ↔ D365 sync:** If Qosina uses Celigo instead of Dual Write for F&O ↔ CE sync (common — Dual Write can be finicky), then Celigo is the pipe that keeps customer data consistent across both systems.
-
-Phase 0 discovery: audit existing Celigo flows to see what's already wired before building new integrations.
+- **UC1:** Reads F&O (customers, products, pricing, inventory) → writes F&O (sales orders)
+- **UC2:** Reads F&O (POs, receipts, invoices, payments) + reads CE (customer history, last contact) → writes F&O (payment journals) + writes CE (collection activities)
+- **UC3:** Reads F&O (existing products for consistency check) → writes F&O (item master)
+- **Celigo:** Trigger layer (inbox watching, document routing) + write-back layer (D365 field mappings, retries) + F&O ↔ CE sync
 
 ---
 

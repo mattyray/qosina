@@ -965,97 +965,95 @@
                             Production Path
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-700 mb-3">The architecture stays identical between this demo and a production deployment at Qosina. Only integration points change. Here's the layer-by-layer:</p>
+                            <p class="text-xs text-gray-700 mb-3">The architecture stays identical between this demo and production. Only the integration points change:</p>
 
                             <table class="w-full text-xs">
                                 <thead>
-                                    <tr class="border-b border-gray-200 text-left text-gray-500">
-                                        <th class="pb-2">Layer</th>
-                                        <th class="pb-2">Demo (today)</th>
-                                        <th class="pb-2">Production (Qosina)</th>
+                                    <tr class="border-b-2 border-gray-300 text-left text-gray-500">
+                                        <th class="pb-2 w-1/5">Layer</th>
+                                        <th class="pb-2 w-2/5">Demo (today)</th>
+                                        <th class="pb-2 w-2/5">Production (Qosina)</th>
                                     </tr>
                                 </thead>
                                 <tbody class="text-gray-700">
                                     <tr class="border-b border-gray-100">
-                                        <td class="py-2 font-semibold">Database</td>
-                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">SQLite</code> + mock data</td>
-                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">D365 F&amp;O</code> via OData REST API</td>
+                                        <td class="py-2.5 font-semibold">ERP Data</td>
+                                        <td class="py-2.5">SQLite + mock data</td>
+                                        <td class="py-2.5"><span class="bg-blue-100 text-blue-800 text-[10px] font-semibold px-2 py-0.5 rounded">D365 F&amp;O</span> via OData REST / MCP</td>
                                     </tr>
                                     <tr class="border-b border-gray-100">
-                                        <td class="py-2 font-semibold">Auth</td>
-                                        <td class="py-2">None ("Demo User")</td>
-                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">Entra ID</code> OAuth + AD groups</td>
+                                        <td class="py-2.5 font-semibold">CRM Data</td>
+                                        <td class="py-2.5">SQLite + mock data</td>
+                                        <td class="py-2.5"><span class="bg-blue-100 text-blue-800 text-[10px] font-semibold px-2 py-0.5 rounded">D365 CE</span> via Dataverse API</td>
                                     </tr>
                                     <tr class="border-b border-gray-100">
-                                        <td class="py-2 font-semibold">File storage</td>
-                                        <td class="py-2">Browser memory (data URLs)</td>
-                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">Azure Blob</code> with retention policies</td>
+                                        <td class="py-2.5 font-semibold">Integration</td>
+                                        <td class="py-2.5">None</td>
+                                        <td class="py-2.5"><span class="bg-orange-100 text-orange-800 text-[10px] font-semibold px-2 py-0.5 rounded">Celigo iPaaS</span> triggers + write-back</td>
                                     </tr>
                                     <tr class="border-b border-gray-100">
-                                        <td class="py-2 font-semibold">Conversation history</td>
-                                        <td class="py-2">In-memory dict (lost on restart)</td>
-                                        <td class="py-2">Persisted SQL with FK to approvals</td>
+                                        <td class="py-2.5 font-semibold">Auth</td>
+                                        <td class="py-2.5">None ("Demo User")</td>
+                                        <td class="py-2.5"><span class="bg-blue-100 text-blue-800 text-[10px] font-semibold px-2 py-0.5 rounded">Entra ID</span> OAuth + AD groups</td>
                                     </tr>
                                     <tr class="border-b border-gray-100">
-                                        <td class="py-2 font-semibold">Logs</td>
-                                        <td class="py-2">stdout / Docker logs</td>
-                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">Application Insights</code> + structured JSON</td>
+                                        <td class="py-2.5 font-semibold">File Storage</td>
+                                        <td class="py-2.5">Browser memory (data URLs)</td>
+                                        <td class="py-2.5"><span class="bg-blue-100 text-blue-800 text-[10px] font-semibold px-2 py-0.5 rounded">Azure Blob</span> with retention policies</td>
                                     </tr>
                                     <tr class="border-b border-gray-100">
-                                        <td class="py-2 font-semibold">Error tracking</td>
-                                        <td class="py-2">Generic catch-all</td>
-                                        <td class="py-2">Sentry / App Insights with stack traces</td>
+                                        <td class="py-2.5 font-semibold">Conversations</td>
+                                        <td class="py-2.5">In-memory (lost on restart)</td>
+                                        <td class="py-2.5"><span class="bg-gray-200 text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded">Persisted SQL</span> with FK to approvals</td>
                                     </tr>
                                     <tr class="border-b border-gray-100">
-                                        <td class="py-2 font-semibold">Agent tracing</td>
-                                        <td class="py-2">Live activity panel</td>
-                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">LangSmith</code> for full trace replay</td>
+                                        <td class="py-2.5 font-semibold">Logs</td>
+                                        <td class="py-2.5">stdout / Docker logs</td>
+                                        <td class="py-2.5"><span class="bg-blue-100 text-blue-800 text-[10px] font-semibold px-2 py-0.5 rounded">Application Insights</span> + structured JSON</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2.5 font-semibold">Error Tracking</td>
+                                        <td class="py-2.5">Generic catch-all</td>
+                                        <td class="py-2.5"><span class="bg-gray-200 text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded">Sentry</span> / App Insights with stack traces</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2.5 font-semibold">Agent Tracing</td>
+                                        <td class="py-2.5">Live activity panel</td>
+                                        <td class="py-2.5"><span class="bg-purple-100 text-purple-800 text-[10px] font-semibold px-2 py-0.5 rounded">LangSmith</span> full trace replay</td>
                                     </tr>
                                     <tr>
-                                        <td class="py-2 font-semibold">Hosting</td>
-                                        <td class="py-2">Railway (Docker)</td>
-                                        <td class="py-2"><code class="text-[10px] bg-gray-100 px-1 rounded">Azure Container Apps</code> (same Azure tenant as D365)</td>
+                                        <td class="py-2.5 font-semibold">Hosting</td>
+                                        <td class="py-2.5">Railway (Docker)</td>
+                                        <td class="py-2.5"><span class="bg-blue-100 text-blue-800 text-[10px] font-semibold px-2 py-0.5 rounded">Azure Container Apps</span> same tenant as D365</td>
                                     </tr>
                                 </tbody>
                             </table>
 
-                            <div class="mt-3 bg-yellow-50 border border-yellow-200 rounded p-3 text-[11px] text-gray-700">
-                                The point I want to land: the OData-shaped tool responses make the database swap a config change. The production deployment is URL + auth, not a rewrite. Every integration point in the right column is something you add at the edges &mdash; the agent code, the tools, the approval workflow, the frontend &mdash; all of that stays the same.
+                            <!-- MCP Callout -->
+                            <div class="mt-4 bg-green-50 border border-green-200 rounded p-3 text-[11px] text-gray-700">
+                                <strong class="text-green-800">D365 ERP MCP Server (GA February 2026):</strong> Microsoft recently released a Model Context Protocol server for D365 Finance &amp; Operations. This could simplify the production integration significantly &mdash; instead of hand-writing OData calls per entity, the agent connects through MCP with built-in governance, auth, and business logic execution. This is something I'd evaluate in Phase 0 discovery.
                             </div>
 
-                            <!-- D365 F&O + CE + Celigo -->
-                            <div class="mt-4 space-y-3">
-                                <div class="font-bold text-gray-800 text-xs">How the agents connect to D365 in production</div>
-
-                                <div class="bg-blue-50 border border-blue-200 rounded p-3 text-[11px] text-gray-700">
-                                    <div class="font-semibold text-qblue mb-1">D365 Finance &amp; Operations (transactional data)</div>
-                                    <p class="mb-1">Every table is exposed as an OData REST entity. My tools currently query SQLite; in production they'd query the same field names at <code class="text-[10px] bg-white px-1 rounded">https://qosina.operations.dynamics.com/data/...</code> instead.</p>
-                                    <ul class="list-disc ml-5 space-y-0.5 text-[10px]">
-                                        <li><strong>UC1 reads:</strong> <code>CustomersV3</code>, <code>ReleasedProductsV2</code>, <code>SalesTradeAgreements</code>, <code>InventoryOnhandEntities</code>. After approval &rarr; writes <code>SalesOrderHeaders</code> + <code>SalesOrderLines</code>.</li>
-                                        <li><strong>UC2 reads:</strong> <code>PurchaseOrderLines</code>, <code>PurchaseOrderReceiptLines</code>, <code>VendorInvoiceLines</code>, <code>CustomerPaymentJournalLines</code>, <code>CustomerInvoices</code>, <code>CustomerAgingSnapshot</code>. After approval &rarr; writes <code>VendorPaymentJournalLines</code> or <code>CustomerPaymentSettlements</code>.</li>
-                                        <li><strong>UC3 reads:</strong> <code>ReleasedProductsV2</code> (for similar-product lookup). After approval &rarr; writes <code>ReleasedProductCreationV2</code> + product attributes + dimension groups.</li>
-                                    </ul>
-                                </div>
-
-                                <div class="bg-purple-50 border border-purple-200 rounded p-3 text-[11px] text-gray-700">
-                                    <div class="font-semibold text-purple-700 mb-1">D365 Customer Engagement (CRM / relationship data)</div>
-                                    <p class="mb-1">Connected to F&amp;O via Dual Write or Celigo. The Python service talks to CE via the Dataverse Web API for relationship context that F&amp;O doesn't own.</p>
-                                    <ul class="list-disc ml-5 space-y-0.5 text-[10px]">
-                                        <li><strong>UC1:</strong> Customer relationship history, account manager context &mdash; helpful for new-customer flagging.</li>
-                                        <li><strong>UC2 Collections:</strong> This is where CE matters most. <code>score_collections</code> pulls customer tier, last contact date, and activity history from CE. After a collection outreach approval is approved &rarr; creates a Phone Call Activity in CE assigned to the AR manager. That updates <code>last_contact_date</code>, so the next scoring run knows not to re-flag the same customer.</li>
-                                        <li><strong>UC3:</strong> Minimal CE involvement &mdash; product catalog records in CE sync from F&amp;O item master via Dual Write.</li>
-                                    </ul>
-                                </div>
-
-                                <div class="bg-orange-50 border border-orange-200 rounded p-3 text-[11px] text-gray-700">
-                                    <div class="font-semibold text-orange-700 mb-1">Where Celigo iPaaS fits</div>
-                                    <p class="mb-1">Celigo is already Qosina's integration backbone. I didn't recommend it as the orchestration layer (iPaaS is built for system-to-system data sync, not AI agent loops with human approval queues), but it has two high-value roles in production:</p>
-                                    <ul class="list-disc ml-5 space-y-0.5 text-[10px]">
-                                        <li><strong>Trigger layer:</strong> If Celigo already has a flow watching <code>orders@qosina.com</code> and routing attachments, I'd add a step to that existing flow: "when a PO arrives, webhook it to the Python agent service." Simpler than deploying n8n alongside an existing iPaaS.</li>
-                                        <li><strong>Write-back layer:</strong> After human approval, instead of the Python service writing directly to D365 F&amp;O, Celigo handles the write. Celigo already knows D365's field mappings, handles retries, and logs everything. Especially valuable for UC3's item master write, which touches 5&ndash;6 related D365 entities.</li>
-                                        <li><strong>D365 &harr; D365 sync:</strong> If Qosina uses Celigo instead of Dual Write for F&amp;O &harr; CE sync (common &mdash; Dual Write can be finicky), then Celigo is the pipe that keeps customer data consistent across both systems.</li>
-                                    </ul>
-                                    <p class="mt-1 text-[10px] italic">Phase 0 discovery: audit existing Celigo flows to see what's already wired before building new integrations.</p>
+                            <!-- Compact integration map -->
+                            <div class="mt-3 text-[11px] text-gray-700">
+                                <div class="font-bold text-gray-800 text-xs mb-2">What each use case connects to in production</div>
+                                <div class="space-y-1.5">
+                                    <div class="flex items-start">
+                                        <span class="bg-qblue text-white text-[9px] font-bold px-1.5 py-0.5 rounded mr-2 mt-0.5 flex-shrink-0">UC1</span>
+                                        <span>Reads F&amp;O (customers, products, pricing, inventory) &rarr; writes F&amp;O (sales orders)</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <span class="bg-green-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded mr-2 mt-0.5 flex-shrink-0">UC2</span>
+                                        <span>Reads F&amp;O (POs, receipts, invoices, payments) + reads CE (customer history, last contact) &rarr; writes F&amp;O (payment journals) + writes CE (collection activities)</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <span class="bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded mr-2 mt-0.5 flex-shrink-0">UC3</span>
+                                        <span>Reads F&amp;O (existing products for consistency check) &rarr; writes F&amp;O (item master)</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <span class="bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded mr-2 mt-0.5 flex-shrink-0">Celigo</span>
+                                        <span>Trigger layer (inbox watching, document routing) + write-back layer (D365 field mappings, retries) + F&amp;O &harr; CE sync</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
