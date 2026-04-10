@@ -513,7 +513,7 @@
                             </div>
 
                             <div class="bg-gray-50 border border-gray-200 rounded p-3 text-[11px] text-gray-600">
-                                <strong class="text-gray-700">The boring plumbing:</strong> FastAPI backend, vanilla JS frontend with Tailwind CDN, Server-Sent Events for streaming, Docker on Railway with auto-deploy from GitHub. ~7,800 lines of code total, 42 unit tests.
+                                <strong class="text-gray-700">The boring plumbing:</strong> FastAPI backend, vanilla JS frontend with Tailwind CDN, Server-Sent Events for streaming, Docker on Railway with auto-deploy from GitHub. ~7,800 lines of code total, 64 unit tests across 4 test files.
                             </div>
                         </div>
                     </section>
@@ -663,6 +663,7 @@
                                         </div>
                                     </div>
                                     <p class="mt-2 italic text-gray-600">This is the one where I'm explicitly NOT recommending my own stack as the core. Microsoft already built the boring 90% &mdash; the D365 F&amp;O connectors, the Teams approval routing, the audit trail. You're already paying for it. Don't rebuild what you own. The custom Python piece is just for the 10% that's actually novel: the AI judgment calls on cash application and collections scoring.</p>
+                                    <p class="mt-2 text-gray-600"><strong>Why not Copilot Studio?</strong> The brief called out Copilot Studio as the AI piece of Power Platform. Copilot Studio is strong for chatbot-style assistants over indexed knowledge bases &mdash; it would be fine for a "check my invoice status" portal. But it's not the right runtime for multi-tool ReAct agent loops (fuzzy matching against 5K SKUs, deterministic tool calls with confidence scoring, vision on handwritten documents). AI Builder has the same gap: designed for templated form extraction, not the variable formats the brief explicitly called out. That's why the intelligence layer stays in custom Python even when the orchestration layer is Power Platform.</p>
                                 </div>
                             </div>
                         </div>
@@ -695,6 +696,11 @@
                                 <div>
                                     <div class="font-bold text-gray-800 text-xs mb-1">The constitutional framework is the interesting part</div>
                                     <p>The naming rules live in a database table, not in code. Adding a new rule is an INSERT, not a deployment. The Product Dev team could maintain their own rules through an admin UI without needing me to push code. The rules are enforced in two places: in the agent's prompt (so Claude follows them during extraction) and in validation code (so we double-check before the approval is created). Belt and suspenders.</p>
+                                </div>
+
+                                <div>
+                                    <div class="font-bold text-gray-800 text-xs mb-1">Downstream connection: Landed cost estimation</div>
+                                    <p>The brief mentioned this connects to landed cost calculation. Several fields the agent extracts &mdash; country of origin, tariff code, MOQ, supplier unit price, weight &mdash; are direct inputs to landed cost formulas (product cost + freight + duties + insurance + handling). Once these fields are normalized and approved into the D365 item master, downstream tools like StockIQ or D365's own costing module can pull them. The agent doesn't calculate landed cost itself &mdash; that's a separate engine. But it ensures the inputs are clean and consistent, which is the failure mode landed cost estimation hates most: garbage in, garbage out.</p>
                                 </div>
 
                                 <div>
@@ -948,6 +954,10 @@
 
                             <p class="text-xs text-gray-700 mb-3">The reason this matters at Qosina specifically: enterprise systems can't go down because a third-party LLM provider is having a bad day. With this setup you get one API key, one bill, one dashboard, and provider data policies enforced (no training on Qosina data). If Claude breaks, the agent keeps working. If OpenRouter itself breaks, I can flip a feature flag and call Claude or OpenAI directly.</p>
 
+                            <div class="bg-green-50 border border-green-200 rounded p-3 text-[11px] text-gray-700 mb-3">
+                                <strong>Worth flagging:</strong> your brief lists Anthropic Claude as already part of Qosina's AI stack. This isn't a new vendor introduction &mdash; I'm building on a model your team is already evaluating. The multi-model approach through OpenRouter also aligns with your stated "multi model approach" strategy. If procurement ever says "we have an OpenAI contract instead," I flip the dropdown and the agent keeps working.
+                            </div>
+
                             <div class="bg-blue-50 border border-blue-200 rounded p-3 text-[11px] text-gray-700">
                                 <strong>Demo move I'll do during the call:</strong> switch the model dropdown in the header from Claude to GPT-4o mid-demo. Process the same PO. Show that the agent, the tools, and the approval queue work identically. The model is interchangeable &mdash; everything else is the same code. Same prompt, same result. That's the resilience story made concrete.
                             </div>
@@ -1017,6 +1027,42 @@
 
                             <div class="mt-3 bg-yellow-50 border border-yellow-200 rounded p-3 text-[11px] text-gray-700">
                                 The point I want to land: the OData-shaped tool responses make the database swap a config change. The production deployment is URL + auth, not a rewrite. Every integration point in the right column is something you add at the edges &mdash; the agent code, the tools, the approval workflow, the frontend &mdash; all of that stays the same.
+                            </div>
+
+                            <!-- D365 F&O + CE + Celigo -->
+                            <div class="mt-4 space-y-3">
+                                <div class="font-bold text-gray-800 text-xs">How the agents connect to D365 in production</div>
+
+                                <div class="bg-blue-50 border border-blue-200 rounded p-3 text-[11px] text-gray-700">
+                                    <div class="font-semibold text-qblue mb-1">D365 Finance &amp; Operations (transactional data)</div>
+                                    <p class="mb-1">Every table is exposed as an OData REST entity. My tools currently query SQLite; in production they'd query the same field names at <code class="text-[10px] bg-white px-1 rounded">https://qosina.operations.dynamics.com/data/...</code> instead.</p>
+                                    <ul class="list-disc ml-5 space-y-0.5 text-[10px]">
+                                        <li><strong>UC1 reads:</strong> <code>CustomersV3</code>, <code>ReleasedProductsV2</code>, <code>SalesTradeAgreements</code>, <code>InventoryOnhandEntities</code>. After approval &rarr; writes <code>SalesOrderHeaders</code> + <code>SalesOrderLines</code>.</li>
+                                        <li><strong>UC2 reads:</strong> <code>PurchaseOrderLines</code>, <code>PurchaseOrderReceiptLines</code>, <code>VendorInvoiceLines</code>, <code>CustomerPaymentJournalLines</code>, <code>CustomerInvoices</code>, <code>CustomerAgingSnapshot</code>. After approval &rarr; writes <code>VendorPaymentJournalLines</code> or <code>CustomerPaymentSettlements</code>.</li>
+                                        <li><strong>UC3 reads:</strong> <code>ReleasedProductsV2</code> (for similar-product lookup). After approval &rarr; writes <code>ReleasedProductCreationV2</code> + product attributes + dimension groups.</li>
+                                    </ul>
+                                </div>
+
+                                <div class="bg-purple-50 border border-purple-200 rounded p-3 text-[11px] text-gray-700">
+                                    <div class="font-semibold text-purple-700 mb-1">D365 Customer Engagement (CRM / relationship data)</div>
+                                    <p class="mb-1">Connected to F&amp;O via Dual Write or Celigo. The Python service talks to CE via the Dataverse Web API for relationship context that F&amp;O doesn't own.</p>
+                                    <ul class="list-disc ml-5 space-y-0.5 text-[10px]">
+                                        <li><strong>UC1:</strong> Customer relationship history, account manager context &mdash; helpful for new-customer flagging.</li>
+                                        <li><strong>UC2 Collections:</strong> This is where CE matters most. <code>score_collections</code> pulls customer tier, last contact date, and activity history from CE. After a collection outreach approval is approved &rarr; creates a Phone Call Activity in CE assigned to the AR manager. That updates <code>last_contact_date</code>, so the next scoring run knows not to re-flag the same customer.</li>
+                                        <li><strong>UC3:</strong> Minimal CE involvement &mdash; product catalog records in CE sync from F&amp;O item master via Dual Write.</li>
+                                    </ul>
+                                </div>
+
+                                <div class="bg-orange-50 border border-orange-200 rounded p-3 text-[11px] text-gray-700">
+                                    <div class="font-semibold text-orange-700 mb-1">Where Celigo iPaaS fits</div>
+                                    <p class="mb-1">Celigo is already Qosina's integration backbone. I didn't recommend it as the orchestration layer (iPaaS is built for system-to-system data sync, not AI agent loops with human approval queues), but it has two high-value roles in production:</p>
+                                    <ul class="list-disc ml-5 space-y-0.5 text-[10px]">
+                                        <li><strong>Trigger layer:</strong> If Celigo already has a flow watching <code>orders@qosina.com</code> and routing attachments, I'd add a step to that existing flow: "when a PO arrives, webhook it to the Python agent service." Simpler than deploying n8n alongside an existing iPaaS.</li>
+                                        <li><strong>Write-back layer:</strong> After human approval, instead of the Python service writing directly to D365 F&amp;O, Celigo handles the write. Celigo already knows D365's field mappings, handles retries, and logs everything. Especially valuable for UC3's item master write, which touches 5&ndash;6 related D365 entities.</li>
+                                        <li><strong>D365 &harr; D365 sync:</strong> If Qosina uses Celigo instead of Dual Write for F&amp;O &harr; CE sync (common &mdash; Dual Write can be finicky), then Celigo is the pipe that keeps customer data consistent across both systems.</li>
+                                    </ul>
+                                    <p class="mt-1 text-[10px] italic">Phase 0 discovery: audit existing Celigo flows to see what's already wired before building new integrations.</p>
+                                </div>
                             </div>
                         </div>
                     </section>

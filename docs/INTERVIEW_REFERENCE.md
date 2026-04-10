@@ -30,7 +30,7 @@ If I had to summarize what this is in one breath: a Python web app that wraps a 
 
 **SQLite with OData-Shaped Responses** — All 17 tables return data formatted to look exactly like D365 F&O OData responses. Same field names, same JSON shape, same `@odata.context` headers. The production swap from SQLite to D365 is a URL + auth change, not a rewrite.
 
-**The boring plumbing:** FastAPI backend, vanilla JS frontend with Tailwind CDN, Server-Sent Events for streaming, Docker on Railway with auto-deploy from GitHub. ~7,800 lines of code total, 42 unit tests.
+**The boring plumbing:** FastAPI backend, vanilla JS frontend with Tailwind CDN, Server-Sent Events for streaming, Docker on Railway with auto-deploy from GitHub. ~7,800 lines of code total, 64 unit tests across 4 test files.
 
 ---
 
@@ -90,6 +90,8 @@ Why hybrid: n8n is great at the email plumbing — watching an inbox, pulling at
 
 This is the one where I'm explicitly NOT recommending my own stack as the core. Microsoft already built the boring 90% — the D365 F&O connectors, the Teams approval routing, the audit trail. You're already paying for it. Don't rebuild what you own. The custom Python piece is just for the 10% that's actually novel: the AI judgment calls on cash application and collections scoring.
 
+**Why not Copilot Studio?** The brief called out Copilot Studio as the AI piece of Power Platform. Copilot Studio is strong for chatbot-style assistants over indexed knowledge bases — it would be fine for a "check my invoice status" portal. But it's not the right runtime for multi-tool ReAct agent loops (fuzzy matching against 5K SKUs, deterministic tool calls with confidence scoring, vision on handwritten documents). AI Builder has the same gap: designed for templated form extraction, not the variable formats the brief explicitly called out. That's why the intelligence layer stays in custom Python even when the orchestration layer is Power Platform.
+
 ### UC3 — Product Data Entry (Product Development)
 
 **The business problem:** When Product Development sources a new SKU, the supplier sends documentation in every format — spec sheets, certificates of analysis, catalog pages, technical drawings. Today someone manually extracts 30+ data fields per SKU and types them into the D365 item master. With 8,000+ existing SKUs and new ones added regularly, this is a significant time investment. The brief specifically called out that AI would need a "constitutional framework" — non-negotiable rules for translating supplier terminology into Qosina's standards. That's the most interesting part of this use case.
@@ -100,6 +102,8 @@ This is the one where I'm explicitly NOT recommending my own stack as the core. 
 - Then it normalizes every field according to the rules: "PC plastic" becomes "Polycarbonate (PC)", "M Luer Lock" becomes "Male Luer Lock", inches become millimeters, "valve" with luer connections becomes "Stopcock".
 - Calls `find_similar_products` to compare against existing catalog entries for consistency, then `validate_consistency` to check the normalized fields against the rules and the catalog patterns.
 - Creates a `product_entry` approval with the structured data grouped by section — Basic Info, Dimensions, Connections, Compliance, Commercial.
+
+**Downstream connection — Landed cost estimation:** The brief mentioned this connects to landed cost calculation. Several fields the agent extracts — country of origin, tariff code, MOQ, supplier unit price, weight — are direct inputs to landed cost formulas (product cost + freight + duties + insurance + handling). Once these fields are normalized and approved into the D365 item master, downstream tools like StockIQ or D365's own costing module can pull them. The agent doesn't calculate landed cost itself — that's a separate engine. But it ensures the inputs are clean and consistent, which is the failure mode landed cost estimation hates most: garbage in, garbage out.
 
 **The constitutional framework is the interesting part:** The naming rules live in a database table, not in code. Adding a new rule is an INSERT, not a deployment. The Product Dev team could maintain their own rules through an admin UI without needing me to push code. The rules are enforced in two places: in the agent's prompt (so Claude follows them during extraction) and in validation code (so we double-check before the approval is created). Belt and suspenders.
 
@@ -150,7 +154,7 @@ There are four agents total — the original general agent from Round 3 plus one
 ### + 1 Write Tool: `create_approval`
 Shared across all four agents. Adds a row to the approval queue with the structured field data, confidence scores, and a reference to the source document. That's the only way data gets written. There's no other path.
 
-A few things worth knowing about how I structured this. Each tool is a pure Python function in `tools.py` with no LangGraph dependency. The `agent.py` file wraps them with `@tool` decorators for the agent. That separation matters because it means the business logic is testable in isolation — 42 unit tests run against the pure functions, no LLM mocking required. If you want to know whether `three_way_match` handles a quantity discrepancy correctly, you write a test against the function directly. You don't need to spin up an agent.
+A few things worth knowing about how I structured this. Each tool is a pure Python function in `tools.py` with no LangGraph dependency. The `agent.py` file wraps them with `@tool` decorators for the agent. That separation matters because it means the business logic is testable in isolation — 64 unit tests run against the pure functions, no LLM mocking required. If you want to know whether `three_way_match` handles a quantity discrepancy correctly, you write a test against the function directly. You don't need to spin up an agent.
 
 ---
 
@@ -218,6 +222,8 @@ This is the resilience story we talked about last time. The idea is that all LLM
 
 The reason this matters at Qosina specifically: enterprise systems can't go down because a third-party LLM provider is having a bad day. With this setup you get one API key, one bill, one dashboard, and provider data policies enforced (no training on Qosina data). If Claude breaks, the agent keeps working. If OpenRouter itself breaks, I can flip a feature flag and call Claude or OpenAI directly.
 
+**Worth flagging:** Your brief lists Anthropic Claude as already part of Qosina's AI stack. This isn't a new vendor introduction — I'm building on a model your team is already evaluating. The multi-model approach through OpenRouter also aligns with your stated "multi model approach" strategy. If procurement ever says "we have an OpenAI contract instead," I flip the dropdown and the agent keeps working.
+
 **Demo move I'll do during the call:** switch the model dropdown in the header from Claude to GPT-4o mid-demo. Process the same PO. Show that the agent, the tools, and the approval queue work identically. The model is interchangeable — everything else is the same code. Same prompt, same result. That's the resilience story made concrete.
 
 ---
@@ -238,6 +244,28 @@ The architecture stays identical between this demo and a production deployment a
 | Hosting | Railway (Docker) | Azure Container Apps (same Azure tenant as D365) |
 
 The point I want to land: the OData-shaped tool responses make the database swap a config change. The production deployment is URL + auth, not a rewrite. Every integration point in the right column is something you add at the edges — the agent code, the tools, the approval workflow, the frontend — all of that stays the same.
+
+### How the agents connect to D365 in production
+
+**D365 Finance & Operations (transactional data):** Every table is exposed as an OData REST entity. My tools currently query SQLite; in production they'd query the same field names at `https://qosina.operations.dynamics.com/data/...` instead.
+
+- **UC1 reads:** `CustomersV3`, `ReleasedProductsV2`, `SalesTradeAgreements`, `InventoryOnhandEntities`. After approval → writes `SalesOrderHeaders` + `SalesOrderLines`.
+- **UC2 reads:** `PurchaseOrderLines`, `PurchaseOrderReceiptLines`, `VendorInvoiceLines`, `CustomerPaymentJournalLines`, `CustomerInvoices`, `CustomerAgingSnapshot`. After approval → writes `VendorPaymentJournalLines` or `CustomerPaymentSettlements`.
+- **UC3 reads:** `ReleasedProductsV2` (for similar-product lookup). After approval → writes `ReleasedProductCreationV2` + product attributes + dimension groups.
+
+**D365 Customer Engagement (CRM / relationship data):** Connected to F&O via Dual Write or Celigo. The Python service talks to CE via the Dataverse Web API for relationship context that F&O doesn't own.
+
+- **UC1:** Customer relationship history, account manager context — helpful for new-customer flagging.
+- **UC2 Collections:** This is where CE matters most. `score_collections` pulls customer tier, last contact date, and activity history from CE. After a collection outreach approval is approved → creates a Phone Call Activity in CE assigned to the AR manager. That updates `last_contact_date`, so the next scoring run deprioritizes that customer.
+- **UC3:** Minimal CE involvement — product catalog records in CE sync from F&O item master via Dual Write.
+
+**Where Celigo iPaaS fits:** Celigo is already Qosina's integration backbone. I didn't recommend it as the orchestration layer (iPaaS is built for system-to-system data sync, not AI agent loops with human approval queues), but it has two high-value roles in production:
+
+- **Trigger layer:** If Celigo already has a flow watching `orders@qosina.com` and routing attachments, I'd add a step to that existing flow: "when a PO arrives, webhook it to the Python agent service." Simpler than deploying n8n alongside an existing iPaaS.
+- **Write-back layer:** After human approval, instead of the Python service writing directly to D365 F&O, Celigo handles the write. Celigo already knows D365's field mappings, handles retries, and logs everything. Especially valuable for UC3's item master write, which touches 5-6 related D365 entities.
+- **D365 ↔ D365 sync:** If Qosina uses Celigo instead of Dual Write for F&O ↔ CE sync (common — Dual Write can be finicky), then Celigo is the pipe that keeps customer data consistent across both systems.
+
+Phase 0 discovery: audit existing Celigo flows to see what's already wired before building new integrations.
 
 ---
 
