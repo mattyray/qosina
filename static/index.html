@@ -997,6 +997,11 @@
                                         <td class="py-2.5"><span class="bg-orange-100 text-orange-800 text-[10px] font-semibold px-2 py-0.5 rounded">Celigo iPaaS</span> triggers + write-back</td>
                                     </tr>
                                     <tr class="border-b border-gray-100">
+                                        <td class="py-2.5 font-semibold">Workflow (UC1)</td>
+                                        <td class="py-2.5">None</td>
+                                        <td class="py-2.5"><span class="bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded">n8n</span> email triggers + attachment routing</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
                                         <td class="py-2.5 font-semibold">Auth</td>
                                         <td class="py-2.5">None ("Demo User")</td>
                                         <td class="py-2.5"><span class="bg-blue-100 text-blue-800 text-[10px] font-semibold px-2 py-0.5 rounded">Entra ID</span> OAuth + AD groups</td>
@@ -1045,7 +1050,7 @@
                                 <div class="space-y-1.5">
                                     <div class="flex items-start">
                                         <span class="bg-qblue text-white text-[9px] font-bold px-1.5 py-0.5 rounded mr-2 mt-0.5 flex-shrink-0">UC1</span>
-                                        <span>Reads F&amp;O (customers, products, pricing, inventory) &rarr; writes F&amp;O (sales orders)</span>
+                                        <span>n8n triggers (inbox, attachments) &rarr; reads F&amp;O (customers, products, pricing, inventory) + reads CE (customer context) &rarr; writes F&amp;O (sales orders)</span>
                                     </div>
                                     <div class="flex items-start">
                                         <span class="bg-green-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded mr-2 mt-0.5 flex-shrink-0">UC2</span>
@@ -1053,7 +1058,7 @@
                                     </div>
                                     <div class="flex items-start">
                                         <span class="bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded mr-2 mt-0.5 flex-shrink-0">UC3</span>
-                                        <span>Reads F&amp;O (existing products for consistency check) &rarr; writes F&amp;O (item master)</span>
+                                        <span>Reads F&amp;O (existing products for consistency) &rarr; writes F&amp;O (item master) &rarr; syncs to CE (product catalog) via Dual Write / Celigo</span>
                                     </div>
                                     <div class="flex items-start">
                                         <span class="bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded mr-2 mt-0.5 flex-shrink-0">Celigo</span>

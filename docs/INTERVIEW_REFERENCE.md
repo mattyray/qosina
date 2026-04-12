@@ -234,6 +234,7 @@ The architecture stays identical between this demo and production. Only the inte
 | **ERP Data** | SQLite + mock data | **D365 F&O** via OData REST / MCP |
 | **CRM Data** | SQLite + mock data | **D365 CE** via Dataverse API |
 | **Integration** | None | **Celigo iPaaS** triggers + write-back |
+| **Workflow (UC1)** | None | **n8n** email triggers + attachment routing |
 | **Auth** | None ("Demo User") | **Entra ID** OAuth + AD groups |
 | **File Storage** | Browser memory (data URLs) | **Azure Blob** with retention policies |
 | **Conversations** | In-memory (lost on restart) | Persisted SQL with FK to approvals |
@@ -246,9 +247,9 @@ The architecture stays identical between this demo and production. Only the inte
 
 ### What each use case connects to in production
 
-- **UC1:** Reads F&O (customers, products, pricing, inventory) → writes F&O (sales orders)
+- **UC1:** n8n triggers (inbox, attachments) → reads F&O (customers, products, pricing, inventory) + reads CE (customer context) → writes F&O (sales orders)
 - **UC2:** Reads F&O (POs, receipts, invoices, payments) + reads CE (customer history, last contact) → writes F&O (payment journals) + writes CE (collection activities)
-- **UC3:** Reads F&O (existing products for consistency check) → writes F&O (item master)
+- **UC3:** Reads F&O (existing products for consistency) → writes F&O (item master) → syncs to CE (product catalog) via Dual Write / Celigo
 - **Celigo:** Trigger layer (inbox watching, document routing) + write-back layer (D365 field mappings, retries) + F&O ↔ CE sync
 
 ---
