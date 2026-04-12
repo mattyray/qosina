@@ -118,11 +118,12 @@ Allied Silicone tubing, all measurements in **fractional imperial** (3/16 inch I
 - **Result:** extracted as imperial, normalized to metric, both stored
 - **Demo line:** *"American suppliers send fractional inches. AI converts to mm so the catalog stays consistent."*
 
-### 4. `certificate_of_analysis_stopcock.pdf` — DIFFERENT DOCUMENT TYPE
-Not a spec sheet at all — a Certificate of Analysis with **lot numbers, expiry dates, test results, biocompatibility data**. Mentions "Qosina equivalent: #11195".
-- **Demonstrates:** the framework handles **different document types**, not just spec sheets — pulls quality/lot data into the right fields
-- **Result:** populates lot tracking + quality fields rather than the catalog fields
-- **Demo line:** *"Same pipeline, totally different document. CoA goes into the lot tracking fields automatically."*
+### 4. `certificate_of_analysis_stopcock.pdf` — QUALITY DOCUMENT (CoA)
+Not a spec sheet at all — a Certificate of Analysis with **lot numbers, expiry dates, 8 test results (burst pressure, biocompatibility, endotoxin, sterility, etc.)**. Mentions "Qosina equivalent: #11195".
+- **Demonstrates:** the framework handles **different document types** — CoAs create a `quality_document` approval (rose/pink badge) instead of a `product_entry` approval. Review panel shows lot tracking fields + a test results table with PASS/FAIL per test.
+- **Result:** links quality data to existing Qosina SKU #11195, shows all 8 test results, captures lot/expiry for traceability
+- **Demo line:** *"Same pipeline, different document type. CoA routes to quality review with lot tracking and test results — not the product catalog."*
+- **Business context:** If there's a defect or recall, you can trace back to this specific lot. FDA/ISO requires this traceability for medical device components.
 
 ### 5. `catalog_page_techvalve.pdf` — MULTI-PRODUCT EXTRACTION
 TechValve catalog page with **3 different products** on one page (TV-CHK-100, TV-CHK-200, TV-FLO-300).

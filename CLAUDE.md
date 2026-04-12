@@ -149,17 +149,17 @@ generate_samples.py            # Generates all sample PDFs/images
 - Approve / Reject buttons at top — saves edited structured data with the approval
 
 **Architecture tab** (11-section interview reference with sticky TOC):
-1. Stack at a Glance — tech choices + boring plumbing
+1. Stack at a Glance — tech choices + application infrastructure
 2. Human in the Loop — zero-write enforcement
 3. The Three Use Cases — per-UC business problem + what was built + platform comparison + recommendation
 4. The Tools — 20 read-only + 1 write across 4 agents
-5. Approval Types — 5 types, "4-line change" extensibility
-6. AP Processing Primer — money in/out/late framework
-7. OpenRouter — resilience story, Claude-is-already-in-your-stack callout
-8. Production Path — demo-vs-production table + D365 F&O/CE entity mapping + Celigo iPaaS integration
+5. Approval Types — 6 types (sales_order, invoice_match, payment_application, collection_outreach, product_entry, quality_document)
+6. Accounts Payable — The Three Sub-Jobs (money in/out/late)
+7. OpenRouter — LLM resilience, model-agnostic demo
+8. Production Path — color-coded demo-vs-production table + D365 MCP callout + per-UC integration map + Celigo iPaaS
 9. Observability & Audit — Entra ID, structured logging, LangSmith, FDA audit trail
 10. Phased Rollout — UC1 first (foundation), UC2 second (dollar impact), UC3 third (reasoning-heavy)
-11. Honest Gaps — 9 explicit gaps acknowledged upfront
+11. Honest Gaps — explicit gaps including "I need to understand Qosina's actual system landscape"
 - Recommendations per use case: UC1 = n8n + Python, UC2 = Power Platform + Python, UC3 = Full Python
 
 **Agent prompt architecture** (added fc0743b):

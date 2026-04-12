@@ -160,7 +160,7 @@ A few things worth knowing about how I structured this. Each tool is a pure Pyth
 
 ## 5. Approval Types
 
-The agent produces five distinct approval types across the three use cases. Each one renders differently in the review panel and would route to a different downstream action in production — writing to D365 F&O for sales orders, vendor payments, and item master entries, or creating activities in D365 CE for collections outreach. The specifics of those write-backs would depend on how Qosina's D365 and Celigo are configured.
+The agent produces six distinct approval types across the three use cases. Each one renders differently in the review panel and would route to a different downstream action in production — writing to D365 F&O for sales orders, vendor payments, and item master entries, creating activities in D365 CE for collections outreach, or linking quality data to existing catalog entries. The specifics of those write-backs would depend on how Qosina's D365 and Celigo are configured.
 
 | Type | Use Case | What it answers |
 |---|---|---|
@@ -169,12 +169,13 @@ The agent produces five distinct approval types across the three use cases. Each
 | `payment_application` | UC2 | Which invoice does this customer payment pay off? |
 | `collection_outreach` | UC2 | Which overdue customer should we chase first? |
 | `product_entry` | UC3 | Should we add this supplier product to our catalog? |
+| `quality_document` | UC3 | Is this batch of an existing product safe to receive and ship? |
 
 **UC1: 1 type** — One approval per PO, even if it has 50 line items. An order is one business object that gets approved or rejected as a whole.
 
 **UC2: 3 types** — AP is three distinct sub-jobs glued together: pay bills, apply payments, chase overdue. Each one routes differently.
 
-**UC3: 1 type** — One approval per supplier doc. A catalog page with three products would be one approval card with three sections.
+**UC3: 2 types** — Product entry for new catalog items (spec sheets, catalogs). Quality document for lot tracking and test results (CoAs). Different document types, different approval routing.
 
 The system is extensible — new approval types can be added without schema changes since the type field is an open string.
 

@@ -810,7 +810,7 @@
                             Approval Types
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
-                            <p class="text-xs text-gray-700 mb-3">The agent produces five distinct approval types across the three use cases. Each one renders differently in the review panel and would route to a different downstream action in production &mdash; writing to D365 F&amp;O for sales orders, vendor payments, and item master entries, or creating activities in D365 CE for collections outreach. The specifics of those write-backs would depend on how Qosina's D365 and Celigo are configured.</p>
+                            <p class="text-xs text-gray-700 mb-3">The agent produces six distinct approval types across the three use cases. Each one renders differently in the review panel and would route to a different downstream action in production &mdash; writing to D365 F&amp;O for sales orders, vendor payments, and item master entries, creating activities in D365 CE for collections outreach, or linking quality data to existing catalog entries. The specifics of those write-backs would depend on how Qosina's D365 and Celigo are configured.</p>
 
                             <table class="w-full text-xs mb-3">
                                 <thead>
@@ -841,10 +841,15 @@
                                         <td>UC2</td>
                                         <td>Which overdue customer should we chase first?</td>
                                     </tr>
-                                    <tr>
+                                    <tr class="border-b border-gray-100">
                                         <td class="py-2"><span class="bg-purple-100 text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded">PRODUCT ENTRY</span></td>
                                         <td>UC3</td>
                                         <td>Should we add this supplier product to our catalog?</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2"><span class="bg-rose-100 text-rose-700 text-[9px] font-bold px-2 py-0.5 rounded">QUALITY DOCUMENT</span></td>
+                                        <td>UC3</td>
+                                        <td>Is this batch of an existing product safe to receive and ship?</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -859,8 +864,8 @@
                                     <div class="text-gray-600 mt-0.5">AP is three distinct sub-jobs glued together: pay bills, apply payments, chase overdue. Each one routes differently.</div>
                                 </div>
                                 <div class="bg-purple-50 rounded p-2">
-                                    <div class="font-bold text-purple-700">UC3: 1 type</div>
-                                    <div class="text-gray-600 mt-0.5">One approval per supplier doc. A catalog page with three products would be one approval card with three sections.</div>
+                                    <div class="font-bold text-purple-700">UC3: 2 types</div>
+                                    <div class="text-gray-600 mt-0.5">Product entry for new catalog items (spec sheets, catalogs). Quality document for lot tracking and test results (CoAs). Different document types, different approval routing.</div>
                                 </div>
                             </div>
 
@@ -1688,6 +1693,7 @@
             payment_application: { color: 'bg-teal-100 text-teal-700', border: 'border-l-teal-500', icon: 'bg-teal-600', label: 'PAYMENT' },
             collection_outreach: { color: 'bg-amber-100 text-amber-700', border: 'border-l-amber-500', icon: 'bg-amber-600', label: 'COLLECTIONS' },
             product_entry: { color: 'bg-purple-100 text-purple-700', border: 'border-l-purple-500', icon: 'bg-purple-600', label: 'PRODUCT' },
+            quality_document: { color: 'bg-rose-100 text-rose-700', border: 'border-l-rose-500', icon: 'bg-rose-600', label: 'QUALITY' },
             general: { color: 'bg-gray-100 text-gray-700', border: 'border-l-gray-400', icon: 'bg-gray-500', label: 'GENERAL' },
         };
 
@@ -1842,7 +1848,7 @@
             arch: null,        // show all
             uc1: ['sales_order'],
             uc2: ['invoice_match', 'payment_application', 'collection_outreach'],
-            uc3: ['product_entry'],
+            uc3: ['product_entry', 'quality_document'],
         };
         currentTabTypes = tabTypeMap[tab] || null;
         const labels = {
@@ -2200,7 +2206,7 @@
                                 if (data.id) {
                                     if (!window._approvalDocs) window._approvalDocs = {};
                                     // Try to find the source doc: check by type mapping, then by active tab
-                                    const tabForType = { sales_order: 'uc1', invoice_match: 'uc2', payment_application: 'uc2', collection_outreach: 'uc2', product_entry: 'uc3' };
+                                    const tabForType = { sales_order: 'uc1', invoice_match: 'uc2', payment_application: 'uc2', collection_outreach: 'uc2', product_entry: 'uc3', quality_document: 'uc3' };
                                     const ucTab = tabForType[data.type] || null;
                                     const doc = (ucTab && ucLastUpload[ucTab]) || ucLastUpload.uc1 || ucLastUpload.uc2 || ucLastUpload.uc3;
                                     if (doc && doc.dataUrl) {
@@ -2494,6 +2500,7 @@
             sales_order: 'bg-blue-100 text-blue-700', invoice_match: 'bg-green-100 text-green-700',
             payment_application: 'bg-teal-100 text-teal-700', collection_outreach: 'bg-amber-100 text-amber-700',
             product_entry: 'bg-purple-100 text-purple-700',
+            quality_document: 'bg-rose-100 text-rose-700',
         };
         const badge = document.getElementById('review-type-badge');
         badge.className = 'text-[10px] font-medium mt-0.5 inline-block px-2 py-0.5 rounded ' + (tc[approval.recommendation_type] || 'bg-gray-100 text-gray-700');
@@ -2629,6 +2636,11 @@
             html += renderAllocations(sd.allocations);
         }
 
+        // Render test results (UC3 quality documents / CoA)
+        if (sd.test_results && sd.test_results.length > 0) {
+            html += renderTestResults(sd.test_results);
+        }
+
         // Total
         if (sd.total !== undefined) {
             html += `<div class="bg-gray-50 rounded-lg border border-gray-200 p-3 flex items-center justify-between">
@@ -2743,6 +2755,35 @@
         });
 
         html += '</div></div>';
+        return html;
+    }
+
+    function renderTestResults(results) {
+        let html = `<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div class="px-3 py-2 bg-gray-50 border-b border-gray-100">
+                <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Quality Test Results</span>
+            </div>
+            <div class="overflow-x-auto"><table class="w-full text-xs">
+                <thead><tr class="border-b border-gray-200 text-left text-gray-500">
+                    <th class="px-3 py-2">Test</th>
+                    <th class="px-3 py-2">Specification</th>
+                    <th class="px-3 py-2">Result</th>
+                    <th class="px-3 py-2">Status</th>
+                </tr></thead>
+                <tbody>`;
+
+        results.forEach(t => {
+            const pass = (t.status || '').toLowerCase() === 'pass';
+            const statusColor = pass ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+            html += `<tr class="border-b border-gray-100">
+                <td class="px-3 py-2 font-medium text-gray-700">${esc(t.test || t.name || '')}</td>
+                <td class="px-3 py-2 text-gray-600">${esc(t.specification || t.spec || '')}</td>
+                <td class="px-3 py-2 text-gray-700">${esc(t.result || '')}</td>
+                <td class="px-3 py-2"><span class="text-[10px] font-bold px-2 py-0.5 rounded ${statusColor}">${esc((t.status || '').toUpperCase())}</span></td>
+            </tr>`;
+        });
+
+        html += '</tbody></table></div></div>';
         return html;
     }
 
