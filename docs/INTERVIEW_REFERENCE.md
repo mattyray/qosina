@@ -316,7 +316,35 @@ Build in this order. Each phase compounds — Phase 1 builds the foundation that
 
 **Discovery work first (longest of the three):** Sit with Product Development for several weeks. Audit 30-50 existing product entries to extract the implicit naming conventions. Build the constitutional framework as a database table they can edit themselves. Understand the landed cost calculation downstream — the brief mentioned this connects to it. Map technical drawings — do those need vision AI? Are they vendor-specific?
 
-**Every phase starts with discovery.** Team interviews, process shadowing, real document audits. Each workflow needs to be fully understood before anything gets built. The discovery work is the most important input.
+### Phase 0 — Discovery Questions (Before Building Anything)
+
+Every phase starts with discovery. These are the questions I'd need answered by working with each team — not from a meeting, but from shadowing the actual process.
+
+**UC1 — Sales Order Entry:**
+- Can I see 50+ real POs from the top 10 customers? What's the actual format distribution?
+- Where does real-time inventory truth live — D365 F&O or PowerHouse WMS?
+- How are trade agreements (customer-specific pricing) structured in D365?
+- What's the new customer onboarding process when someone orders for the first time?
+- How is the product catalog structured in F&O — standard fields, extended attributes, or dimension groups?
+
+**UC2 — AP Processing:**
+- How do vendor invoices get into D365 today? Manual entry, EDI, Celigo flow from email?
+- What tolerance thresholds does Finance actually use? Are there vendor-specific rules?
+- What percentage of customer payments arrive with remittance advice vs without?
+- How does the team prioritize collections today? What's DSO and what's the target?
+- Which customers are notorious for short-pays or unauthorized deductions?
+- Does anyone use D365 CE for collection activities, or is it tracked in spreadsheets?
+
+**UC3 — Product Data Entry:**
+- What are Qosina's actual naming conventions? (The demo has 16 placeholder rules — the real ones are tribal knowledge that takes weeks to codify.)
+- How are the 30+ product fields structured in D365 F&O? Standard item master or custom extensions?
+- What does the landed cost calculation need from product data, and is it in D365 costing or StockIQ?
+- Do technical drawings need vision AI, or are they handled differently?
+
+**Cross-cutting:**
+- What existing Celigo flows touch these processes? Don't rebuild what's already wired.
+- Does StockIQ already handle low-stock alerts and reorder recommendations?
+- Can I shadow each team for a week? CX processing POs, Finance matching invoices, Product Dev entering specs.
 
 **The compounding story:** Phase 1 builds the foundation (auth, observability, audit, deployment) with the simplest use case. Phase 2 adds the highest-value AI work to that foundation. Phase 3 adds the most reasoning-heavy work to a mature platform. By the end: three production workflows, one shared platform, and a pattern that extends to future use cases without rebuilding.
 
