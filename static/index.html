@@ -133,7 +133,7 @@
 <main class="flex-1 flex overflow-hidden">
 
     <!-- LEFT: Agent Tools Panel -->
-    <div class="w-[240px] bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+    <div id="left-sidebar" class="w-[240px] bg-white border-r border-gray-200 flex flex-col flex-shrink-0 transition-all duration-200">
         <div class="px-4 py-3 border-b border-gray-100">
             <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Agent Tools</h2>
             <p class="text-[10px] text-gray-400 mt-0.5">Tools light up when the AI uses them</p>
@@ -478,10 +478,14 @@
                 </aside>
 
                 <!-- Content -->
-                <div class="flex-1 p-6 space-y-8 max-w-4xl">
-                    <div class="text-center mb-4">
+                <div id="arch-content" class="flex-1 p-6 space-y-8 max-w-4xl">
+                    <div class="text-center mb-4 relative">
                         <h2 class="text-lg font-bold text-gray-800">Architecture &amp; Design Reference</h2>
                         <p class="text-xs text-gray-500 mt-1">What I built, why I built it that way, and what would change in production at Qosina.</p>
+                        <button id="arch-expand-btn" onclick="toggleArchFocus()" class="absolute right-0 top-0 bg-qblue text-white text-[10px] font-medium px-3 py-1.5 rounded-lg hover:bg-qblue-dark transition-colors flex items-center space-x-1.5" title="Expand for presentation">
+                            <svg id="arch-expand-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/></svg>
+                            <span id="arch-expand-label">Expand</span>
+                        </button>
                     </div>
 
                     <!-- 1. Stack at a Glance -->
@@ -1518,7 +1522,7 @@
     </div>
 
     <!-- RIGHT: Approval Queue -->
-    <div class="w-[380px] bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
+    <div id="right-sidebar" class="w-[380px] bg-white border-l border-gray-200 flex flex-col flex-shrink-0 transition-all duration-200">
         <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
             <div class="flex items-center justify-between">
                 <div>
@@ -2042,6 +2046,10 @@
                 el.classList.toggle('text-gray-500', !active);
             }
         });
+        // Collapse arch focus mode when leaving Architecture tab
+        if (tab !== 'arch' && archFocused) {
+            toggleArchFocus();
+        }
         if (tab === 'data') loadDataTab('products');
         if (tab === 'chat') chatInput.focus();
         if (tab === 'dash') fetchDashboard();
@@ -2085,6 +2093,33 @@
             } else {
                 delete reviewByTab[tab];
             }
+        }
+    };
+
+    // Architecture focus mode — expand content, hide sidebars
+    let archFocused = false;
+    window.toggleArchFocus = function() {
+        archFocused = !archFocused;
+        const left = document.getElementById('left-sidebar');
+        const right = document.getElementById('right-sidebar');
+        const content = document.getElementById('arch-content');
+        const label = document.getElementById('arch-expand-label');
+        const icon = document.getElementById('arch-expand-icon');
+
+        if (archFocused) {
+            left.classList.add('hidden');
+            right.classList.add('hidden');
+            content.classList.remove('max-w-4xl');
+            content.classList.add('max-w-6xl', 'mx-auto');
+            label.textContent = 'Collapse';
+            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>';
+        } else {
+            left.classList.remove('hidden');
+            right.classList.remove('hidden');
+            content.classList.add('max-w-4xl');
+            content.classList.remove('max-w-6xl', 'mx-auto');
+            label.textContent = 'Expand';
+            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/>';
         }
     };
 
