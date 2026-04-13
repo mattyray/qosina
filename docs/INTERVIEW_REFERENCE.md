@@ -292,9 +292,9 @@ Build in this order. Each phase compounds — Phase 1 builds the foundation that
 
 ### Phase 1 — UC1: Sales Order Entry (Foundation Phase)
 
-**Why this first:** One approval type, one team (CX), lowest stakes. Standard product orders only — skip medical device orders for Phase 1 like Tom suggested. If something goes wrong, the reviewer rejects the approval and the order gets processed manually like it does today.
+**Why this first:** UC1 is the simplest to implement — one approval type, one team (CX), and standard product orders only (skip medical device orders for Phase 1 like Tom suggested). While we get UC1 up and running, we also stand up all the shared infrastructure that Phase 2 and 3 will inherit. If anything goes wrong, the fallback is simple — the reviewer rejects the approval and the order gets processed manually like it does today.
 
-**What gets built:** The UC1 flow productionized — D365 OData reads and writes, hybrid n8n trigger plus the Python AI service. Plus all the foundation pieces every future use case will inherit: Entra ID OAuth, AD groups for authorization, Application Insights logging, LangSmith agent tracing, persisted conversations with audit FK, Azure Blob Storage for source documents, Sentry, health checks, alerting.
+**What gets built:** The UC1 flow productionized — D365 F&O and CE integration via OData, hybrid n8n trigger plus the Python AI service. Alongside that, all the foundation pieces: Entra ID OAuth, AD groups for authorization, Application Insights logging, LangSmith agent tracing, persisted conversations with audit FK, Azure Blob Storage for source documents, Sentry, health checks, alerting, and Celigo flow mapping. UC1 is the vehicle — the foundation is the real deliverable.
 
 **Discovery work first:** Spend a couple weeks doing a PO format audit with the CX team. Look at 50+ real POs, establish format distribution, baseline current process time. Map the actual D365 sales order fields they use in production. Identify the top 10 customers and what their POs actually look like.
 
