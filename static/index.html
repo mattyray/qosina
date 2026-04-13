@@ -1272,11 +1272,16 @@
                                         <strong class="text-qblue text-[10px]">UC1 is the vehicle &mdash; the foundation is the real deliverable</strong>
                                     </div>
                                     <div>
-                                        <strong class="text-gray-800">Discovery first:</strong>
+                                        <strong class="text-gray-800">Discovery first (shadow the CX team):</strong>
                                         <ul class="ml-5 list-disc space-y-0.5 mt-0.5">
-                                            <li>PO format audit with CX team &mdash; 50+ real POs, format distribution</li>
-                                            <li>Map actual D365 sales order fields in production</li>
-                                            <li>Top 10 customers &mdash; what do their POs actually look like?</li>
+                                            <li>Can I see 50+ real POs from the top 10 customers? What's the actual format distribution?</li>
+                                            <li>Where does real-time inventory truth live &mdash; D365 F&amp;O or PowerHouse WMS?</li>
+                                            <li>How are trade agreements (customer-specific pricing) structured in D365?</li>
+                                            <li>What's the new customer onboarding process when someone orders for the first time?</li>
+                                            <li>How is the product catalog structured in F&amp;O &mdash; standard fields, extended attributes, or dimension groups?</li>
+                                            <li>What existing Celigo flows touch these processes? Don't rebuild what's already wired</li>
+                                            <li>Does StockIQ already handle low-stock alerts and reorder recommendations?</li>
+                                            <li>Can I shadow each team for a week? CX processing POs, Finance matching invoices, Product Dev entering specs</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -1314,11 +1319,16 @@
                                         </ul>
                                     </div>
                                     <div>
-                                        <strong class="text-gray-800">Discovery first:</strong>
+                                        <strong class="text-gray-800">Discovery first (shadow the Finance team):</strong>
                                         <ul class="ml-5 list-disc space-y-0.5 mt-0.5">
-                                            <li>Sit with Finance team &mdash; tribal knowledge on vendors, short-pays, tolerance thresholds</li>
-                                            <li>Map existing Celigo flows &mdash; don't rebuild what's already working</li>
+                                            <li>How do vendor invoices get into D365 today? Manual entry, EDI, Celigo flow from email?</li>
+                                            <li>What tolerance thresholds does Finance actually use? Are there vendor-specific rules?</li>
+                                            <li>What percentage of customer payments arrive with remittance advice vs without?</li>
+                                            <li>How does the team prioritize collections today? What's DSO and what's the target?</li>
+                                            <li>Which customers are notorious for short-pays or unauthorized deductions?</li>
+                                            <li>Does anyone use D365 CE for collection activities, or is it tracked in spreadsheets?</li>
                                             <li>Approval authority by dollar amount &mdash; set up AD groups correctly</li>
+                                            <li>Map existing Celigo flows &mdash; don't rebuild what's already working</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -1349,65 +1359,13 @@
                                         </ul>
                                     </div>
                                     <div>
-                                        <strong class="text-gray-800">Discovery first (longest of the three):</strong>
+                                        <strong class="text-gray-800">Discovery first (longest &mdash; shadow Product Dev):</strong>
                                         <ul class="ml-5 list-disc space-y-0.5 mt-0.5">
-                                            <li>Sit with Product Dev several weeks &mdash; audit 30-50 existing entries</li>
-                                            <li>Extract implicit naming conventions &rarr; build constitutional framework table</li>
-                                            <li>Landed cost downstream &mdash; what does it need from product data?</li>
-                                            <li>Technical drawings &mdash; need vision AI? Vendor-specific?</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Phase 0 Discovery Questions -->
-                            <div class="border-2 border-orange-300 bg-orange-50/30 rounded-lg p-4 mb-3">
-                                <div class="flex items-center space-x-2 mb-2">
-                                    <span class="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">PHASE 0</span>
-                                    <h4 class="text-xs font-bold text-gray-800">Discovery Questions</h4>
-                                    <span class="text-[11px] text-gray-500 ml-auto">Before building anything</span>
-                                </div>
-                                <ul class="text-[11px] text-gray-700 mb-3 ml-4 list-disc space-y-0.5">
-                                    <li><strong>Every phase starts with discovery</strong> &mdash; not from a meeting, from shadowing the actual process</li>
-                                </ul>
-
-                                <div class="text-[11px] text-gray-700 space-y-3">
-                                    <div>
-                                        <div class="font-bold text-qblue text-[10px] mb-1">UC1 &mdash; Sales Order Entry</div>
-                                        <ul class="list-disc ml-5 space-y-0.5">
-                                            <li>Can I see 50+ real POs from the top 10 customers? What's the actual format distribution?</li>
-                                            <li>Where does real-time inventory truth live &mdash; D365 F&amp;O or PowerHouse WMS?</li>
-                                            <li>How are trade agreements (customer-specific pricing) structured in D365?</li>
-                                            <li>What's the new customer onboarding process when someone orders for the first time?</li>
-                                            <li>How is the product catalog structured in F&amp;O &mdash; standard fields, extended attributes, or dimension groups?</li>
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold text-green-700 text-[10px] mb-1">UC2 &mdash; AP Processing</div>
-                                        <ul class="list-disc ml-5 space-y-0.5">
-                                            <li>How do vendor invoices get into D365 today? Manual entry, EDI, Celigo flow from email?</li>
-                                            <li>What tolerance thresholds does Finance actually use? Are there vendor-specific rules?</li>
-                                            <li>What percentage of customer payments arrive with remittance advice vs without?</li>
-                                            <li>How does the team prioritize collections today? What's DSO and what's the target?</li>
-                                            <li>Which customers are notorious for short-pays or unauthorized deductions?</li>
-                                            <li>Does anyone use D365 CE for collection activities, or is it tracked in spreadsheets?</li>
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold text-purple-700 text-[10px] mb-1">UC3 &mdash; Product Data Entry</div>
-                                        <ul class="list-disc ml-5 space-y-0.5">
-                                            <li>What are Qosina's actual naming conventions? (The demo has 16 placeholder rules &mdash; the real ones are tribal knowledge that takes weeks to codify.)</li>
-                                            <li>How are the 30+ product fields structured in D365 F&amp;O? Standard item master or custom extensions?</li>
-                                            <li>What does the landed cost calculation need from product data, and is it in D365 costing or StockIQ?</li>
+                                            <li>What are Qosina's actual naming conventions? (Demo has 16 placeholders &mdash; real ones are tribal knowledge, weeks to codify)</li>
+                                            <li>How are 30+ product fields structured in D365 F&amp;O? Standard item master or custom extensions?</li>
+                                            <li>What does landed cost calculation need from product data &mdash; D365 costing or StockIQ?</li>
                                             <li>Do technical drawings need vision AI, or are they handled differently?</li>
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold text-gray-700 text-[10px] mb-1">Cross-cutting</div>
-                                        <ul class="list-disc ml-5 space-y-0.5">
-                                            <li>What existing Celigo flows touch these processes? Don't rebuild what's already wired.</li>
-                                            <li>Does StockIQ already handle low-stock alerts and reorder recommendations?</li>
-                                            <li>Can I shadow each team for a week? CX processing POs, Finance matching invoices, Product Dev entering specs.</li>
+                                            <li>Audit 30-50 existing entries &rarr; extract implicit naming conventions &rarr; build framework table</li>
                                         </ul>
                                     </div>
                                 </div>
