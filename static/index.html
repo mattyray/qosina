@@ -1249,12 +1249,27 @@
                                         </ul>
                                     </div>
                                     <div>
-                                        <strong class="text-gray-800">What gets built:</strong>
+                                        <strong class="text-gray-800">What gets built &mdash; UC1 flow:</strong>
                                         <ul class="ml-5 list-disc space-y-0.5 mt-0.5">
                                             <li><strong>UC1 productionized</strong> &mdash; D365 F&amp;O/CE via OData, n8n trigger + Python AI service</li>
-                                            <li><strong>All foundation pieces</strong> &mdash; Entra ID, AD groups, App Insights, LangSmith, persisted conversations, Azure Blob, Sentry, health checks, Celigo mapping</li>
-                                            <li><strong>UC1 is the vehicle &mdash; the foundation is the real deliverable</strong></li>
                                         </ul>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800">What gets built &mdash; foundation (Phase 2 and 3 inherit all of this):</strong>
+                                        <ul class="ml-5 list-disc space-y-0.5 mt-0.5">
+                                            <li><strong>Entra ID OAuth</strong> &mdash; login through Microsoft, JWT validation in FastAPI middleware</li>
+                                            <li><strong>AD groups for authorization</strong> &mdash; "CX_Manager", "AP_Approver", "Product_Dev_Lead" &mdash; IT already manages these</li>
+                                            <li><strong>Application Insights</strong> &mdash; latency, error rates, dependency tracing (already on Azure)</li>
+                                            <li><strong>LangSmith</strong> &mdash; AI agent tracing, every LLM call and tool call, step-by-step replay</li>
+                                            <li><strong>Persisted conversations</strong> &mdash; SQL tables with FK to approvals, audit trail</li>
+                                            <li><strong>Azure Blob Storage</strong> &mdash; source documents with 7+ year retention (FDA medical device)</li>
+                                            <li><strong>Sentry</strong> &mdash; error tracking with full stack traces</li>
+                                            <li><strong>Health checks + alerting</strong> &mdash; <code class="text-[10px] bg-gray-100 px-1 rounded">/health</code> endpoint for liveness probes</li>
+                                            <li><strong>Celigo flow mapping</strong> &mdash; understand existing integrations, don't rebuild what's wired</li>
+                                        </ul>
+                                    </div>
+                                    <div class="bg-blue-50 border border-blue-200 rounded p-2 mt-1">
+                                        <strong class="text-qblue text-[10px]">UC1 is the vehicle &mdash; the foundation is the real deliverable</strong>
                                     </div>
                                     <div>
                                         <strong class="text-gray-800">Discovery first:</strong>
