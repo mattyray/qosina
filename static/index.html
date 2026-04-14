@@ -473,7 +473,6 @@
                         <a href="#arch-production" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">8. Production Path</a>
                         <a href="#arch-observability" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">9. Observability &amp; Audit</a>
                         <a href="#arch-rollout" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">10. Phased Rollout</a>
-                        <a href="#arch-gaps" class="arch-toc-link block py-1 px-2 rounded hover:bg-qblue/10 hover:text-qblue text-gray-600">11. Honest Gaps</a>
                     </nav>
                 </aside>
 
@@ -1382,86 +1381,6 @@
                                     <li><strong>Phase 2</strong> &mdash; highest-value AI work on that foundation</li>
                                     <li><strong>Phase 3</strong> &mdash; most reasoning-heavy work on a mature platform</li>
                                     <li><strong>End state</strong> &mdash; three production workflows, one shared platform, pattern extends to future UCs</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- 11. Honest Gaps -->
-                    <section id="arch-gaps" class="scroll-mt-4">
-                        <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center">
-                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">11</span>
-                            Honest Gaps
-                        </h3>
-                        <div class="bg-white rounded-xl border-2 border-orange-300 p-5">
-                            <ul class="text-xs text-gray-700 mb-3 ml-4 list-disc space-y-0.5">
-                                <li><strong>Tom's brief</strong> &mdash; "we value honest assessment over polished sales pitches"</li>
-                                <li><strong>What's NOT in this demo</strong> &mdash; rather acknowledge upfront than get caught in a gotcha</li>
-                            </ul>
-
-                            <div class="space-y-2 text-xs">
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No real D365 connection.</strong> Seeded SQLite. OData-shaped so swap is URL + auth, not rewrite. Phase 1.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No user accounts.</strong> Everything is "Demo User". Production = Entra ID OAuth + AD groups. Phase 1.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No persisted conversations.</strong> In-memory, lost on restart. Production = persisted SQL + FK to approvals + Azure Blob. Phase 1.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No time-savings claims.</strong> Won't say "saves 10 hours/week" without baselining against your actual process. Phase 0 discovery.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No "FDA-grade" or "healthcare-grade" claims.</strong> Marketing fluff. These are features you implement, not free defaults. HITL + audit trail = the path, but not free.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">Sample docs are representative, not Qosina's actual format mix.</strong> Real format distribution = audit 50+ actual POs in Phase 0.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">Constitutional rules are placeholders.</strong> 16 seeded rules. Real ones = tribal knowledge in Product Dev. Phase 0 codification for UC3.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">No D365 write integration.</strong> "Approve" = status change in SQLite. Production = POST to D365 OData endpoints with Azure AD auth.
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <span class="text-orange-500 font-bold">&times;</span>
-                                    <div>
-                                        <strong class="text-gray-800">Need to understand Qosina's actual system landscape.</strong> D365 F&amp;O/CE config, Celigo flows, StockIQ, approval authority, Shopify migration &mdash; every rec needs validation against how systems are actually connected. Phase 0, requires Tom's and the team's expertise. Architecture plugs in; specific wiring is a conversation, not a guess.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 bg-green-50 border border-green-200 rounded p-3 text-[11px] text-gray-700">
-                                <strong class="text-gray-800">What I AM saying:</strong>
-                                <ul class="ml-3 list-disc space-y-0.5 mt-1">
-                                    <li><strong>All integration points, not rewrites</strong> &mdash; Phase 1 work, on the job</li>
-                                    <li><strong>Demo lands the hard part</strong> &mdash; AI reasoning, tool architecture, HITL pattern, OData mock layer</li>
-                                    <li><strong>Boring integration work</strong> = boring integration work &mdash; two weeks per piece, not architectural risk</li>
                                 </ul>
                             </div>
                         </div>
