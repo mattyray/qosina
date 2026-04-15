@@ -319,6 +319,38 @@
                  ondragover="event.preventDefault(); this.classList.add('ring-2','ring-qblue','ring-inset')"
                  ondragleave="this.classList.remove('ring-2','ring-qblue','ring-inset')"
                  ondrop="event.preventDefault(); this.classList.remove('ring-2','ring-qblue','ring-inset'); ucDrop(event,'uc1')">
+                <div class="uc-welcome max-w-2xl mx-auto">
+                    <div class="bg-white rounded-xl border border-blue-200 p-5">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <span class="bg-qblue text-white text-[10px] font-bold px-2 py-0.5 rounded">UC1</span>
+                            <h3 class="text-sm font-bold text-gray-800">Sales Order Entry Agent</h3>
+                        </div>
+                        <p class="text-[11px] text-gray-600 mb-3">Automates PO intake for the CX team. Drop a PO in any format &mdash; PDF, image, handwritten, or paste the email body &mdash; the agent extracts the fields, matches them against D365, and produces a sales order approval for human review.</p>
+                        <div class="grid grid-cols-2 gap-3 text-[11px]">
+                            <div>
+                                <div class="font-bold text-gray-700 mb-1">What it does</div>
+                                <ul class="text-gray-600 space-y-0.5 list-disc ml-4">
+                                    <li>Extracts customer, line items, ship-to, terms</li>
+                                    <li>Fuzzy-matches customer + products</li>
+                                    <li>Validates pricing against contracted rates</li>
+                                    <li>Checks inventory availability</li>
+                                    <li>Creates approval with confidence scores</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <div class="font-bold text-gray-700 mb-1">Try this</div>
+                                <ul class="text-gray-600 space-y-0.5 list-disc ml-4">
+                                    <li>Drop a PO PDF from <code class="text-[10px] bg-gray-100 px-1 rounded">sample_docs/uc1_sales_orders/</code></li>
+                                    <li>Paste a PO email directly into the chat</li>
+                                    <li>Ask: "Show me sample POs I can try"</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-100 text-[10px] text-gray-500">
+                            <strong>HITL:</strong> Agent cannot write to D365. Creates an approval &rarr; you review &amp; edit &rarr; you decide.
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="uc1-file-chip" class="hidden px-4 py-1 bg-blue-50 border-t border-blue-100 flex-shrink-0">
                 <div class="max-w-2xl mx-auto flex items-center space-x-2">
@@ -380,6 +412,38 @@
                  ondragover="event.preventDefault(); this.classList.add('ring-2','ring-green-500','ring-inset')"
                  ondragleave="this.classList.remove('ring-2','ring-green-500','ring-inset')"
                  ondrop="event.preventDefault(); this.classList.remove('ring-2','ring-green-500','ring-inset'); ucDrop(event,'uc2')">
+                <div class="uc-welcome max-w-2xl mx-auto">
+                    <div class="bg-white rounded-xl border border-green-200 p-5">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <span class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">UC2</span>
+                            <h3 class="text-sm font-bold text-gray-800">Accounts Payable Agent</h3>
+                        </div>
+                        <p class="text-[11px] text-gray-600 mb-3">Three sub-jobs glued together: <strong>three-way matching</strong> (pay vendor bills), <strong>cash application</strong> (allocate incoming customer payments), and <strong>collections prioritization</strong> (rank overdue accounts). The "waste of human effort" from Tom's brief.</p>
+                        <div class="grid grid-cols-2 gap-3 text-[11px]">
+                            <div>
+                                <div class="font-bold text-gray-700 mb-1">What it does</div>
+                                <ul class="text-gray-600 space-y-0.5 list-disc ml-4">
+                                    <li>PO vs receipt vs invoice line-by-line match</li>
+                                    <li>Tolerance thresholds: auto, quick review, full review</li>
+                                    <li>Payment allocation (handles partial pays + deductions)</li>
+                                    <li>Collections scoring by age, amount, history, tier</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <div class="font-bold text-gray-700 mb-1">Try this</div>
+                                <ul class="text-gray-600 space-y-0.5 list-disc ml-4">
+                                    <li>Click "Three-Way Match All" above</li>
+                                    <li>Drop a vendor invoice PDF</li>
+                                    <li>Click "Collections Priority"</li>
+                                    <li>Click "Cash Application"</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-100 text-[10px] text-gray-500">
+                            <strong>HITL:</strong> Three approval types &mdash; invoice_match, payment_application, collection_outreach. Every one reviewed before money moves.
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="uc2-file-chip" class="hidden px-4 py-1 bg-green-50 border-t border-green-100 flex-shrink-0">
                 <div class="max-w-2xl mx-auto flex items-center space-x-2">
@@ -419,6 +483,38 @@
                  ondragover="event.preventDefault(); this.classList.add('ring-2','ring-purple-500','ring-inset')"
                  ondragleave="this.classList.remove('ring-2','ring-purple-500','ring-inset')"
                  ondrop="event.preventDefault(); this.classList.remove('ring-2','ring-purple-500','ring-inset'); ucDrop(event,'uc3')">
+                <div class="uc-welcome max-w-2xl mx-auto">
+                    <div class="bg-white rounded-xl border border-purple-200 p-5">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <span class="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">UC3</span>
+                            <h3 class="text-sm font-bold text-gray-800">Product Data Entry Agent</h3>
+                        </div>
+                        <p class="text-[11px] text-gray-600 mb-3">Automates new SKU entry for Product Development. Drop a supplier spec sheet &mdash; agent extracts 30+ fields, applies Qosina's <strong>constitutional framework</strong> (the naming rules that translate supplier terminology into Qosina standards), and validates consistency against the existing catalog.</p>
+                        <div class="grid grid-cols-2 gap-3 text-[11px]">
+                            <div>
+                                <div class="font-bold text-gray-700 mb-1">What it does</div>
+                                <ul class="text-gray-600 space-y-0.5 list-disc ml-4">
+                                    <li>Extracts 30+ fields from any format</li>
+                                    <li>Normalizes terminology per constitutional rules</li>
+                                    <li>Converts units (inches &rarr; mm, etc.)</li>
+                                    <li>Cross-checks against existing catalog entries</li>
+                                    <li>Groups fields by section for review</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <div class="font-bold text-gray-700 mb-1">Try this</div>
+                                <ul class="text-gray-600 space-y-0.5 list-disc ml-4">
+                                    <li>Drop a spec sheet from <code class="text-[10px] bg-gray-100 px-1 rounded">sample_docs/uc3_product_data/</code></li>
+                                    <li>Try a spec with imperial units (watch the mm conversion)</li>
+                                    <li>Ask: "What are the naming conventions?"</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-100 text-[10px] text-gray-500">
+                            <strong>Constitutional rules:</strong> "PC plastic" &rarr; "Polycarbonate (PC)", "M Luer" &rarr; "Male Luer Lock", inches &rarr; mm, etc. Rules live in a database table &mdash; adding one is an INSERT, not a deployment.
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="uc3-file-chip" class="hidden px-4 py-1 bg-purple-50 border-t border-purple-100 flex-shrink-0">
                 <div class="max-w-2xl mx-auto flex items-center space-x-2">
@@ -2480,9 +2576,15 @@
         read();
     }
 
+    function removeUCWelcome(container) {
+        const welcome = container.querySelector('.uc-welcome');
+        if (welcome) welcome.remove();
+    }
+
     function sendToUC(useCase, message, messagesContainerId) {
         const container = document.getElementById(messagesContainerId);
         const uc = messagesContainerId.replace('-messages', '');
+        removeUCWelcome(container);
         // Add user message
         const userDiv = document.createElement('div');
         userDiv.className = 'flex justify-end slide-in';
@@ -2597,6 +2699,7 @@
 
         // If file attached, upload it (with optional text prompt)
         if (file) {
+            removeUCWelcome(container);
             // Show user message
             const label = msg ? msg + ' [+ ' + file.name + ']' : 'Uploaded: ' + file.name;
             const userDiv = document.createElement('div');
