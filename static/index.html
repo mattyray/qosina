@@ -1204,7 +1204,9 @@
                         </h3>
                         <div class="bg-white rounded-xl border border-gray-200 p-5">
                             <ul class="text-xs text-gray-700 mb-3 ml-4 list-disc space-y-0.5">
-                                <li><strong>Architecture stays identical</strong> &mdash; only the integration points change</li>
+                                <li><strong>Backend architecture stays identical</strong> &mdash; FastAPI, LangGraph agents, tools, OData shape, approval queue, HITL pattern</li>
+                                <li><strong>Frontend gets rebuilt</strong> &mdash; this single HTML file is a demo shortcut; production would be a proper SPA (Vite + React + TypeScript)</li>
+                                <li><strong>Integration points swap in</strong> &mdash; SQLite &rarr; D365, "Demo User" &rarr; Entra ID, in-memory &rarr; persisted SQL + Azure Blob</li>
                             </ul>
 
                             <table class="w-full text-xs">
@@ -1216,6 +1218,11 @@
                                     </tr>
                                 </thead>
                                 <tbody class="text-gray-700">
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2.5 font-semibold">Frontend</td>
+                                        <td class="py-2.5">Single HTML file + Tailwind CDN + vanilla JS</td>
+                                        <td class="py-2.5"><span class="bg-cyan-100 text-cyan-800 text-[10px] font-semibold px-2 py-0.5 rounded">Vite + React + TS</span> + Tailwind, static deploy</td>
+                                    </tr>
                                     <tr class="border-b border-gray-100">
                                         <td class="py-2.5 font-semibold">ERP Data</td>
                                         <td class="py-2.5">SQLite + mock data</td>
